@@ -57,6 +57,11 @@ CREATE TABLE patients (
   notes TEXT DEFAULT '',
   next_visit_date DATE,
   next_visit_note TEXT DEFAULT '',
+  admission_date DATE,
+  passport_series TEXT DEFAULT '',
+  passport_number TEXT DEFAULT '',
+  passport_issued TEXT DEFAULT '',
+  iin TEXT DEFAULT '',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
