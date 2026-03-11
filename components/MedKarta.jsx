@@ -1,8 +1,8 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import * as XLSX from "xlsx";
 
-const SPECIALIZATIONS = ["Ортопед", "Физиотерапевт", "Невролог", "Мануальний терапевт", "Ревматолог", "Подиатр", "Хирург", "Реабилитолог", "Эндокринолог", "Гастроэнтеролог"];
-const WEEKDAYS = ["Пн","Вт","Ср","Чт","Пт","Сб","Нд"];
+const SPECIALIZATIONS = ["Ортопед", "Физиотерапевт", "Невролог", "Мануальный терапевт", "Ревматолог", "Подиатр", "Хирург", "Реабилитолог", "Эндокринолог", "Гастроэнтеролог"];
+const WEEKDAYS = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
 const SAMPLE_DOCTORS = [
   { id:1, name:"Андрухів Макар Романович", specialization:"Ортопед", phone:"+77001112233", email:"andrukhiv@atlant.kz", schedule:["Пн","Вт","Ср","Чт","Пт"], notes:"" },
   { id:2, name:"Тлеубергенов Даулет Талгатович", specialization:"Ортопед", phone:"+77002223344", email:"", schedule:["Пн","Ср","Пт"], notes:"" },
@@ -15,52 +15,52 @@ const STATUS_COLORS = { active: "#10b981", discharged: "#6366f1", referred: "#f5
 const APPT_TYPES = ["Первичный приём", "Повторная консультация", "Плановый осмотр", "Анализы / диагностика", "Процедура"];
 const APPT_STATUSES = { scheduled: "Запланирован", done: "Проведён", cancelled: "Отменён", missed: "Не явился" };
 const APPT_STATUS_COLORS = { scheduled: "#2563eb", done: "#10b981", cancelled: "#ef4444", missed: "#f59e0b" };
-const EMPTY_PATIENT = { lastName:"", firstName:"", patronymic:"", dob:"", phone:"", diagnosis:"", doctor:"", status:"active", lastVisit:"", notes:"", nextVisitDate:"", nextVisitNote:"" };
+const EMPTY_PATIENT = { lastName:"", firstName:"", patronymic:"", dob:"", phone:"", diagnosis:"", doctor:"", status:"active", lastVisit:"", notes:"", nextVisitDate:"", nextVisitNote:"", admissionDate:"", passportSeries:"", passportNumber:"", passportIssued:"", iin:"" };
 const EMPTY_APPT = { patientId:"", doctor:"", date:"", time:"", type:"Первичный приём", status:"scheduled", notes:"" };
 
 // ─── Treatment protocol templates ───
-const PROCEDURE_CATEGORIES = ["Физиотерапия", "Инъекции", "Мануальная", "Медикаменты", "Диагностика", "Інше"];
+const PROCEDURE_CATEGORIES = ["Физиотерапия", "Инъекции", "Мануальная", "Медикаменты", "Диагностика", "Другое"];
 const PROCEDURE_ICONS = ["⚡","🔬","💥","🔊","💨","⚙️","🦴","🤲","💉","🩸","🎯","💊","📋","🧪","🔧","❤️"];
 const PROCEDURE_COLORS = ["#8b5cf6","#06b6d4","#f97316","#3b82f6","#10b981","#64748b","#a855f7","#ec4899","#ef4444","#dc2626","#f59e0b","#2563eb","#0e7c6b","#7c3aed","#475569","#be185d"];
 const SAMPLE_PROCEDURES = [
-  { id:1, name: "TEKAR-терапія", category: "Физиотерапия", icon: "⚡", color: "#8b5cf6", defaultSessions: 10, price: 8000 },
-  { id:2, name: "SIS-терапія", category: "Физиотерапия", icon: "🔬", color: "#06b6d4", defaultSessions: 8, price: 7000 },
-  { id:3, name: "УХТ (ударно-хвильова)", category: "Физиотерапия", icon: "💥", color: "#f97316", defaultSessions: 5, price: 6000 },
+  { id:1, name: "TEKAR-терапия", category: "Физиотерапия", icon: "⚡", color: "#8b5cf6", defaultSessions: 10, price: 8000 },
+  { id:2, name: "SIS-терапия", category: "Физиотерапия", icon: "🔬", color: "#06b6d4", defaultSessions: 8, price: 7000 },
+  { id:3, name: "УВТ (ударно-волновая)", category: "Физиотерапия", icon: "💥", color: "#f97316", defaultSessions: 5, price: 6000 },
   { id:4, name: "Ультразвук", category: "Физиотерапия", icon: "🔊", color: "#3b82f6", defaultSessions: 10, price: 3000 },
-  { id:5, name: "Карбокситерапія", category: "Инъекции", icon: "💨", color: "#10b981", defaultSessions: 6, price: 5000 },
-  { id:6, name: "Електрофізіопроцедура", category: "Физиотерапия", icon: "⚙️", color: "#64748b", defaultSessions: 10, price: 3500 },
+  { id:5, name: "Карбокситерапия", category: "Инъекции", icon: "💨", color: "#10b981", defaultSessions: 6, price: 5000 },
+  { id:6, name: "Электрофизиопроцедура", category: "Физиотерапия", icon: "⚙️", color: "#64748b", defaultSessions: 10, price: 3500 },
   { id:7, name: "Комп. вытяжение позвоночника", category: "Мануальная", icon: "🦴", color: "#a855f7", defaultSessions: 10, price: 5000 },
   { id:8, name: "Мануальнаяя терапия", category: "Мануальная", icon: "🤲", color: "#ec4899", defaultSessions: 8, price: 7000 },
-  { id:9, name: "Внутрішньосуглобова инъекція (УЗД)", category: "Инъекции", icon: "💉", color: "#ef4444", defaultSessions: 3, price: 15000 },
-  { id:10, name: "PRP-терапія", category: "Инъекции", icon: "🩸", color: "#dc2626", defaultSessions: 3, price: 25000 },
+  { id:9, name: "Внутрисуставная инъекция (УЗИ)", category: "Инъекции", icon: "💉", color: "#ef4444", defaultSessions: 3, price: 15000 },
+  { id:10, name: "PRP-терапия", category: "Инъекции", icon: "🩸", color: "#dc2626", defaultSessions: 3, price: 25000 },
   { id:11, name: "Блокада", category: "Инъекции", icon: "🎯", color: "#f59e0b", defaultSessions: 1, price: 10000 },
-  { id:12, name: "Фармакотерапія", category: "Медикаменты", icon: "💊", color: "#2563eb", defaultSessions: 1, price: 0 },
-  { id:13, name: "УЗД черевної порожнини", category: "Диагностика", icon: "🔬", color: "#0e7c6b", defaultSessions: 1, price: 8000 },
-  { id:14, name: "УЗД нирок та сечостатевої системи", category: "Диагностика", icon: "🔬", color: "#0e7c6b", defaultSessions: 1, price: 6000 },
-  { id:15, name: "УЗД щитовидної залози", category: "Диагностика", icon: "🔬", color: "#0e7c6b", defaultSessions: 1, price: 5000 },
-  { id:16, name: "УЗД суглобів", category: "Диагностика", icon: "🔬", color: "#0e7c6b", defaultSessions: 1, price: 6000 },
-  { id:17, name: "УЗД м'яких тканин", category: "Диагностика", icon: "🔬", color: "#06b6d4", defaultSessions: 1, price: 5000 },
-  { id:18, name: "УЗД хребта", category: "Диагностика", icon: "🔬", color: "#06b6d4", defaultSessions: 1, price: 7000 },
-  { id:19, name: "УЗД судин (доплер)", category: "Диагностика", icon: "🔬", color: "#7c3aed", defaultSessions: 1, price: 8000 },
-  { id:20, name: "УЗД молочних залоз", category: "Диагностика", icon: "🔬", color: "#ec4899", defaultSessions: 1, price: 5500 },
+  { id:12, name: "Фармакотерапия", category: "Медикаменты", icon: "💊", color: "#2563eb", defaultSessions: 1, price: 0 },
+  { id:13, name: "УЗИ брюшной полости", category: "Диагностика", icon: "🔬", color: "#0e7c6b", defaultSessions: 1, price: 8000 },
+  { id:14, name: "УЗИ почек и мочеполовой системы", category: "Диагностика", icon: "🔬", color: "#0e7c6b", defaultSessions: 1, price: 6000 },
+  { id:15, name: "УЗИ щитовидной железы", category: "Диагностика", icon: "🔬", color: "#0e7c6b", defaultSessions: 1, price: 5000 },
+  { id:16, name: "УЗИ суставов", category: "Диагностика", icon: "🔬", color: "#0e7c6b", defaultSessions: 1, price: 6000 },
+  { id:17, name: "УЗИ мягких тканей", category: "Диагностика", icon: "🔬", color: "#06b6d4", defaultSessions: 1, price: 5000 },
+  { id:18, name: "УЗИ позвоночника", category: "Диагностика", icon: "🔬", color: "#06b6d4", defaultSessions: 1, price: 7000 },
+  { id:19, name: "УЗИ сосудов (допплер)", category: "Диагностика", icon: "🔬", color: "#7c3aed", defaultSessions: 1, price: 8000 },
+  { id:20, name: "УЗИ молочных желёз", category: "Диагностика", icon: "🔬", color: "#ec4899", defaultSessions: 1, price: 5500 },
 ];
 
 const DIAGNOSES_CATALOG = [
-  "Міжхребцева грижа (L4-L5)", "Міжхребцева грижа (L5-S1)", "Міжхребцева грижа шийного відділу",
-  "Остеохондроз поперекового відділу", "Остеохондроз шийного відділу", "Остеохондроз грудного відділу",
-  "Гонартроз (колінний суглоб)", "Коксартроз (кульшовий суглоб)", "Артроз плечового суглоба",
-  "Плантарний фасціїт", "Hallux valgus", "Плоскостопие",
-  "Міофасціальний больовий синдром", "Бурсит", "Синовіїт",
-  "Ревматоїдний артрит", "Подагричний артрит",
-  "Сколіоз", "Кіфоз", "Цервікалгія", "Люмбалгія", "Торакалгія",
-  "Епікондиліт", "Тунельний синдром",
+  "Межпозвоночная грыжа (L4-L5)", "Межпозвоночная грыжа (L5-S1)", "Межпозвоночная грыжа шейного отдела",
+  "Остеохондроз поясничного отдела", "Остеохондроз шейного отдела", "Остеохондроз грудного отдела",
+  "Гонартроз (коленный сустав)", "Коксартроз (тазобедренный сустав)", "Артроз плечевого сустава",
+  "Плантарный фасциит", "Hallux valgus", "Плоскостопие",
+  "Миофасциальный болевой синдром", "Бурсит", "Синовиит",
+  "Ревматоидный артрит", "Подагрический артрит",
+  "Сколиоз", "Кифоз", "Цервикалгия", "Люмбалгия", "Торакалгия",
+  "Эпикондилит", "Туннельный синдром",
 ];
 
 // ─── Podiatech constants ───
 const FOOT_TYPES = ["Нормальная стопа", "Плоскостопие (I ст.)", "Плоскостопие (II ст.)", "Плоскостопие (III ст.)", "Полая стопа", "Вальгусная деформация", "Варусная деформация"];
 const INSOLE_STATUSES = { ordered: "Заказано", production: "У производстве", ready: "Готово", delivered: "Выдано" };
 const INSOLE_STATUS_COLORS = { ordered: "#f59e0b", production: "#2563eb", ready: "#10b981", delivered: "#6366f1" };
-const INSOLE_TYPES = ["Повседневная", "Спортивная", "Диабетическая", "Детская", "Ортопедическая каркасная", "Напівстелька"];
+const INSOLE_TYPES = ["Повседневная", "Спортивная", "Диабетическая", "Детская", "Ортопедическая каркасная", "Полустелька"];
 const INSOLE_SIZES = Array.from({length:19}, (_,i) => i+30); // 30-48
 const STOCK_OP_TYPES = { in: "Приход", out: "Выдача" };
 
@@ -86,27 +86,27 @@ const SAMPLE_STOCK_LOG = [
 
 // ─── Medications catalog ───
 const MEDICATION_CATEGORIES = {
-  "НПЗП": ["Мелоксикам", "Діклофенак", "Ібупрофен", "Німесулід", "Целекоксиб", "Еторикоксиб", "Кеторолак", "Декскетопрофен"],
-  "Міорелаксанти": ["Тизанідин", "Толперизон", "Баклофен", "Сирдалуд"],
-  "Хондропротектори": ["Хондроїтин сульфат", "Глюкозамін", "Дона", "Артра", "Терафлекс", "Мукосат", "Алфлутоп"],
-  "Гіалуроновая кислота": ["Ostenil", "Ostenil Plus", "Synvisc", "Fermatron", "Curavisc", "Hyalgan", "Sinovial"],
-  "Кортикостероїди": ["Дипроспан", "Дексаметазон", "Кеналог", "Гідрокортизон", "Флостерон"],
-  "PRP / біопрепарати": ["PRP (власна кров)", "SVF", "Ортокін"],
-  "Вітаміни / нейротропи": ["Вітамін B1/B6/B12", "Мільгама", "Нейрорубін", "Нуклео ЦМФ Форте"],
-  "Знеболюючі (для блокад)": ["Лідокаїн", "Бупівакаїн", "Ропівакаїн", "Новокаїн"],
-  "Інше": ["Карбоген (CO₂)", "Озон", "Плазмоліфтинг"],
+  "НПВП": ["Мелоксикам", "Диклофенак", "Ибупрофен", "Нимесулид", "Целекоксиб", "Эторикоксиб", "Кеторолак", "Декскетопрофен"],
+  "Миорелаксанты": ["Тизанидин", "Толперизон", "Баклофен", "Сирдалуд"],
+  "Хондропротекторы": ["Хондроитин сульфат", "Глюкозамин", "Дона", "Артра", "Терафлекс", "Мукосат", "Алфлутоп"],
+  "Гиалуроновая кислота": ["Ostenil", "Ostenil Plus", "Synvisc", "Fermatron", "Curavisc", "Hyalgan", "Sinovial"],
+  "Кортикостероиды": ["Дипроспан", "Дексаметазон", "Кеналог", "Гидрокортизон", "Флостерон"],
+  "PRP / биопрепараты": ["PRP (собственная кровь)", "SVF", "Ортокин"],
+  "Витамины / нейротропы": ["Витамин B1/B6/B12", "Мильгамма", "Нейрорубин", "Нуклео ЦМФ Форте"],
+  "Обезболивающие (для блокад)": ["Лидокаин", "Бупивакаин", "Ропивакаин", "Новокаин"],
+  "Другое": ["Карбоген (CO₂)", "Озон", "Плазмолифтинг"],
 };
 const ALL_MEDICATIONS = Object.values(MEDICATION_CATEGORIES).flat();
 
 const SAMPLE_PATIENTS = [
-  { id:1, lastName:"Ахметова", firstName:"Айгерим", patronymic:"Болатовна", dob:"1985-03-12", phone:"+77011234567", diagnosis:"Остеохондроз поперекового відділу", doctor:"Андрухів Макар Романович", status:"active", lastVisit:"2026-02-20", notes:"", nextVisitDate:"2026-03-15", nextVisitNote:"Контроль, TEKAR №6" },
-  { id:2, lastName:"Нурланов", firstName:"Бауыржан", patronymic:"Сейткалиевич", dob:"1970-07-25", phone:"+77052345678", diagnosis:"Гонартроз (колінний суглоб)", doctor:"Тлеубергенов Даулет Талгатович", status:"active", lastVisit:"2026-03-01", notes:"", nextVisitDate:"2026-03-10", nextVisitNote:"Инъекция №2" },
-  { id:3, lastName:"Жумабекова", firstName:"Дина", patronymic:"Маратовна", dob:"1992-11-08", phone:"+77713456789", diagnosis:"Плантарний фасціїт", doctor:"Андрухів Макар Романович", status:"discharged", lastVisit:"2026-01-15", notes:"Подиатрична корекція", nextVisitDate:"", nextVisitNote:"" },
-  { id:4, lastName:"Ковальчук", firstName:"Олена", patronymic:"Петрівна", dob:"1988-06-22", phone:"+77019876543", diagnosis:"Міжхребцева грижа (L5-S1)", doctor:"Андрухів Макар Романович", status:"active", lastVisit:"2026-03-05", notes:"Комплексне лечения", nextVisitDate:"2026-03-12", nextVisitNote:"УХТ №3, витягування" },
+  { id:1, lastName:"Ахметова", firstName:"Айгерим", patronymic:"Болатовна", dob:"1985-03-12", phone:"+77011234567", diagnosis:"Остеохондроз поясничного отдела", doctor:"Андрухів Макар Романович", status:"active", lastVisit:"2026-02-20", notes:"", nextVisitDate:"2026-03-15", nextVisitNote:"Контроль, TEKAR №6" },
+  { id:2, lastName:"Нурланов", firstName:"Бауыржан", patronymic:"Сейткалиевич", dob:"1970-07-25", phone:"+77052345678", diagnosis:"Гонартроз (коленный сустав)", doctor:"Тлеубергенов Даулет Талгатович", status:"active", lastVisit:"2026-03-01", notes:"", nextVisitDate:"2026-03-10", nextVisitNote:"Инъекция №2" },
+  { id:3, lastName:"Жумабекова", firstName:"Дина", patronymic:"Маратовна", dob:"1992-11-08", phone:"+77713456789", diagnosis:"Плантарный фасциит", doctor:"Андрухів Макар Романович", status:"discharged", lastVisit:"2026-01-15", notes:"Подиатрична корекція", nextVisitDate:"", nextVisitNote:"" },
+  { id:4, lastName:"Ковальчук", firstName:"Елена", patronymic:"Петровна", dob:"1988-06-22", phone:"+77019876543", diagnosis:"Межпозвоночная грыжа (L5-S1)", doctor:"Андрухів Макар Романович", status:"active", lastVisit:"2026-03-05", notes:"Комплексное лечение", nextVisitDate:"2026-03-12", nextVisitNote:"УХТ №3, витягування" },
 ];
 const SAMPLE_APPTS = [
   { id:101, patientId:1, doctor:"Андрухів Макар Романович", date:"2026-03-15", time:"10:00", type:"Процедура", status:"scheduled", notes:"TEKAR-терапія №6" },
-  { id:102, patientId:2, doctor:"Тлеубергенов Даулет Талгатович", date:"2026-03-10", time:"09:30", type:"Процедура", status:"scheduled", notes:"Инъекция гіалуронової кислоти" },
+  { id:102, patientId:2, doctor:"Тлеубергенов Даулет Талгатович", date:"2026-03-10", time:"09:30", type:"Процедура", status:"scheduled", notes:"Инъекция гиалуроновой кислоты" },
   { id:103, patientId:4, doctor:"Андрухів Макар Романович", date:"2026-03-12", time:"11:00", type:"Процедура", status:"scheduled", notes:"УХТ №3" },
   { id:104, patientId:1, doctor:"Андрухів Макар Романович", date:"2026-03-08", time:"10:00", type:"Процедура", status:"done", notes:"TEKAR-терапія №5" },
   { id:105, patientId:4, doctor:"Андрухів Макар Романович", date:"2026-03-05", time:"11:00", type:"Процедура", status:"done", notes:"УХТ №2" },
@@ -118,27 +118,27 @@ const SAMPLE_APPTS = [
 ];
 
 const SAMPLE_PROTOCOLS = [
-  { id:201, patientId:1, name:"Курс TEKAR-терапія", procedures:[
-    { procedureName:"TEKAR-терапія", totalSessions:10, completedSessions:5, notes:"Поперековий відділ", medications:[] }
-  ], startDate:"2026-02-20", status:"active", doctor:"Андрухів Макар Романович", diagnosis:"Остеохондроз поперекового відділу" },
-  { id:202, patientId:2, name:"Курс инъекцій гіалуронової кислоти", procedures:[
-    { procedureName:"Внутрішньосуглобова инъекція (УЗД)", totalSessions:3, completedSessions:1, notes:"Колінний суглоб", medications:["Ostenil Plus"] }
-  ], startDate:"2026-03-01", status:"active", doctor:"Тлеубергенов Даулет Талгатович", diagnosis:"Гонартроз (колінний суглоб)" },
-  { id:203, patientId:4, name:"Комплексне лечения грижі L5-S1", procedures:[
-    { procedureName:"УХТ (ударно-хвильова)", totalSessions:5, completedSessions:2, notes:"Поперековий відділ", medications:[] },
+  { id:201, patientId:1, name:"Курс TEKAR-терапии", procedures:[
+    { procedureName:"TEKAR-терапия", totalSessions:10, completedSessions:5, notes:"Поясничный отдел", medications:[] }
+  ], startDate:"2026-02-20", status:"active", doctor:"Андрухів Макар Романович", diagnosis:"Остеохондроз поясничного отдела" },
+  { id:202, patientId:2, name:"Курс инъекций гиалуроновой кислоты", procedures:[
+    { procedureName:"Внутрисуставная инъекция (УЗИ)", totalSessions:3, completedSessions:1, notes:"Коленный сустав", medications:["Ostenil Plus"] }
+  ], startDate:"2026-03-01", status:"active", doctor:"Тлеубергенов Даулет Талгатович", diagnosis:"Гонартроз (коленный сустав)" },
+  { id:203, patientId:4, name:"Комплексное лечение грыжи L5-S1", procedures:[
+    { procedureName:"УВТ (ударно-волновая)", totalSessions:5, completedSessions:2, notes:"Поясничный отдел", medications:[] },
     { procedureName:"Комп. вытяжение позвоночника", totalSessions:10, completedSessions:3, notes:"", medications:[] },
     { procedureName:"Мануальнаяя терапия", totalSessions:8, completedSessions:2, notes:"", medications:[] },
-    { procedureName:"Фармакотерапія", totalSessions:1, completedSessions:1, notes:"", medications:["Мелоксикам","Тизанідин","Мільгама"] },
-  ], startDate:"2026-02-28", status:"active", doctor:"Андрухів Макар Романович", diagnosis:"Міжхребцева грижа (L5-S1)" },
-  { id:204, patientId:3, name:"Лечение плантарного фасціїту", procedures:[
-    { procedureName:"УХТ (ударно-хвильова)", totalSessions:5, completedSessions:5, notes:"П'яткова шпора", medications:[] },
-    { procedureName:"Карбокситерапія", totalSessions:4, completedSessions:4, notes:"", medications:[] },
-  ], startDate:"2025-11-01", status:"completed", doctor:"Андрухів Макар Романович", diagnosis:"Плантарний фасціїт" },
+    { procedureName:"Фармакотерапия", totalSessions:1, completedSessions:1, notes:"", medications:["Мелоксикам","Тизанидин","Мильгамма"] },
+  ], startDate:"2026-02-28", status:"active", doctor:"Андрухів Макар Романович", diagnosis:"Межпозвоночная грыжа (L5-S1)" },
+  { id:204, patientId:3, name:"Лечение плантарного фасциита", procedures:[
+    { procedureName:"УВТ (ударно-волновая)", totalSessions:5, completedSessions:5, notes:"Пяточная шпора", medications:[] },
+    { procedureName:"Карбокситерапия", totalSessions:4, completedSessions:4, notes:"", medications:[] },
+  ], startDate:"2025-11-01", status:"completed", doctor:"Андрухів Макар Романович", diagnosis:"Плантарный фасциит" },
 ];
 
 const SAMPLE_PODIATECH = [
-  { id:301, patientId:3, date:"2025-12-10", footType:"Плоскостопие (II ст.)", halluxValgus:true, archIndex:"0.31", pressureNotes:"Перевантаження медіального склепіння, зміщення центру тиску латерально", insoleStatus:"delivered", insoleDeliveryDate:"2026-01-10", notes:"Корекція повздовжнього склепіння + розвантаження I плюсно-фалангового суглоба" },
-  { id:302, patientId:4, date:"2026-03-01", footType:"Плоскостопие (I ст.)", halluxValgus:false, archIndex:"0.38", pressureNotes:"Незначне зниження повздовжнього склепіння, рівномірний розподіл тиску", insoleStatus:"production", insoleDeliveryDate:"", notes:"Профілактичні стельки для корекції біомеханіки ходьби" },
+  { id:301, patientId:3, date:"2025-12-10", footType:"Плоскостопие (II ст.)", halluxValgus:true, archIndex:"0.31", pressureNotes:"Перегрузка медиального склепіння, смещение центра давления латерально", insoleStatus:"delivered", insoleDeliveryDate:"2026-01-10", notes:"Корекція повздовжнього склепіння + розвантаження I плюсно-фалангового суглоба" },
+  { id:302, patientId:4, date:"2026-03-01", footType:"Плоскостопие (I ст.)", halluxValgus:false, archIndex:"0.38", pressureNotes:"Незначительное снижение повздовжнього склепіння, равномерное распределение давления", insoleStatus:"production", insoleDeliveryDate:"", notes:"Профилактические стельки для коррекции биомеханики ходьбы" },
 ];
 
 const uid = () => Date.now() + Math.random();
@@ -201,7 +201,15 @@ const CSS = `
   .fade-item{animation:fadeSlide .3s ease forwards;opacity:0}
   td:hover .slot-plus{opacity:.35!important}
   td:hover{background:#f0fdf433}
-`;
+  @media print {
+    .no-print { display: none !important; }
+    body { background: white !important; }
+    .discharge-print-wrapper { display: block; }
+    .modal-bg { position: static !important; backdrop-filter: none !important; background: white !important; }
+    .modal { box-shadow: none !important; border-radius: 0 !important; max-height: none !important; overflow: visible !important; }
+  }
+  .discharge-print-wrapper {}
+` ;
 
 const WA_SVG = <svg width="15" height="15" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#fff" fillOpacity=".2"/><path d="M23.5 8.5A10.4 10.4 0 0 0 16 5.5C10.2 5.5 5.5 10.2 5.5 16c0 1.8.5 3.6 1.4 5.1L5.5 26.5l5.6-1.5A10.4 10.4 0 0 0 16 26.5c5.8 0 10.5-4.7 10.5-10.5 0-2.8-1.1-5.4-3-7.5z" fill="#fff"/></svg>;
 const TG_SVG = <svg width="15" height="15" viewBox="0 0 32 32" fill="none"><path d="M23.5 9L6 15.8c-1.2.5-1.2 1.1-.2 1.4l4.3 1.3 10-6.3c.5-.3.9-.1.6.2l-8 7.2v2.8l2.1-2a85 85 0 0 0 5.8 4.3c.7.4 1.2.2 1.4-.6l2.5-12.2c.3-1.2-.5-1.7-2-1z" fill="#fff"/></svg>;
@@ -337,10 +345,22 @@ function PatientForm({form,setForm,isAdd,onSave,onClose,doctorNames}) {
               <label>Телефон (WA / TG)</label>
               <input value={form.phone||""} onChange={e=>s("phone",e.target.value)} placeholder="+77011234567"/>
             </div>
+            <div className="field"><label>ИИН</label><input value={form.iin||""} onChange={e=>s("iin",e.target.value)} placeholder="000000000000" maxLength={12}/></div>
+          </div>
+          <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,padding:"12px 14px"}}>
+            <div style={{fontSize:11,fontWeight:700,color:"#64748b",marginBottom:8,textTransform:"uppercase",letterSpacing:".06em"}}>📄 Паспортные данные</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+              <div className="field"><label>Серия</label><input value={form.passportSeries||""} onChange={e=>s("passportSeries",e.target.value)} placeholder="AB"/></div>
+              <div className="field"><label>Номер</label><input value={form.passportNumber||""} onChange={e=>s("passportNumber",e.target.value)} placeholder="1234567"/></div>
+              <div className="field"><label>Кем выдан</label><input value={form.passportIssued||""} onChange={e=>s("passportIssued",e.target.value)} placeholder="МВД РК"/></div>
+            </div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <div className="field"><label>Дата поступления</label><input type="date" value={form.admissionDate||""} onChange={e=>s("admissionDate",e.target.value)}/></div>
             <div className="field"><label>Последний визит</label><input type="date" value={form.lastVisit||""} onChange={e=>s("lastVisit",e.target.value)}/></div>
           </div>
           <div className="field"><label>Диагноз</label>
-            <input list="diag-list" value={form.diagnosis||""} onChange={e=>s("diagnosis",e.target.value)} placeholder="Выберите або введіть диагноз"/>
+            <input list="diag-list" value={form.diagnosis||""} onChange={e=>s("diagnosis",e.target.value)} placeholder="Выберите или введите диагноз"/>
             <datalist id="diag-list">{DIAGNOSES_CATALOG.map(d=><option key={d} value={d}/>)}</datalist>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
@@ -432,14 +452,14 @@ function ApptForm({form,setForm,isAdd,patients,onSave,onClose,doctorNames,onCrea
               <div className="field"><label>Телефон</label><input value={np.phone} onChange={e=>npSet("phone",e.target.value)} placeholder="+77011234567"/></div>
             </div>
             <div className="field"><label>Диагноз</label>
-              <input list="diag-list-appt" value={np.diagnosis} onChange={e=>npSet("diagnosis",e.target.value)} placeholder="Выберите або введіть диагноз"/>
+              <input list="diag-list-appt" value={np.diagnosis} onChange={e=>npSet("diagnosis",e.target.value)} placeholder="Выберите или введите диагноз"/>
               <datalist id="diag-list-appt">{DIAGNOSES_CATALOG.map(d=><option key={d} value={d}/>)}</datalist>
             </div>
           </div>}
 
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
             <div className="field"><label>Дата *</label><input type="date" value={form.date||""} onChange={e=>s("date",e.target.value)}/></div>
-            <div className="field"><label>Час</label><input type="time" value={form.time||""} onChange={e=>s("time",e.target.value)}/></div>
+            <div className="field"><label>Время</label><input type="time" value={form.time||""} onChange={e=>s("time",e.target.value)}/></div>
           </div>
           <div className="field"><label>Врач *</label>
             <select value={form.doctor||""} onChange={e=>s("doctor",e.target.value)}>
@@ -457,7 +477,7 @@ function ApptForm({form,setForm,isAdd,patients,onSave,onClose,doctorNames,onCrea
               {Object.entries(APPT_STATUSES).map(([k,v])=><option key={k} value={k}>{v}</option>)}
             </select>
           </div>}
-          <div className="field"><label>Примечания</label><textarea rows={2} value={form.notes||""} onChange={e=>s("notes",e.target.value)} placeholder="Мета визиту, підготовка…" style={{resize:"vertical"}}/></div>
+          <div className="field"><label>Примечания</label><textarea rows={2} value={form.notes||""} onChange={e=>s("notes",e.target.value)} placeholder="Мета визиту, подготовка…" style={{resize:"vertical"}}/></div>
           <div style={{display:"flex",gap:10,marginTop:4}}>
             <button className="btn" onClick={handleSave} disabled={!valid} style={{flex:1,background:valid?"#0e7c6b":"#e2e8f0",color:valid?"#fff":"#94a3b8",padding:"12px",fontSize:15}}>{isAdd?(newPat?"👤📅 Создать пациента і запись":"📅 Создать запись"):"💾 Сохранить"}</button>
             <button className="btn" onClick={onClose} style={{background:"#f1f5f9",color:"#475569",padding:"12px 20px"}}>Отменить</button>
@@ -522,7 +542,7 @@ function ProtocolForm({form,setForm,isAdd,patients,onSave,onClose,doctorNames,pr
 
           <div style={{background:"#f8fafc",borderRadius:12,padding:"14px 16px",border:"1px solid #e2e8f0"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-              <div style={{fontSize:12,fontWeight:700,color:"#0e7c6b",textTransform:"uppercase",letterSpacing:".06em"}}>Процедури ({form.procedures.length})</div>
+              <div style={{fontSize:12,fontWeight:700,color:"#0e7c6b",textTransform:"uppercase",letterSpacing:".06em"}}>Процедуры ({form.procedures.length})</div>
               <button className="btn" onClick={addProc} style={{background:"#0e7c6b",color:"#fff",padding:"5px 14px",fontSize:12}}>＋ Добавить процедуру</button>
             </div>
             {form.procedures.map((proc,i) => {
@@ -571,10 +591,10 @@ function ProtocolForm({form,setForm,isAdd,patients,onSave,onClose,doctorNames,pr
             {form.procedures.length===0&&<div style={{textAlign:"center",color:"#94a3b8",padding:"16px",fontSize:13}}>Добавьте хотя бы одну процедуру</div>}
           </div>
 
-          {!isAdd&&<div className="field"><label>Статус протоколу</label>
+          {!isAdd&&<div className="field"><label>Статус протокола</label>
             <select value={form.status||"active"} onChange={e=>s("status",e.target.value)}>
               <option value="active">Активный</option>
-              <option value="completed">Завершено</option>
+              <option value="completed">Завершён</option>
               <option value="paused">Приостановлено</option>
             </select>
           </div>}
@@ -626,7 +646,7 @@ function PodiatechForm({form,setForm,isAdd,patients,onSave,onClose}) {
               Hallux Valgus
             </label>
           </div>
-          <div className="field"><label>Результати барографії / подоскопии</label><textarea rows={3} value={form.pressureNotes||""} onChange={e=>s("pressureNotes",e.target.value)} placeholder="Распределение давления, зоны перегрузки…" style={{resize:"vertical"}}/></div>
+          <div className="field"><label>Результаты барографии / подоскопии</label><textarea rows={3} value={form.pressureNotes||""} onChange={e=>s("pressureNotes",e.target.value)} placeholder="Распределение давления, зоны перегрузки…" style={{resize:"vertical"}}/></div>
           <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"12px 14px"}}>
             <div style={{fontSize:11,fontWeight:700,color:"#1e40af",marginBottom:8,textTransform:"uppercase",letterSpacing:".06em"}}>🥿 Ортопедичні стельки</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
@@ -635,7 +655,7 @@ function PodiatechForm({form,setForm,isAdd,patients,onSave,onClose}) {
                   {Object.entries(INSOLE_STATUSES).map(([k,v])=><option key={k} value={k}>{v}</option>)}
                 </select>
               </div>
-              <div className="field"><label>Дата готовності / видачі</label><input type="date" value={form.insoleDeliveryDate||""} onChange={e=>s("insoleDeliveryDate",e.target.value)}/></div>
+              <div className="field"><label>Дата готовности / видачі</label><input type="date" value={form.insoleDeliveryDate||""} onChange={e=>s("insoleDeliveryDate",e.target.value)}/></div>
             </div>
           </div>
           <div className="field"><label>Рекомендации / примечания</label><textarea rows={2} value={form.notes||""} onChange={e=>s("notes",e.target.value)} placeholder="Тип коррекции, особенности…" style={{resize:"vertical"}}/></div>
@@ -665,7 +685,7 @@ function DoctorForm({form,setForm,isAdd,onSave,onClose}) {
           <button className="btn" onClick={onClose} style={{background:"rgba(255,255,255,.15)",color:"#fff",padding:"5px 11px"}}>✕</button>
         </div>
         <div style={{padding:"20px 24px",display:"flex",flexDirection:"column",gap:12}}>
-          <div className="field"><label>ПІБ *</label><input value={form.name||""} onChange={e=>s("name",e.target.value)} placeholder="Фамилия Имя Отчество"/></div>
+          <div className="field"><label>ФИО *</label><input value={form.name||""} onChange={e=>s("name",e.target.value)} placeholder="Фамилия Имя Отчество"/></div>
           <div className="field"><label>Специализация</label>
             <select value={form.specialization||""} onChange={e=>s("specialization",e.target.value)}>
               <option value="">— выбрать —</option>
@@ -770,6 +790,224 @@ function StockOpForm({form,setForm,patients,stock,onSave,onClose}) {
 // ═══════════════════════════════════════════
 // MAIN APP
 // ═══════════════════════════════════════════
+
+// ═══════════════════════════════════════════
+// DISCHARGE SUMMARY MODAL (Выписной эпикриз)
+// ═══════════════════════════════════════════
+function DischargeSummaryModal({ patient, protocols, appointments, procCatalog, onClose }) {
+  const [recommendations, setRecommendations] = useState(patient.notes || "");
+  const [improvement, setImprovement] = useState(5);
+  const [nextVisitDate, setNextVisitDate] = useState(patient.nextVisitDate || "");
+  const [nextVisitNote, setNextVisitNote] = useState(patient.nextVisitNote || "");
+
+  const patProtocols = protocols.filter(pr => pr.patientId === patient.id || pr.patientId === String(patient.id));
+  const patAppts = appointments.filter(a => (a.patientId === patient.id || a.patientId === String(patient.id)) && a.status === "done").sort((a,b)=>a.date.localeCompare(b.date));
+
+  const completedProcedures = [];
+  patProtocols.forEach(pr => {
+    pr.procedures.forEach(proc => {
+      if (proc.completedSessions > 0) {
+        const cat = procCatalog.find(c=>c.name===proc.procedureName);
+        completedProcedures.push({ name:proc.procedureName, sessions:proc.completedSessions, total:proc.totalSessions, notes:proc.notes, medications:proc.medications||[], icon:cat?.icon||"📋", color:cat?.color||"#64748b", price:cat?.price||0 });
+      }
+    });
+  });
+
+  const improvLabels = ["","Без изменений","Незначительное улучшение","Небольшое улучшение","Умеренное улучшение","Заметное улучшение","Хорошее улучшение","Значительное улучшение","Существенное улучшение","Выраженное улучшение","Полное восстановление"];
+  const improvColors = ["","#dc2626","#f97316","#f59e0b","#eab308","#84cc16","#22c55e","#16a34a","#15803d","#166534","#0e7c6b"];
+
+  const handlePrint = () => window.print();
+
+  const handlePDF = () => {
+    const printCSS = `
+      @media print {
+        body > *:not(.discharge-print-wrapper) { display: none !important; }
+        .discharge-print-wrapper { display: block !important; position: fixed; inset: 0; background: white; z-index: 9999; overflow: auto; padding: 20px; }
+        .no-print { display: none !important; }
+        @page { margin: 15mm; }
+      }
+    `;
+    const style = document.createElement('style');
+    style.textContent = printCSS;
+    document.head.appendChild(style);
+    window.print();
+    setTimeout(() => document.head.removeChild(style), 1000);
+  };
+
+  return (
+    <div className="modal-bg no-print" onClick={onClose}>
+      <div className="modal" style={{width:760,maxHeight:"95vh",overflow:"auto"}} onClick={e=>e.stopPropagation()}>
+        <div style={{background:"linear-gradient(135deg,#042f2e,#064e3b,#0e7c6b)",padding:"18px 24px",borderRadius:"18px 18px 0 0",display:"flex",justifyContent:"space-between",alignItems:"center"}} className="no-print">
+          <div>
+            <div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:"#fff"}}>📄 Выписной эпикриз</div>
+            <div style={{color:"rgba(255,255,255,.65)",fontSize:13,marginTop:2}}>{fullName(patient)}</div>
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <button className="btn" onClick={handlePrint} style={{background:"#fff",color:"#064e3b",padding:"8px 16px",fontWeight:700}}>🖨️ Печать</button>
+            <button className="btn" onClick={handlePDF} style={{background:"rgba(255,255,255,.2)",color:"#fff",padding:"8px 16px",fontWeight:700}}>📥 PDF</button>
+            <button className="btn" onClick={onClose} style={{background:"rgba(255,255,255,.15)",color:"#fff",padding:"5px 11px"}}>✕</button>
+          </div>
+        </div>
+
+        {/* Settings panel */}
+        <div style={{padding:"16px 24px",background:"#f8fafc",borderBottom:"1px solid #e2e8f0"}} className="no-print">
+          <div style={{fontSize:11,fontWeight:700,color:"#64748b",marginBottom:10,textTransform:"uppercase",letterSpacing:".06em"}}>⚙️ Параметры выписки</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
+            <div className="field"><label>Дата повторной консультации</label><input type="date" value={nextVisitDate} onChange={e=>setNextVisitDate(e.target.value)} style={{width:"100%",padding:"8px 10px",border:"1.5px solid #dde4ef",borderRadius:8,fontSize:13,outline:"none"}}/></div>
+            <div className="field"><label>Цель консультации</label><input value={nextVisitNote} onChange={e=>setNextVisitNote(e.target.value)} placeholder="Контроль, продолжение..." style={{width:"100%",padding:"8px 10px",border:"1.5px solid #dde4ef",borderRadius:8,fontSize:13,outline:"none"}}/></div>
+            <div>
+              <label style={{display:"block",fontSize:11,fontWeight:700,color:"#64748b",marginBottom:4,textTransform:"uppercase"}}>Шкала улучшения (1–10)</label>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <input type="range" min={1} max={10} value={improvement} onChange={e=>setImprovement(+e.target.value)} style={{flex:1,accentColor:improvColors[improvement]}}/>
+                <span style={{fontWeight:800,color:improvColors[improvement],fontSize:18,minWidth:22}}>{improvement}</span>
+              </div>
+              <div style={{fontSize:11,color:improvColors[improvement],fontWeight:600}}>{improvLabels[improvement]}</div>
+            </div>
+          </div>
+          <div style={{marginTop:12}}>
+            <label style={{display:"block",fontSize:11,fontWeight:700,color:"#64748b",marginBottom:4,textTransform:"uppercase"}}>Рекомендации врача</label>
+            <textarea rows={3} value={recommendations} onChange={e=>setRecommendations(e.target.value)} placeholder="Рекомендации по лечению, образу жизни, повторной консультации..." style={{width:"100%",padding:"8px 10px",border:"1.5px solid #dde4ef",borderRadius:8,fontSize:13,outline:"none",resize:"vertical"}}/>
+          </div>
+        </div>
+
+        {/* PRINTABLE DISCHARGE DOCUMENT */}
+        <div className="discharge-print-wrapper" style={{padding:"28px 32px"}}>
+          {/* Header */}
+          <div style={{textAlign:"center",marginBottom:24,borderBottom:"2px solid #0e7c6b",paddingBottom:16}}>
+            <div style={{fontFamily:"'DM Serif Display',serif",fontSize:26,color:"#042f2e"}}>🏥 Atlant Clinic</div>
+            <div style={{fontSize:14,color:"#64748b",marginTop:4,fontWeight:600}}>ВЫПИСНОЙ ЭПИКРИЗ</div>
+            <div style={{fontSize:12,color:"#94a3b8",marginTop:2}}>Дата выдачи: {fmt(today())}</div>
+          </div>
+
+          {/* Patient */}
+          <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:12,padding:"16px 20px",marginBottom:20}}>
+            <div style={{fontSize:11,fontWeight:700,color:"#166534",marginBottom:12,textTransform:"uppercase",letterSpacing:".06em"}}>👤 Данные пациента</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+              {[
+                ["ФИО", fullName(patient)],
+                ["Дата рождения", fmt(patient.dob) + (patient.dob ? ` (${calcAge(patient.dob)})` : "")],
+                ["Телефон", patient.phone || "—"],
+                ["ИИН", patient.iin || "—"],
+                ...(patient.passportNumber ? [["Паспорт", `${patient.passportSeries||""} ${patient.passportNumber}`.trim()]] : []),
+                ["Лечащий врач", patient.doctor || "—"],
+                ["Дата поступления", fmt(patient.admissionDate || patient.lastVisit)],
+                ["Последний визит", fmt(patient.lastVisit)],
+                ["Статус", {active:"Наблюдается",discharged:"Выписан",referred:"Направлен"}[patient.status] || patient.status],
+              ].map(([label, value]) => (
+                <div key={label} style={{display:"flex",gap:6,fontSize:13}}>
+                  <span style={{fontWeight:700,color:"#166534",minWidth:140}}>{label}:</span>
+                  <span>{value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Diagnosis */}
+          <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:12,padding:"14px 20px",marginBottom:20}}>
+            <div style={{fontSize:11,fontWeight:700,color:"#1e40af",marginBottom:8,textTransform:"uppercase",letterSpacing:".06em"}}>🩺 Диагноз</div>
+            <div style={{fontSize:17,fontWeight:700,color:"#1e3a5f"}}>{patient.diagnosis || "—"}</div>
+          </div>
+
+          {/* Procedures */}
+          {completedProcedures.length > 0 && (
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:12,fontWeight:700,color:"#0e7c6b",marginBottom:12,textTransform:"uppercase",letterSpacing:".06em"}}>⚕️ Проведённые процедуры</div>
+              <table style={{width:"100%",borderCollapse:"collapse",border:"1px solid #e2e8f0",borderRadius:10,overflow:"hidden"}}>
+                <thead>
+                  <tr style={{background:"#f0fdf4"}}>
+                    {["Процедура","Выполнено","Препараты","Примечания","Стоимость"].map(h=>(
+                      <th key={h} style={{padding:"8px 12px",textAlign:"left",fontSize:11,fontWeight:700,color:"#166534",borderBottom:"1px solid #e2e8f0"}}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {completedProcedures.map((proc,i)=>(
+                    <tr key={i} style={{borderBottom:"1px solid #f0f4f8",background:i%2?"#fff":"#fafffe"}}>
+                      <td style={{padding:"7px 12px",fontSize:13,fontWeight:600}}><span style={{color:proc.color}}>{proc.icon}</span> {proc.name}</td>
+                      <td style={{padding:"7px 12px",fontSize:13}}><b style={{color:"#0e7c6b"}}>{proc.sessions}</b><span style={{color:"#94a3b8"}}>/{proc.total}</span></td>
+                      <td style={{padding:"7px 12px",fontSize:12,color:"#475569"}}>{proc.medications.length>0?proc.medications.join(", "):"—"}</td>
+                      <td style={{padding:"7px 12px",fontSize:12,color:"#64748b"}}>{proc.notes||"—"}</td>
+                      <td style={{padding:"7px 12px",fontSize:12,color:"#0e7c6b",fontWeight:600}}>{proc.price?`${(proc.price*proc.sessions).toLocaleString()} ₸`:"—"}</td>
+                    </tr>
+                  ))}
+                  {completedProcedures.some(p=>p.price>0)&&(
+                    <tr style={{background:"#f0fdf4",borderTop:"2px solid #bbf7d0"}}>
+                      <td colSpan={4} style={{padding:"8px 12px",fontWeight:700,fontSize:13,textAlign:"right"}}>Итого:</td>
+                      <td style={{padding:"8px 12px",fontWeight:800,fontSize:14,color:"#0e7c6b"}}>{completedProcedures.reduce((s,p)=>s+(p.price*p.sessions),0).toLocaleString()} ₸</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Visit history */}
+          {patAppts.length > 0 && (
+            <div style={{marginBottom:20}}>
+              <div style={{fontSize:12,fontWeight:700,color:"#2563eb",marginBottom:10,textTransform:"uppercase",letterSpacing:".06em"}}>📅 История посещений</div>
+              <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                {patAppts.map(a=>(
+                  <div key={a.id} style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:8,padding:"5px 12px",fontSize:12}}>
+                    <b style={{color:"#1e40af"}}>{fmt(a.date)}</b>{a.time?` ${a.time}`:""} — {a.type}{a.notes?` · ${a.notes}`:""}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Improvement scale */}
+          <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:12,padding:"14px 20px",marginBottom:20}}>
+            <div style={{fontSize:11,fontWeight:700,color:"#166534",marginBottom:10,textTransform:"uppercase",letterSpacing:".06em"}}>📊 Шкала улучшения состояния</div>
+            <div style={{display:"flex",alignItems:"center",gap:16}}>
+              <div style={{flex:1}}>
+                <div style={{height:14,borderRadius:7,background:"#e2e8f0",overflow:"hidden"}}>
+                  <div style={{height:"100%",width:`${improvement*10}%`,background:`linear-gradient(90deg,#ef4444,${improvColors[improvement]})`,borderRadius:7}}/>
+                </div>
+                <div style={{display:"flex",justifyContent:"space-between",marginTop:4,fontSize:10,color:"#94a3b8"}}><span>1 — Без изменений</span><span>10 — Полное восстановление</span></div>
+              </div>
+              <div style={{textAlign:"center",minWidth:56}}>
+                <div style={{fontSize:36,fontWeight:800,color:improvColors[improvement]}}>{improvement}</div>
+                <div style={{fontSize:11,color:"#94a3b8",fontWeight:600}}>/10</div>
+              </div>
+            </div>
+            <div style={{marginTop:8,fontSize:15,fontWeight:700,color:improvColors[improvement]}}>{improvLabels[improvement]}</div>
+          </div>
+
+          {/* Recommendations */}
+          {recommendations && (
+            <div style={{background:"#fefce8",border:"1px solid #fde68a",borderRadius:12,padding:"14px 20px",marginBottom:20}}>
+              <div style={{fontSize:11,fontWeight:700,color:"#92400e",marginBottom:8,textTransform:"uppercase",letterSpacing:".06em"}}>📋 Рекомендации врача</div>
+              <div style={{fontSize:14,lineHeight:1.8,color:"#1a2332",whiteSpace:"pre-wrap"}}>{recommendations}</div>
+            </div>
+          )}
+
+          {/* Next visit */}
+          {nextVisitDate && (
+            <div style={{background:"#eff6ff",border:"2px solid #3b82f6",borderRadius:12,padding:"14px 20px",marginBottom:20}}>
+              <div style={{fontSize:11,fontWeight:700,color:"#1e40af",marginBottom:8,textTransform:"uppercase",letterSpacing:".06em"}}>🗓 Повторная консультация</div>
+              <div style={{fontSize:20,fontWeight:700,color:"#1e3a5f"}}>{fmt(nextVisitDate)}</div>
+              {nextVisitNote && <div style={{fontSize:14,color:"#475569",marginTop:4}}>{nextVisitNote}</div>}
+            </div>
+          )}
+
+          {/* Signature */}
+          <div style={{borderTop:"1px solid #e2e8f0",paddingTop:16,display:"flex",justifyContent:"space-between",alignItems:"flex-end"}}>
+            <div style={{fontSize:12,color:"#64748b"}}>
+              <div>Врач: <b>{patient.doctor||"—"}</b></div>
+              <div style={{marginTop:4}}>Дата: {fmt(today())}</div>
+            </div>
+            <div style={{textAlign:"right"}}>
+              <div style={{fontSize:11,color:"#94a3b8",marginBottom:24}}>Подпись врача:</div>
+              <div style={{borderBottom:"1px solid #475569",width:200,marginBottom:4}}/>
+              <div style={{fontSize:11,color:"#94a3b8"}}>М.П. / Печать</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function MedKarta({ supabase, session, profile }) {
   const [patients, setPatients] = useState([]);
   const [appointments, setAppointments] = useState([]);
@@ -804,50 +1042,112 @@ export default function MedKarta({ supabase, session, profile }) {
 
   const doctorNames = useMemo(() => doctors.map(d => d.name), [doctors]);
 
-  // ─── Storage: localStorage for now, Supabase for full version ───
-  const loadData = (key, fallback) => {
+  // ─── Storage: Supabase (primary) with localStorage fallback ───
+  const [usingSupabase, setUsingSupabase] = useState(false);
+
+  const loadLocal = (key, fallback) => {
     try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; }
   };
-  const saveData = (key, data) => {
+  const saveLocal = (key, data) => {
     try { localStorage.setItem(key, JSON.stringify(data)); } catch(e) { console.error(e); }
   };
 
+  // Map Supabase row → local state
+  const mapPat = (r) => ({ id:r.id, lastName:r.last_name, firstName:r.first_name, patronymic:r.patronymic||"", dob:r.dob||"", phone:r.phone||"", diagnosis:r.diagnosis||"", doctor:r.doctor||"", status:r.status||"active", lastVisit:r.last_visit||"", notes:r.notes||"", nextVisitDate:r.next_visit_date||"", nextVisitNote:r.next_visit_note||"", admissionDate:r.admission_date||"", passportSeries:r.passport_series||"", passportNumber:r.passport_number||"", passportIssued:r.passport_issued||"", iin:r.iin||"" });
+  const mapAppt = (r) => ({ id:r.id, patientId:r.patient_id, doctor:r.doctor||"", date:r.date||"", time:r.time||"", type:r.type||"Первичный приём", status:r.status||"scheduled", notes:r.notes||"" });
+  const mapProto = (r) => ({ id:r.id, patientId:r.patient_id, name:r.name||"", procedures:r.procedures||[], startDate:r.start_date||"", status:r.status||"active", doctor:r.doctor||"", diagnosis:r.diagnosis||"" });
+  const mapDoc = (r) => ({ id:r.id, name:r.name||"", specialization:r.specialization||"", phone:r.phone||"", email:r.email||"", schedule:r.schedule||[], notes:r.notes||"" });
+  const mapPodio = (r) => ({ id:r.id, patientId:r.patient_id, date:r.date||"", footType:r.foot_type||"", halluxValgus:r.hallux_valgus||false, archIndex:r.arch_index||"", pressureNotes:r.pressure_notes||"", insoleStatus:r.insole_status||"ordered", insoleDeliveryDate:r.insole_delivery_date||"", notes:r.notes||"" });
+  const mapStock_ = (r) => ({ id:r.id, type:r.type||"", size:r.size||0, cost:r.cost||0, price:r.price||0, qty:r.qty||0, notes:r.notes||"" });
+  const mapStockLog_ = (r) => ({ id:r.id, date:r.date||"", opType:r.op_type||"in", insoleType:r.insole_type||"", size:r.size||0, qty:r.qty||0, cost:r.cost||0, price:r.price||0, patientId:r.patient_id||null, notes:r.notes||"" });
+  const mapProc_ = (r) => ({ id:r.id, name:r.name||"", category:r.category||"Другое", icon:r.icon||"📋", color:r.color||"#64748b", defaultSessions:r.default_sessions||5, price:r.price||0 });
+
+  // Load from Supabase, fallback to localStorage
   useEffect(() => {
-    setPatients(loadData("mk2_patients", SAMPLE_PATIENTS));
-    setAppointments(loadData("mk2_appts", SAMPLE_APPTS));
-    setProtocols(loadData("mk2_protocols", SAMPLE_PROTOCOLS));
-    setPodiatech(loadData("mk2_podiatech", SAMPLE_PODIATECH));
-    setDoctors(loadData("mk2_doctors", SAMPLE_DOCTORS));
-    setStock(loadData("mk2_stock", SAMPLE_STOCK));
-    setStockLog(loadData("mk2_stocklog", SAMPLE_STOCK_LOG));
-    setProcCatalog(loadData("mk2_proccatalog", SAMPLE_PROCEDURES));
-    setLoaded(true);
+    const loadFromSupabase = async () => {
+      if (!supabase) return false;
+      try {
+        const [pR,aR,prR,dR,poR,stR,slR,pcR] = await Promise.all([
+          supabase.from("patients").select("*").order("last_name"),
+          supabase.from("appointments").select("*").order("date",{ascending:false}),
+          supabase.from("protocols").select("*").order("created_at",{ascending:false}),
+          supabase.from("doctors").select("*").order("name"),
+          supabase.from("podiatech").select("*").order("date",{ascending:false}),
+          supabase.from("insole_stock").select("*"),
+          supabase.from("insole_stock_log").select("*").order("date",{ascending:false}),
+          supabase.from("procedure_catalog").select("*").order("name"),
+        ]);
+        if (pR.error) return false;
+        setPatients((pR.data||[]).map(mapPat));
+        setAppointments((aR.data||[]).map(mapAppt));
+        setProtocols((prR.data||[]).map(mapProto));
+        setDoctors((dR.data||[]).map(mapDoc));
+        setPodiatech((poR.data||[]).map(mapPodio));
+        setStock((stR.data||[]).map(mapStock_));
+        setStockLog((slR.data||[]).map(mapStockLog_));
+        setProcCatalog((pcR.data||[]).length>0?(pcR.data||[]).map(mapProc_):SAMPLE_PROCEDURES);
+        return true;
+      } catch(e) { console.error("Supabase load error:", e); return false; }
+    };
+    loadFromSupabase().then(ok => {
+      if (ok) {
+        setUsingSupabase(true);
+      } else {
+        setPatients(loadLocal("mk2_patients", SAMPLE_PATIENTS));
+        setAppointments(loadLocal("mk2_appts", SAMPLE_APPTS));
+        setProtocols(loadLocal("mk2_protocols", SAMPLE_PROTOCOLS));
+        setPodiatech(loadLocal("mk2_podiatech", SAMPLE_PODIATECH));
+        setDoctors(loadLocal("mk2_doctors", SAMPLE_DOCTORS));
+        setStock(loadLocal("mk2_stock", SAMPLE_STOCK));
+        setStockLog(loadLocal("mk2_stocklog", SAMPLE_STOCK_LOG));
+        setProcCatalog(loadLocal("mk2_proccatalog", SAMPLE_PROCEDURES));
+      }
+      setLoaded(true);
+    });
   }, []);
 
+  // Real-time subscriptions (Supabase only)
   useEffect(() => {
-    if (!loaded) return;
-    saveData("mk2_patients", patients);
-    saveData("mk2_appts", appointments);
-    saveData("mk2_protocols", protocols);
-    saveData("mk2_podiatech", podiatech);
-    saveData("mk2_doctors", doctors);
-    saveData("mk2_stock", stock);
-    saveData("mk2_stocklog", stockLog);
-    saveData("mk2_proccatalog", procCatalog);
-  }, [patients, appointments, protocols, podiatech, doctors, stock, stockLog, procCatalog, loaded]);
+    if (!usingSupabase || !supabase) return;
+    const chs = [];
+    const sub = (table, cb) => {
+      const ch = supabase.channel(`rt:${table}`).on("postgres_changes",{event:"*",schema:"public",table},cb).subscribe();
+      chs.push(ch);
+    };
+    sub("patients", async () => { const {data}=await supabase.from("patients").select("*").order("last_name"); if(data) setPatients(data.map(mapPat)); });
+    sub("appointments", async () => { const {data}=await supabase.from("appointments").select("*").order("date",{ascending:false}); if(data) setAppointments(data.map(mapAppt)); });
+    sub("protocols", async () => { const {data}=await supabase.from("protocols").select("*").order("created_at",{ascending:false}); if(data) setProtocols(data.map(mapProto)); });
+    sub("doctors", async () => { const {data}=await supabase.from("doctors").select("*").order("name"); if(data) setDoctors(data.map(mapDoc)); });
+    sub("podiatech", async () => { const {data}=await supabase.from("podiatech").select("*").order("date",{ascending:false}); if(data) setPodiatech(data.map(mapPodio)); });
+    sub("insole_stock", async () => { const {data}=await supabase.from("insole_stock").select("*"); if(data) setStock(data.map(mapStock_)); });
+    return () => chs.forEach(ch => supabase.removeChannel(ch));
+  }, [usingSupabase]);
+
+  // Save to localStorage when NOT using Supabase
+  useEffect(() => {
+    if (!loaded || usingSupabase) return;
+    saveLocal("mk2_patients", patients);
+    saveLocal("mk2_appts", appointments);
+    saveLocal("mk2_protocols", protocols);
+    saveLocal("mk2_podiatech", podiatech);
+    saveLocal("mk2_doctors", doctors);
+    saveLocal("mk2_stock", stock);
+    saveLocal("mk2_stocklog", stockLog);
+    saveLocal("mk2_proccatalog", procCatalog);
+  }, [patients, appointments, protocols, podiatech, doctors, stock, stockLog, procCatalog, loaded, usingSupabase]);
 
   // ─── Email notification on appointment creation ───
   const sendApptEmail = async (appt, patient) => {
     const doc = doctors.find(d => d.name === appt.doctor);
     if (!doc?.email) return;
-    const patName = patient ? `${patient.lastName} ${patient.firstName} ${patient.patronymic||""}`.trim() : "Невідомий";
+    const patName = patient ? `${patient.lastName} ${patient.firstName} ${patient.patronymic||""}`.trim() : "Неизвестный";
     try {
       await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           to: doc.email,
-          subject: `📅 Новый запись: ${patName} — ${fmt(appt.date)} ${appt.time||""}`,
+          subject: `📅 Новая запись: ${patName} — ${fmt(appt.date)} ${appt.time||""}`,
           html: `
             <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">
               <div style="background:linear-gradient(135deg,#042f2e,#0e7c6b);padding:20px 24px;color:#fff">
@@ -856,14 +1156,14 @@ export default function MedKarta({ supabase, session, profile }) {
               <div style="padding:20px 24px">
                 <p style="margin:0 0 12px"><strong>Пациент:</strong> ${patName}</p>
                 <p style="margin:0 0 12px"><strong>Дата:</strong> ${fmt(appt.date)}</p>
-                <p style="margin:0 0 12px"><strong>Час:</strong> ${appt.time || "не вказано"}</p>
+                <p style="margin:0 0 12px"><strong>Час:</strong> ${appt.time || "не указано"}</p>
                 <p style="margin:0 0 12px"><strong>Тип:</strong> ${appt.type}</p>
                 ${appt.notes ? `<p style="margin:0 0 12px"><strong>Примечания:</strong> ${appt.notes}</p>` : ""}
                 ${patient?.phone ? `<p style="margin:0 0 12px"><strong>Телефон:</strong> ${formatPhone(patient.phone)}</p>` : ""}
                 ${patient?.diagnosis ? `<p style="margin:0 0 12px"><strong>Диагноз:</strong> ${patient.diagnosis}</p>` : ""}
               </div>
               <div style="padding:12px 24px;background:#f0f2f5;font-size:12px;color:#64748b">
-                Автоматическое уведомление від МедКарта
+                Автоматическое уведомление от МедКарта
               </div>
             </div>
           `,
@@ -894,44 +1194,64 @@ export default function MedKarta({ supabase, session, profile }) {
   const getP = id => patients.find(p=>p.id===id);
 
   // ─── CRUD ───
-  const savePat = (form) => {
-    if (modal==="addPat") setPatients(prev=>[...prev,{...form,id:uid()}]);
-    else setPatients(prev=>prev.map(p=>p.id===form.id?form:p));
-    setModal(null); showToast(modal==="addPat"?"Пациента добавлено":"Дані сохранено");
+  // ─── CRUD helpers (Supabase OR localStorage) ───────────────────────────
+  const savePat = async (form) => {
+    if (usingSupabase && supabase) {
+      const row = { last_name:form.lastName, first_name:form.firstName, patronymic:form.patronymic||"", dob:form.dob||null, phone:form.phone||"", diagnosis:form.diagnosis||"", doctor:form.doctor||"", status:form.status||"active", last_visit:form.lastVisit||null, notes:form.notes||"", next_visit_date:form.nextVisitDate||null, next_visit_note:form.nextVisitNote||"", admission_date:form.admissionDate||null, passport_series:form.passportSeries||"", passport_number:form.passportNumber||"", passport_issued:form.passportIssued||"", iin:form.iin||"" };
+      if (modal==="addPat") { const {data,error}=await supabase.from("patients").insert(row).select().single(); if(!error&&data) setPatients(prev=>[...prev,mapPat(data)]); }
+      else { const {data,error}=await supabase.from("patients").update(row).eq("id",form.id).select().single(); if(!error&&data) setPatients(prev=>prev.map(p=>p.id===form.id?mapPat(data):p)); }
+    } else {
+      if (modal==="addPat") setPatients(prev=>[...prev,{...form,id:uid()}]);
+      else setPatients(prev=>prev.map(p=>p.id===form.id?form:p));
+    }
+    setModal(null); showToast(modal==="addPat"?"Пациент добавлен":"Данные сохранены");
   };
-  const deletePat = (id) => {
+  const deletePat = async (id) => {
+    if (usingSupabase && supabase) await supabase.from("patients").delete().eq("id",id);
     setPatients(prev=>prev.filter(p=>p.id!==id));
     setAppointments(prev=>prev.filter(a=>a.patientId!==id));
     setProtocols(prev=>prev.filter(p=>p.patientId!==id));
     setPodiatech(prev=>prev.filter(p=>p.patientId!==id));
     setDeleteTarget(null); setModal(null); setViewPat(null);
-    showToast("Пациента удалено","error");
+    showToast("Пациент удалён","error");
   };
-  const saveAppt = (form) => {
-    if (modal==="addAppt") {
-      setAppointments(prev=>[...prev,{...form,id:uid()}]);
-      // Send email notification to doctor
-      const patient = patients.find(p=>p.id===form.patientId);
-      sendApptEmail(form, patient);
+  const saveAppt = async (form) => {
+    if (usingSupabase && supabase) {
+      const row = { patient_id:form.patientId, doctor:form.doctor||"", date:form.date, time:form.time||null, type:form.type||"Первичный приём", status:form.status||"scheduled", notes:form.notes||"" };
+      if (modal==="addAppt") { const {data,error}=await supabase.from("appointments").insert(row).select().single(); if(!error&&data){setAppointments(prev=>[...prev,mapAppt(data)]); const patient=patients.find(p=>p.id===form.patientId); sendApptEmail(form,patient);} }
+      else { const {data,error}=await supabase.from("appointments").update(row).eq("id",form.id).select().single(); if(!error&&data) setAppointments(prev=>prev.map(a=>a.id===form.id?mapAppt(data):a)); }
+    } else {
+      if (modal==="addAppt") { setAppointments(prev=>[...prev,{...form,id:uid()}]); const patient=patients.find(p=>p.id===form.patientId); sendApptEmail(form,patient); }
+      else setAppointments(prev=>prev.map(a=>a.id===form.id?form:a));
     }
-    else setAppointments(prev=>prev.map(a=>a.id===form.id?form:a));
-    setModal(null); showToast(modal==="addAppt"?"Запись создано":"Запись обновлено");
+    setModal(null); showToast(modal==="addAppt"?"Запись создана":"Запись обновлена");
   };
-  const deleteAppt = (id) => { setAppointments(prev=>prev.filter(a=>a.id!==id)); setDeleteTarget(null); showToast("Запись удалено","error"); };
-  const changeApptStatus = (id,status) => { setAppointments(prev=>prev.map(a=>a.id===id?{...a,status}:a)); showToast("Статус обновлено"); };
-  const saveProtocol = (form) => {
-    if (modal==="addProtocol") setProtocols(prev=>[...prev,{...form,id:uid()}]);
-    else setProtocols(prev=>prev.map(p=>p.id===form.id?form:p));
-    setModal(null); showToast(modal==="addProtocol"?"Протокол создано":"Протокол обновлено");
+  const deleteAppt = async (id) => { if(usingSupabase&&supabase) await supabase.from("appointments").delete().eq("id",id); setAppointments(prev=>prev.filter(a=>a.id!==id)); setDeleteTarget(null); showToast("Запись удалена","error"); };
+  const changeApptStatus = async (id,status) => { if(usingSupabase&&supabase) await supabase.from("appointments").update({status}).eq("id",id); setAppointments(prev=>prev.map(a=>a.id===id?{...a,status}:a)); showToast("Статус обновлён"); };
+  const saveProtocol = async (form) => {
+    if (usingSupabase && supabase) {
+      const row = { patient_id:form.patientId, name:form.name, procedures:form.procedures, start_date:form.startDate||null, status:form.status||"active", doctor:form.doctor||"", diagnosis:form.diagnosis||"" };
+      if (modal==="addProtocol") { const {data,error}=await supabase.from("protocols").insert(row).select().single(); if(!error&&data) setProtocols(prev=>[...prev,mapProto(data)]); }
+      else { const {data,error}=await supabase.from("protocols").update(row).eq("id",form.id).select().single(); if(!error&&data) setProtocols(prev=>prev.map(p=>p.id===form.id?mapProto(data):p)); }
+    } else {
+      if (modal==="addProtocol") setProtocols(prev=>[...prev,{...form,id:uid()}]);
+      else setProtocols(prev=>prev.map(p=>p.id===form.id?form:p));
+    }
+    setModal(null); showToast(modal==="addProtocol"?"Протокол создан":"Протокол обновлён");
   };
-  const deleteProtocol = (id) => { setProtocols(prev=>prev.filter(p=>p.id!==id)); setDeleteTarget(null); showToast("Протокол удалено","error"); };
+  const deleteProtocol = async (id) => { if(usingSupabase&&supabase) await supabase.from("protocols").delete().eq("id",id); setProtocols(prev=>prev.filter(p=>p.id!==id)); setDeleteTarget(null); showToast("Протокол удалён","error"); };
   const savePodiatech = (form) => {
     if (modal==="addPodiatech") setPodiatech(prev=>[...prev,{...form,id:uid()}]);
     else setPodiatech(prev=>prev.map(p=>p.id===form.id?form:p));
-    setModal(null); showToast(modal==="addPodiatech"?"Диагностику сохранено":"Дані обновлено");
+    setModal(null); showToast(modal==="addPodiatech"?"Диагностика сохранена":"Данные обновлены");
   };
-  const deletePodiatech = (id) => { setPodiatech(prev=>prev.filter(p=>p.id!==id)); setDeleteTarget(null); showToast("Запись удалено","error"); };
-  const saveDoctor = (form) => {
+  const deletePodiatech = (id) => { setPodiatech(prev=>prev.filter(p=>p.id!==id)); setDeleteTarget(null); showToast("Запись удалена","error"); };
+  const saveDoctor = async (form) => {
+    if (usingSupabase && supabase) {
+      const row={name:form.name,specialization:form.specialization||"",phone:form.phone||"",email:form.email||"",schedule:form.schedule||[],notes:form.notes||""};
+      if(modal==="addDoctor"){const{data,error}=await supabase.from("doctors").insert(row).select().single();if(!error&&data)setDoctors(prev=>[...prev,mapDoc(data)]);}
+      else{const{data,error}=await supabase.from("doctors").update(row).eq("id",form.id).select().single();if(!error&&data)setDoctors(prev=>prev.map(d=>d.id===form.id?mapDoc(data):d));}
+    } else {
     if (modal==="addDoctor") setDoctors(prev=>[...prev,{...form,id:uid()}]);
     else {
       const old = doctors.find(d=>d.id===form.id);
@@ -942,9 +1262,10 @@ export default function MedKarta({ supabase, session, profile }) {
       }
       setDoctors(prev=>prev.map(d=>d.id===form.id?form:d));
     }
-    setModal(null); showToast(modal==="addDoctor"?"Специалиста добавлено":"Дані сохранено");
+    }
+    setModal(null); showToast(modal==="addDoctor"?"Специалист добавлен":"Данные сохранены");
   };
-  const deleteDoctor = (id) => { setDoctors(prev=>prev.filter(d=>d.id!==id)); setDeleteTarget(null); showToast("Специалиста удалено","error"); };
+  const deleteDoctor = (id) => { setDoctors(prev=>prev.filter(d=>d.id!==id)); setDeleteTarget(null); showToast("Специалист удалён","error"); };
 
   const saveStockOp = (form) => {
     const logEntry = { ...form, id: uid(), date: form.date || today() };
@@ -967,15 +1288,15 @@ export default function MedKarta({ supabase, session, profile }) {
       }
     });
     setModal(null);
-    showToast(form.opType === "in" ? "Приход оформлено" : "Видачу оформлено");
+    showToast(form.opType === "in" ? "Приход оформлен" : "Выдача оформлена");
   };
-  const deleteStockItem = (id) => { setStock(prev => prev.filter(s => s.id !== id)); setDeleteTarget(null); showToast("Позицію удалено","error"); };
+  const deleteStockItem = (id) => { setStock(prev => prev.filter(s => s.id !== id)); setDeleteTarget(null); showToast("Позиция удалена","error"); };
   const saveProcCatalogItem = (form) => {
     if (modal==="addProc") setProcCatalog(prev=>[...prev,{...form,id:uid()}]);
     else setProcCatalog(prev=>prev.map(p=>p.id===form.id?form:p));
-    setModal(null); showToast(modal==="addProc"?"Процедуру добавлено":"Процедуру обновлено");
+    setModal(null); showToast(modal==="addProc"?"Процедура добавлена":"Процедура обновлена");
   };
-  const deleteProcCatalogItem = (id) => { setProcCatalog(prev=>prev.filter(p=>p.id!==id)); setDeleteTarget(null); showToast("Процедуру удалено","error"); };
+  const deleteProcCatalogItem = (id) => { setProcCatalog(prev=>prev.filter(p=>p.id!==id)); setDeleteTarget(null); showToast("Процедура удалена","error"); };
 
   const exportExcel = () => {
     const wb = XLSX.utils.book_new();
@@ -987,7 +1308,7 @@ export default function MedKarta({ supabase, session, profile }) {
     [...appointments].sort((a,b)=>a.date.localeCompare(b.date)).forEach(a=>{const p=getP(a.patientId);ar.push([fmt(a.date),a.time,p?fullName(p):"—",a.doctor,a.type,APPT_STATUSES[a.status]||a.status,a.notes]);});
     const ws2=XLSX.utils.aoa_to_sheet(ar); ws2["!cols"]=[12,8,22,22,20,14,28].map(w=>({wch:w}));
     XLSX.utils.book_append_sheet(wb,ws2,"Записьи");
-    const protRows=[["Пациент","Протокол","Врач","Диагноз","Дата начала","Статус","Процедури"]];
+    const protRows=[["Пациент","Протокол","Врач","Диагноз","Дата начала","Статус","Процедуры"]];
     protocols.forEach(pr=>{const p=getP(pr.patientId);protRows.push([p?fullName(p):"—",pr.name,pr.doctor,pr.diagnosis,fmt(pr.startDate),pr.status,pr.procedures.map(proc=>`${proc.procedureName}: ${proc.completedSessions}/${proc.totalSessions}`).join("; ")]);});
     const ws3=XLSX.utils.aoa_to_sheet(protRows); ws3["!cols"]=[22,28,22,24,13,12,50].map(w=>({wch:w}));
     XLSX.utils.book_append_sheet(wb,ws3,"Протоколи");
@@ -996,7 +1317,7 @@ export default function MedKarta({ supabase, session, profile }) {
     const ws4=XLSX.utils.aoa_to_sheet(docRows); ws4["!cols"]=[28,16,18,22,20,28].map(w=>({wch:w}));
     XLSX.utils.book_append_sheet(wb,ws4,"Специалисти");
     XLSX.writeFile(wb,`Atlant_МедКарта_${today()}.xlsx`);
-    showToast("Excel завантажено 📥");
+    showToast("Excel скачан 📥");
   };
 
   // ─── Analytics computations ───
@@ -1039,7 +1360,7 @@ export default function MedKarta({ supabase, session, profile }) {
   const TABS = [
     {id:"patients",label:"👤 Пациенты",count:patients.length},
     {id:"appointments",label:"📅 Записьи",count:appointments.filter(a=>a.status==="scheduled").length},
-    {id:"protocols",label:"💊 Протоколи",count:protocols.filter(p=>p.status==="active").length},
+    {id:"protocols",label:"💊 Протоколы",count:protocols.filter(p=>p.status==="active").length},
     {id:"podiatech",label:"🦶 Podiatech",count:podiatech.length},
     {id:"doctors",label:"👨‍⚕️ Специалисти",count:doctors.length},
     {id:"analytics",label:"📊 Аналитика",count:null},
@@ -1059,7 +1380,10 @@ export default function MedKarta({ supabase, session, profile }) {
             <div style={{width:40,height:40,borderRadius:10,background:"rgba(255,255,255,.12)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>🏥</div>
             <div>
               <div style={{fontFamily:"'DM Serif Display',serif",fontSize:21,color:"#fff"}}>Atlant Clinic</div>
-              <div style={{fontSize:10,color:"rgba(255,255,255,.45)",letterSpacing:".12em",textTransform:"uppercase"}}>МедКарта · Учет пациентів</div>
+              <div style={{fontSize:10,color:"rgba(255,255,255,.45)",letterSpacing:".12em",textTransform:"uppercase",display:"flex",alignItems:"center",gap:6}}>
+                МедКарта · Учёт пациентов
+                {usingSupabase&&<span style={{background:"rgba(255,255,255,.15)",padding:"1px 7px",borderRadius:8,fontSize:9,letterSpacing:".08em"}}>🌐 Онлайн</span>}
+              </div>
             </div>
           </div>
           <div style={{display:"flex",gap:8}}>
@@ -1147,6 +1471,7 @@ export default function MedKarta({ supabase, session, profile }) {
                       <td style={{padding:"10px 14px",textAlign:"right"}} onClick={e=>e.stopPropagation()}>
                         <div style={{display:"flex",gap:3,justifyContent:"flex-end"}}>
                           {p.nextVisitDate&&<MsgBtns patient={p} setMessengerPat={setMessengerPat}/>}
+                          <button className="btn" onClick={()=>{setDischargePat(p);setModal("discharge");}} title="Выписка" style={{background:"#f0fdf4",color:"#0e7c6b",padding:"5px 8px"}}>📄</button>
                           <button className="btn" onClick={()=>{setTimelinePat(p);setModal("timeline");}} title="История" style={{background:"#faf5ff",color:"#7c3aed",padding:"5px 8px"}}>📋</button>
                           <button className="btn" onClick={()=>{setEditPat({...p});setModal("editPat");}} style={{background:"#eff6ff",color:"#2563eb",padding:"5px 8px"}}>✏️</button>
                           <button className="btn" onClick={()=>setDeleteTarget({type:"patient",id:p.id,name:fullName(p)})} style={{background:"#fef2f2",color:"#dc2626",padding:"5px 8px"}}>🗑</button>
@@ -1193,20 +1518,20 @@ export default function MedKarta({ supabase, session, profile }) {
                 </div>:null;
               })}
             </div>
-            <button className="btn" onClick={()=>{setEditAppt({...EMPTY_APPT,date:apptDate});setModal("addAppt");}} style={{background:"#0e7c6b",color:"#fff",padding:"8px 18px",marginLeft:"auto"}}>＋ Новый запись</button>
+            <button className="btn" onClick={()=>{setEditAppt({...EMPTY_APPT,date:apptDate});setModal("addAppt");}} style={{background:"#0e7c6b",color:"#fff",padding:"8px 18px",marginLeft:"auto"}}>＋ Новая запись</button>
           </div>
 
           {workingDocs.length===0?(
             <div className="card" style={{padding:"52px",textAlign:"center",color:"#94a3b8",fontSize:15}}>
-              📭 На {dayName} нет врачів, що працюють
-              {doctors.length>0&&<div style={{marginTop:8,fontSize:13}}>Перевірте график у вкладці «Специалисти»</div>}
+              📭 На {dayName} нет работающих врачей
+              {doctors.length>0&&<div style={{marginTop:8,fontSize:13}}>Проверьте график во вкладке «Специалисты»</div>}
             </div>
           ):(
             <div className="card" style={{overflow:"auto",maxHeight:"calc(100vh - 220px)"}}>
               <table style={{width:"100%",borderCollapse:"collapse",minWidth:workingDocs.length*200+80}}>
                 <thead>
                   <tr style={{position:"sticky",top:0,zIndex:10,background:"#fff"}}>
-                    <th style={{padding:"10px 8px",textAlign:"left",width:70,borderBottom:"2px solid #e8edf5",borderRight:"1px solid #f0f4f8",position:"sticky",left:0,background:"#fff",zIndex:11}}>Час</th>
+                    <th style={{padding:"10px 8px",textAlign:"left",width:70,borderBottom:"2px solid #e8edf5",borderRight:"1px solid #f0f4f8",position:"sticky",left:0,background:"#fff",zIndex:11}}>Время</th>
                     {workingDocs.map(doc=>(
                       <th key={doc.id} style={{padding:"10px 12px",textAlign:"center",borderBottom:"2px solid #e8edf5",borderRight:"1px solid #f0f4f8",minWidth:180}}>
                         <div style={{fontSize:12,fontWeight:700}}>{doc.name.split(" ").slice(0,2).join(" ")}</div>
@@ -1238,7 +1563,11 @@ export default function MedKarta({ supabase, session, profile }) {
                                 }}
                                   onClick={(e)=>{e.stopPropagation();setEditAppt({...appt});setModal("editAppt");}}>
                                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:4}}>
-                                    <span style={{fontWeight:700,color:"#1a2332",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p?shortName(p):"—"}</span>
+                                    <span
+                                        style={{fontWeight:700,color:"#1a2332",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",cursor:"pointer",textDecoration:"underline dotted #94a3b8",textUnderlineOffset:2}}
+                                        title="Открыть карту пациента"
+                                        onClick={e=>{e.stopPropagation();if(p){setViewPat(p);setModal("viewPat");}}}
+                                      >{p?shortName(p):"—"}</span>
                                     <div style={{display:"flex",gap:2,flexShrink:0}}>
                                       {appt.status==="scheduled"&&<>
                                         <button className="btn" onClick={e=>{e.stopPropagation();changeApptStatus(appt.id,"done");}} style={{background:APPT_STATUS_COLORS.done,color:"#fff",padding:"1px 5px",fontSize:10,lineHeight:1}}>✓</button>
@@ -1303,7 +1632,7 @@ export default function MedKarta({ supabase, session, profile }) {
           </div>
 
           <div style={{display:"flex",gap:4,marginBottom:16}}>
-            {[{id:"protocols",label:"💊 Протоколи",count:protocols.filter(p=>p.status==="active").length},{id:"catalog",label:"📋 Прайс процедур",count:procCatalog.length}].map(st=>(
+            {[{id:"protocols",label:"💊 Протоколы",count:protocols.filter(p=>p.status==="active").length},{id:"catalog",label:"📋 Прайс процедур",count:procCatalog.length}].map(st=>(
               <div key={st.id} className={`tab${protocolSubTab===st.id?" active":""}`} onClick={()=>setProtocolSubTab(st.id)}>
                 {st.label}
                 <span style={{marginLeft:6,background:protocolSubTab===st.id?"rgba(255,255,255,.25)":"rgba(14,124,107,.1)",color:protocolSubTab===st.id?"#fff":"#0e7c6b",borderRadius:10,padding:"1px 7px",fontSize:11,fontWeight:700}}>{st.count}</span>
@@ -1322,7 +1651,7 @@ export default function MedKarta({ supabase, session, profile }) {
                   const doneAll = pr.procedures.reduce((s,proc)=>s+proc.completedSessions,0);
                   const pct = totalAll>0?Math.round(doneAll/totalAll*100):0;
                   const statusColor = pr.status==="active"?"#0e7c6b":pr.status==="completed"?"#6366f1":"#f59e0b";
-                  const statusLabel = pr.status==="active"?"Активный":pr.status==="completed"?"Завершено":"Приостановлено";
+                  const statusLabel = pr.status==="active"?"Активный":pr.status==="completed"?"Завершён":"Приостановлено";
                   const totalPrice = pr.procedures.reduce((s,proc)=>{const cat=procCatalog.find(c=>c.name===proc.procedureName);return s+(cat?.price||0)*proc.totalSessions;},0);
                   return (
                     <div key={pr.id} className="card" style={{padding:0,overflow:"hidden",borderLeft:`4px solid ${statusColor}`}}>
@@ -1671,7 +2000,7 @@ export default function MedKarta({ supabase, session, profile }) {
         {tab==="analytics"&&<>
           <div style={{fontFamily:"'DM Serif Display',serif",fontSize:22,marginBottom:18}}>📊 Аналитика клиники</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:20}}>
-            {[{l:"Пациенты",v:patients.length,c:"#0e7c6b",i:"👥"},{l:"Проведено приемів",v:appointments.filter(a=>a.status==="done").length,c:"#2563eb",i:"✅"},{l:"Активных протоколов",v:analytics.activeProts,c:"#f59e0b",i:"💊"},{l:"Podiatech діагностик",v:podiatech.length,c:"#8b5cf6",i:"🦶"}].map(s=>(
+            {[{l:"Пациенты",v:patients.length,c:"#0e7c6b",i:"👥"},{l:"Проведено приемів",v:appointments.filter(a=>a.status==="done").length,c:"#2563eb",i:"✅"},{l:"Активных протоколов",v:analytics.activeProts,c:"#f59e0b",i:"💊"},{l:"Podiatech диагностик",v:podiatech.length,c:"#8b5cf6",i:"🦶"}].map(s=>(
               <div key={s.l} className="card" style={{padding:"16px 20px",borderLeft:`4px solid ${s.c}`,display:"flex",alignItems:"center",gap:14}}>
                 <div style={{fontSize:32}}>{s.i}</div>
                 <div>
@@ -1734,7 +2063,7 @@ export default function MedKarta({ supabase, session, profile }) {
 
             {/* Procedures stats */}
             <div className="card" style={{padding:"20px"}}>
-              <div style={{fontSize:14,fontWeight:700,marginBottom:14,color:"#1a2332"}}>⚡ Процедури (выполнено сеансов)</div>
+              <div style={{fontSize:14,fontWeight:700,marginBottom:14,color:"#1a2332"}}>⚡ Процедуры (выполнено сеансов)</div>
               {analytics.topProcs.length===0?<div style={{color:"#94a3b8",fontSize:13}}>Нет даних</div>:
                 analytics.topProcs.map(([name,count]) => {
                   const cat = procCatalog.find(c=>c.name===name);
@@ -1798,6 +2127,7 @@ export default function MedKarta({ supabase, session, profile }) {
       {/* ════════════════════════════════════════ */}
 
       {messengerPat&&<MessengerModal patient={messengerPat} onClose={()=>setMessengerPat(null)}/>}
+      {modal==="discharge"&&dischargePat&&<DischargeSummaryModal patient={dischargePat} protocols={protocols} appointments={appointments} procCatalog={procCatalog} onClose={()=>{setModal(null);setDischargePat(null);}}/>}
 
       {/* Patient view modal */}
       {modal==="viewPat"&&viewPat&&(
@@ -1820,7 +2150,7 @@ export default function MedKarta({ supabase, session, profile }) {
               {/* Protocols for this patient */}
               <div style={{marginTop:8}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                  <div style={{fontSize:11,fontWeight:700,color:"#0e7c6b",textTransform:"uppercase",letterSpacing:".06em"}}>💊 Протоколи лечения</div>
+                  <div style={{fontSize:11,fontWeight:700,color:"#0e7c6b",textTransform:"uppercase",letterSpacing:".06em"}}>💊 Протоколы лечения</div>
                   <button className="btn" onClick={()=>{setEditProtocol({patientId:viewPat.id,name:"",procedures:[{procedureName:"",totalSessions:5,completedSessions:0,notes:""}],startDate:today(),status:"active",doctor:viewPat.doctor||"",diagnosis:viewPat.diagnosis||""});setModal("addProtocol");}} style={{background:"#0e7c6b",color:"#fff",padding:"4px 12px",fontSize:11}}>＋ Протокол</button>
                 </div>
                 {protocols.filter(pr=>pr.patientId===viewPat.id).length>0?
@@ -1834,7 +2164,7 @@ export default function MedKarta({ supabase, session, profile }) {
                         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
                           <div style={{display:"flex",alignItems:"center",gap:6}}>
                             <span style={{fontWeight:700,fontSize:13}}>{pr.name}</span>
-                            <span className="chip" style={{background:statusColor+"22",color:statusColor,fontSize:10}}>{pr.status==="active"?"Активный":pr.status==="completed"?"Завершено":"Пауза"}</span>
+                            <span className="chip" style={{background:statusColor+"22",color:statusColor,fontSize:10}}>{pr.status==="active"?"Активный":pr.status==="completed"?"Завершён":"Пауза"}</span>
                           </div>
                           <div style={{display:"flex",gap:4}}>
                             {pr.status==="active"&&<button className="btn" onClick={()=>{const updated={...pr,procedures:pr.procedures.map(proc=>({...proc,completedSessions:Math.min(proc.completedSessions+1,proc.totalSessions)}))};setProtocols(prev=>prev.map(p=>p.id===pr.id?updated:p));showToast("+1 сеанс");}} style={{background:"#d1fae5",color:"#065f46",padding:"2px 8px",fontSize:10}}>＋1</button>}
@@ -1862,7 +2192,8 @@ export default function MedKarta({ supabase, session, profile }) {
                 {appointments.filter(a=>a.patientId===viewPat.id).length===0&&<div style={{color:"#94a3b8",fontSize:13}}>Нет записьей</div>}
               </div>
               <div style={{display:"flex",gap:8,marginTop:16,flexWrap:"wrap"}}>
-                <button className="btn" onClick={()=>{setModal(null);setTimelinePat(viewPat);setTimeout(()=>setModal("timeline"),50);}} style={{background:"#faf5ff",color:"#7c3aed",padding:"9px 14px"}}>📋 История</button>
+                <button className="btn" onClick={()=>{setDischargePat(viewPat);setModal("discharge");}} style={{background:"#f0fdf4",color:"#0e7c6b",padding:"9px 14px"}}>📄 Выписка</button>
+              <button className="btn" onClick={()=>{setModal(null);setTimelinePat(viewPat);setTimeout(()=>setModal("timeline"),50);}} style={{background:"#faf5ff",color:"#7c3aed",padding:"9px 14px"}}>📋 История</button>
                 <button className="btn" onClick={()=>{setEditAppt({...EMPTY_APPT,patientId:viewPat.id,doctor:viewPat.doctor,date:today()});setModal("addAppt");}} style={{background:"#f0fdf4",color:"#10b981",padding:"9px 14px"}}>📅 Записьати</button>
                 {viewPat.nextVisitDate&&<button className="btn" onClick={()=>{setModal(null);setMessengerPat(viewPat);}} style={{background:"#25d366",color:"#fff",padding:"9px 14px",display:"flex",alignItems:"center",gap:5}}>{WA_SVG} WA/TG</button>}
                 <button className="btn" onClick={()=>{setEditPat({...viewPat});setModal("editPat");}} style={{flex:1,background:"#0e7c6b",color:"#fff",padding:"9px"}}>✏️ Редактировать</button>
@@ -1899,7 +2230,7 @@ export default function MedKarta({ supabase, session, profile }) {
                       <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
                         <span style={{fontSize:12,color:"#64748b",fontWeight:600}}>{fmt(ev.date)} {ev.time}</span>
                         <span className="chip" style={{background:ev.color+"22",color:ev.color,fontSize:11}}>
-                          {ev.type==="appt"?APPT_STATUSES[ev.status]||ev.status:ev.type==="protocol"?(ev.status==="active"?"Активный":"Завершено"):INSOLE_STATUSES[ev.status]||ev.status}
+                          {ev.type==="appt"?APPT_STATUSES[ev.status]||ev.status:ev.type==="protocol"?(ev.status==="active"?"Активный":"Завершён"):INSOLE_STATUSES[ev.status]||ev.status}
                         </span>
                       </div>
                       <div style={{fontWeight:600,fontSize:14,color:"#1a2332"}}>{ev.label}</div>
