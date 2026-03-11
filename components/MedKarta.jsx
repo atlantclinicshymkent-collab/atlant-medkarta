@@ -159,7 +159,7 @@ const formatPhone = (raw) => {
 const buildMsg = (p) => {
   const d = daysUntil(p.nextVisitDate);
   const when = d===0?"сегодня":d===1?"завтра":fmt(p.nextVisitDate);
-  return `Уважаемый(ая) ${p.firstName} ${p.patronymic||""}!\n\nНапоминаем, что Вам назначена консультация ${when}${p.nextVisitNote?" ("+p.nextVisitNote+")":""}.\n\nВрач: ${p.doctor}\nAtlant Clinic\n\nЖдём Вас! 🏥`;
+  return `Уважаемый(ая) ${p.firstName} ${p.patronymic||""}!\n\nНапоминаем, что Вам назначена консультация ${when}${p.nextVisitNote?" ("+p.nextVisitNote+")":""}.\n\nВрач: ${p.doctor}\nAtlant Clinic\nАдрес: ул. Акпан Батыр, 46\n\nЖдём Вас! 😊`;
 };
 
 const openWA  = (phone, text) => { const p=cleanPhone(phone); if(!p){alert("Укажите номер телефона!");return;} window.open(`https://wa.me/${p.replace("+","")}?text=${encodeURIComponent(text)}`,"_blank"); };
@@ -203,10 +203,12 @@ const CSS = `
   td:hover{background:#f0fdf433}
   @media print {
     .no-print { display: none !important; }
-    body { background: white !important; }
-    .discharge-print-wrapper { display: block; }
-    .modal-bg { position: static !important; backdrop-filter: none !important; background: white !important; }
-    .modal { box-shadow: none !important; border-radius: 0 !important; max-height: none !important; overflow: visible !important; }
+    body * { visibility: hidden; }
+    .discharge-print-wrapper, .discharge-print-wrapper * { visibility: visible; }
+    .discharge-print-wrapper { position: fixed; left: 0; top: 0; width: 100%; background: white; z-index: 99999; padding: 20px; overflow: visible; }
+    .modal-bg { position: static !important; background: white !important; padding: 0 !important; backdrop-filter: none !important; }
+    .modal { box-shadow: none !important; border-radius: 0 !important; max-height: none !important; overflow: visible !important; width: 100% !important; }
+    @page { margin: 10mm; }
   }
   .discharge-print-wrapper {}
 ` ;
@@ -477,7 +479,7 @@ function ApptForm({form,setForm,isAdd,patients,onSave,onClose,doctorNames,onCrea
               {Object.entries(APPT_STATUSES).map(([k,v])=><option key={k} value={k}>{v}</option>)}
             </select>
           </div>}
-          <div className="field"><label>Примечания</label><textarea rows={2} value={form.notes||""} onChange={e=>s("notes",e.target.value)} placeholder="Мета визиту, подготовка…" style={{resize:"vertical"}}/></div>
+          <div className="field"><label>Примечания</label><textarea rows={2} value={form.notes||""} onChange={e=>s("notes",e.target.value)} placeholder="Цель визита, подготовка…" style={{resize:"vertical"}}/></div>
           <div style={{display:"flex",gap:10,marginTop:4}}>
             <button className="btn" onClick={handleSave} disabled={!valid} style={{flex:1,background:valid?"#0e7c6b":"#e2e8f0",color:valid?"#fff":"#94a3b8",padding:"12px",fontSize:15}}>{isAdd?(newPat?"👤📅 Создать пациента і запись":"📅 Создать запись"):"💾 Сохранить"}</button>
             <button className="btn" onClick={onClose} style={{background:"#f1f5f9",color:"#475569",padding:"12px 20px"}}>Отменить</button>
@@ -514,7 +516,7 @@ function ProtocolForm({form,setForm,isAdd,patients,onSave,onClose,doctorNames,pr
     <div className="modal-bg" onClick={onClose}>
       <div className="modal" style={{width:640,maxHeight:"93vh",overflow:"auto"}} onClick={e=>e.stopPropagation()}>
         <div style={{background:"linear-gradient(135deg,#064e3b,#0e7c6b)",padding:"18px 24px",borderRadius:"18px 18px 0 0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:"#fff"}}>{isAdd?"💊 Новый протокол лечения":"Редактирование протоколу"}</div>
+          <div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:"#fff"}}>{isAdd?"💊 Новый протокол лечения":"Редактирование протокола"}</div>
           <button className="btn" onClick={onClose} style={{background:"rgba(255,255,255,.15)",color:"#fff",padding:"5px 11px"}}>✕</button>
         </div>
         <div style={{padding:"20px 24px",display:"flex",flexDirection:"column",gap:12}}>
@@ -800,8 +802,8 @@ function DischargeSummaryModal({ patient, protocols, appointments, procCatalog, 
   const [nextVisitDate, setNextVisitDate] = useState(patient.nextVisitDate || "");
   const [nextVisitNote, setNextVisitNote] = useState(patient.nextVisitNote || "");
 
-  const patProtocols = protocols.filter(pr => pr.patientId === patient.id || pr.patientId === String(patient.id));
-  const patAppts = appointments.filter(a => (a.patientId === patient.id || a.patientId === String(patient.id)) && a.status === "done").sort((a,b)=>a.date.localeCompare(b.date));
+  const patProtocols = protocols.filter(pr => String(pr.patientId) === String(patient.id));
+  const patAppts = appointments.filter(a => String(a.patientId) === String(patient.id) && a.status === "done").sort((a,b)=>a.date.localeCompare(b.date));
 
   const completedProcedures = [];
   patProtocols.forEach(pr => {
@@ -835,7 +837,7 @@ function DischargeSummaryModal({ patient, protocols, appointments, procCatalog, 
   };
 
   return (
-    <div className="modal-bg no-print" onClick={onClose}>
+    <div className="modal-bg" onClick={onClose}>
       <div className="modal" style={{width:760,maxHeight:"95vh",overflow:"auto"}} onClick={e=>e.stopPropagation()}>
         <div style={{background:"linear-gradient(135deg,#042f2e,#064e3b,#0e7c6b)",padding:"18px 24px",borderRadius:"18px 18px 0 0",display:"flex",justifyContent:"space-between",alignItems:"center"}} className="no-print">
           <div>
@@ -1054,10 +1056,10 @@ export default function MedKarta({ supabase, session, profile }) {
 
   // Map Supabase row → local state
   const mapPat = (r) => ({ id:r.id, lastName:r.last_name, firstName:r.first_name, patronymic:r.patronymic||"", dob:r.dob||"", phone:r.phone||"", diagnosis:r.diagnosis||"", doctor:r.doctor||"", status:r.status||"active", lastVisit:r.last_visit||"", notes:r.notes||"", nextVisitDate:r.next_visit_date||"", nextVisitNote:r.next_visit_note||"", admissionDate:r.admission_date||"", passportSeries:r.passport_series||"", passportNumber:r.passport_number||"", passportIssued:r.passport_issued||"", iin:r.iin||"" });
-  const mapAppt = (r) => ({ id:r.id, patientId:r.patient_id, doctor:r.doctor||"", date:r.date||"", time:r.time||"", type:r.type||"Первичный приём", status:r.status||"scheduled", notes:r.notes||"" });
-  const mapProto = (r) => ({ id:r.id, patientId:r.patient_id, name:r.name||"", procedures:r.procedures||[], startDate:r.start_date||"", status:r.status||"active", doctor:r.doctor||"", diagnosis:r.diagnosis||"" });
+  const mapAppt = (r) => ({ id:r.id, patientId:Number(r.patient_id), doctor:r.doctor||"", date:r.date||"", time:r.time||"", type:r.type||"Первичный приём", status:r.status||"scheduled", notes:r.notes||"" });
+  const mapProto = (r) => ({ id:r.id, patientId:Number(r.patient_id), name:r.name||"", procedures:r.procedures||[], startDate:r.start_date||"", status:r.status||"active", doctor:r.doctor||"", diagnosis:r.diagnosis||"" });
   const mapDoc = (r) => ({ id:r.id, name:r.name||"", specialization:r.specialization||"", phone:r.phone||"", email:r.email||"", schedule:r.schedule||[], notes:r.notes||"" });
-  const mapPodio = (r) => ({ id:r.id, patientId:r.patient_id, date:r.date||"", footType:r.foot_type||"", halluxValgus:r.hallux_valgus||false, archIndex:r.arch_index||"", pressureNotes:r.pressure_notes||"", insoleStatus:r.insole_status||"ordered", insoleDeliveryDate:r.insole_delivery_date||"", notes:r.notes||"" });
+  const mapPodio = (r) => ({ id:r.id, patientId:Number(r.patient_id), date:r.date||"", footType:r.foot_type||"", halluxValgus:r.hallux_valgus||false, archIndex:r.arch_index||"", pressureNotes:r.pressure_notes||"", insoleStatus:r.insole_status||"ordered", insoleDeliveryDate:r.insole_delivery_date||"", notes:r.notes||"" });
   const mapStock_ = (r) => ({ id:r.id, type:r.type||"", size:r.size||0, cost:r.cost||0, price:r.price||0, qty:r.qty||0, notes:r.notes||"" });
   const mapStockLog_ = (r) => ({ id:r.id, date:r.date||"", opType:r.op_type||"in", insoleType:r.insole_type||"", size:r.size||0, qty:r.qty||0, cost:r.cost||0, price:r.price||0, patientId:r.patient_id||null, notes:r.notes||"" });
   const mapProc_ = (r) => ({ id:r.id, name:r.name||"", category:r.category||"Другое", icon:r.icon||"📋", color:r.color||"#64748b", defaultSessions:r.default_sessions||5, price:r.price||0 });
@@ -1191,7 +1193,7 @@ export default function MedKarta({ supabase, session, profile }) {
     return [...list].sort((a,b)=>(a[sortBy]||"").localeCompare(b[sortBy]||"","uk"));
   }, [patients,search,filterStatus,filterDoctor,sortBy]);
 
-  const getP = id => patients.find(p=>p.id===id);
+  const getP = id => patients.find(p=>String(p.id)===String(id));
 
   // ─── CRUD ───
   // ─── CRUD helpers (Supabase OR localStorage) ───────────────────────────
@@ -1217,7 +1219,7 @@ export default function MedKarta({ supabase, session, profile }) {
   };
   const saveAppt = async (form) => {
     if (usingSupabase && supabase) {
-      const row = { patient_id:form.patientId, doctor:form.doctor||"", date:form.date, time:form.time||null, type:form.type||"Первичный приём", status:form.status||"scheduled", notes:form.notes||"" };
+      const row = { patient_id:Number(form.patientId), doctor:form.doctor||"", date:form.date, time:form.time||null, type:form.type||"Первичный приём", status:form.status||"scheduled", notes:form.notes||"" };
       if (modal==="addAppt") { const {data,error}=await supabase.from("appointments").insert(row).select().single(); if(!error&&data){setAppointments(prev=>[...prev,mapAppt(data)]); const patient=patients.find(p=>p.id===form.patientId); sendApptEmail(form,patient);} }
       else { const {data,error}=await supabase.from("appointments").update(row).eq("id",form.id).select().single(); if(!error&&data) setAppointments(prev=>prev.map(a=>a.id===form.id?mapAppt(data):a)); }
     } else {
@@ -1230,7 +1232,7 @@ export default function MedKarta({ supabase, session, profile }) {
   const changeApptStatus = async (id,status) => { if(usingSupabase&&supabase) await supabase.from("appointments").update({status}).eq("id",id); setAppointments(prev=>prev.map(a=>a.id===id?{...a,status}:a)); showToast("Статус обновлён"); };
   const saveProtocol = async (form) => {
     if (usingSupabase && supabase) {
-      const row = { patient_id:form.patientId, name:form.name, procedures:form.procedures, start_date:form.startDate||null, status:form.status||"active", doctor:form.doctor||"", diagnosis:form.diagnosis||"" };
+      const row = { patient_id:Number(form.patientId), name:form.name, procedures:form.procedures, start_date:form.startDate||null, status:form.status||"active", doctor:form.doctor||"", diagnosis:form.diagnosis||"" };
       if (modal==="addProtocol") { const {data,error}=await supabase.from("protocols").insert(row).select().single(); if(!error&&data) setProtocols(prev=>[...prev,mapProto(data)]); }
       else { const {data,error}=await supabase.from("protocols").update(row).eq("id",form.id).select().single(); if(!error&&data) setProtocols(prev=>prev.map(p=>p.id===form.id?mapProto(data):p)); }
     } else {
@@ -1437,7 +1439,7 @@ export default function MedKarta({ supabase, session, profile }) {
               {Object.entries(STATUSES).map(([k,v])=><option key={k} value={k}>{v}</option>)}
             </select>
             <select value={filterDoctor} onChange={e=>setFilterDoctor(e.target.value)} style={{padding:"8px 12px",border:"1.5px solid #dde4ef",borderRadius:8,fontSize:14,outline:"none",background:"#fff"}}>
-              <option value="all">Усі врачі</option>
+              <option value="all">Все врачи</option>
               {doctorNames.map(d=><option key={d} value={d}>{d}</option>)}
             </select>
             <span style={{fontSize:13,color:"#94a3b8"}}>Найдено: <b style={{color:"#1a2332"}}>{filteredPats.length}</b></span>
@@ -1694,7 +1696,7 @@ export default function MedKarta({ supabase, session, profile }) {
                         </div>
                       </div>
                       <div style={{borderTop:"1px solid #f0f4f8",padding:"10px 20px",display:"flex",gap:6,justifyContent:"flex-end"}}>
-                        {pr.status==="active"&&<button className="btn" onClick={()=>{const updated={...pr,procedures:pr.procedures.map(proc=>({...proc,completedSessions:Math.min(proc.completedSessions+1,proc.totalSessions)}))};setProtocols(prev=>prev.map(p=>p.id===pr.id?updated:p));showToast("+1 сеанс добавлено");}} style={{background:"#f0fdf4",color:"#10b981",padding:"6px 14px",fontSize:12}}>＋1 сеанс</button>}
+                        {pr.status==="active"&&<button className="btn" onClick={async ()=>{const updated={...pr,procedures:pr.procedures.map(proc=>({...proc,completedSessions:Math.min(proc.completedSessions+1,proc.totalSessions)}))};if(usingSupabase&&supabase)await supabase.from("protocols").update({procedures:updated.procedures}).eq("id",pr.id);setProtocols(prev=>prev.map(p=>p.id===pr.id?updated:p));showToast("+1 сеанс добавлено");}} style={{background:"#f0fdf4",color:"#10b981",padding:"6px 14px",fontSize:12}}>＋1 сеанс</button>}
                         <button className="btn" onClick={()=>{setEditProtocol({...pr,procedures:pr.procedures.map(p=>({...p}))});setModal("editProtocol");}} style={{background:"#eff6ff",color:"#2563eb",padding:"6px 12px",fontSize:12}}>✏️ Редактировать</button>
                         <button className="btn" onClick={()=>setDeleteTarget({type:"protocol",id:pr.id,name:pr.name})} style={{background:"#fef2f2",color:"#dc2626",padding:"6px 12px",fontSize:12}}>🗑</button>
                       </div>
@@ -2141,7 +2143,7 @@ export default function MedKarta({ supabase, session, profile }) {
               <span className="chip" style={{background:STATUS_COLORS[viewPat.status]+"44",color:"#fff",border:`1px solid ${STATUS_COLORS[viewPat.status]}`}}>{STATUSES[viewPat.status]}</span>
             </div>
             <div style={{padding:"20px 24px"}}>
-              {[["🩺 Диагноз",viewPat.diagnosis||"—"],["👨‍⚕️ Врач",viewPat.doctor||"—"],["📆 Последний визит",fmt(viewPat.lastVisit)],["🔔 Следующий визит",viewPat.nextVisitDate?`${fmt(viewPat.nextVisitDate)} (${(d=>d<0?`просрочено ${-d}д`:d===0?"сегодня":`через ${d}д`)(daysUntil(viewPat.nextVisitDate))})`:"—"],["📋 Мета визиту",viewPat.nextVisitNote||"—"],["📝 Примечания",viewPat.notes||"—"]].map(([l,v])=>(
+              {[["🩺 Диагноз",viewPat.diagnosis||"—"],["👨‍⚕️ Врач",viewPat.doctor||"—"],["📆 Последний визит",fmt(viewPat.lastVisit)],["🔔 Следующий визит",viewPat.nextVisitDate?`${fmt(viewPat.nextVisitDate)} (${(d=>d<0?`просрочено ${-d}д`:d===0?"сегодня":`через ${d}д`)(daysUntil(viewPat.nextVisitDate))})`:"—"],["📋 Цель визита",viewPat.nextVisitNote||"—"],["📝 Примечания",viewPat.notes||"—"]].map(([l,v])=>(
                 <div key={l} style={{display:"flex",gap:10,marginBottom:11,paddingBottom:11,borderBottom:"1px solid #f0f4f8"}}>
                   <div style={{fontSize:13,color:"#64748b",minWidth:150,fontWeight:600}}>{l}</div>
                   <div style={{fontSize:14}}>{v}</div>
@@ -2153,8 +2155,8 @@ export default function MedKarta({ supabase, session, profile }) {
                   <div style={{fontSize:11,fontWeight:700,color:"#0e7c6b",textTransform:"uppercase",letterSpacing:".06em"}}>💊 Протоколы лечения</div>
                   <button className="btn" onClick={()=>{setEditProtocol({patientId:viewPat.id,name:"",procedures:[{procedureName:"",totalSessions:5,completedSessions:0,notes:""}],startDate:today(),status:"active",doctor:viewPat.doctor||"",diagnosis:viewPat.diagnosis||""});setModal("addProtocol");}} style={{background:"#0e7c6b",color:"#fff",padding:"4px 12px",fontSize:11}}>＋ Протокол</button>
                 </div>
-                {protocols.filter(pr=>pr.patientId===viewPat.id).length>0?
-                  protocols.filter(pr=>pr.patientId===viewPat.id).map(pr=>{
+                {protocols.filter(pr=>String(pr.patientId)===String(viewPat.id)).length>0?
+                  protocols.filter(pr=>String(pr.patientId)===String(viewPat.id)).map(pr=>{
                     const totalAll = pr.procedures.reduce((s,proc)=>s+proc.totalSessions,0);
                     const doneAll = pr.procedures.reduce((s,proc)=>s+proc.completedSessions,0);
                     const pct = totalAll>0?Math.round(doneAll/totalAll*100):0;
@@ -2167,7 +2169,7 @@ export default function MedKarta({ supabase, session, profile }) {
                             <span className="chip" style={{background:statusColor+"22",color:statusColor,fontSize:10}}>{pr.status==="active"?"Активный":pr.status==="completed"?"Завершён":"Пауза"}</span>
                           </div>
                           <div style={{display:"flex",gap:4}}>
-                            {pr.status==="active"&&<button className="btn" onClick={()=>{const updated={...pr,procedures:pr.procedures.map(proc=>({...proc,completedSessions:Math.min(proc.completedSessions+1,proc.totalSessions)}))};setProtocols(prev=>prev.map(p=>p.id===pr.id?updated:p));showToast("+1 сеанс");}} style={{background:"#d1fae5",color:"#065f46",padding:"2px 8px",fontSize:10}}>＋1</button>}
+                            {pr.status==="active"&&<button className="btn" onClick={async ()=>{const updated={...pr,procedures:pr.procedures.map(proc=>({...proc,completedSessions:Math.min(proc.completedSessions+1,proc.totalSessions)}))};if(usingSupabase&&supabase)await supabase.from("protocols").update({procedures:updated.procedures}).eq("id",pr.id);setProtocols(prev=>prev.map(p=>p.id===pr.id?updated:p));showToast("+1 сеанс");}} style={{background:"#d1fae5",color:"#065f46",padding:"2px 8px",fontSize:10}}>＋1</button>}
                             <button className="btn" onClick={()=>{setEditProtocol({...pr,procedures:pr.procedures.map(p=>({...p}))});setModal("editProtocol");}} style={{background:"#eff6ff",color:"#2563eb",padding:"2px 8px",fontSize:10}}>✏️</button>
                           </div>
                         </div>
@@ -2178,23 +2180,23 @@ export default function MedKarta({ supabase, session, profile }) {
                       </div>
                     );
                   })
-                :<div style={{color:"#94a3b8",fontSize:13,padding:"4px 0"}}>Нет протоколів</div>}
+                :<div style={{color:"#94a3b8",fontSize:13,padding:"4px 0"}}>Нет протоколов</div>}
               </div>
               {/* Appointments for this patient */}
               <div style={{marginTop:8}}>
-                <div style={{fontSize:11,fontWeight:700,color:"#64748b",marginBottom:8,textTransform:"uppercase",letterSpacing:".06em"}}>Записьи на прием</div>
-                {appointments.filter(a=>a.patientId===viewPat.id).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5).map(a=>(
+                <div style={{fontSize:11,fontWeight:700,color:"#64748b",marginBottom:8,textTransform:"uppercase",letterSpacing:".06em"}}>Записи на приём</div>
+                {appointments.filter(a=>String(a.patientId)===String(viewPat.id)).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5).map(a=>(
                   <div key={a.id} style={{display:"flex",justifyContent:"space-between",padding:"7px 10px",background:"#f8fafc",borderRadius:7,marginBottom:4,fontSize:13}}>
                     <span>{fmt(a.date)} {a.time} — {a.type}{a.notes?` · ${a.notes}`:""}</span>
                     <span className="chip" style={{background:APPT_STATUS_COLORS[a.status]+"22",color:APPT_STATUS_COLORS[a.status],fontSize:11}}>{APPT_STATUSES[a.status]}</span>
                   </div>
                 ))}
-                {appointments.filter(a=>a.patientId===viewPat.id).length===0&&<div style={{color:"#94a3b8",fontSize:13}}>Нет записьей</div>}
+                {appointments.filter(a=>String(a.patientId)===String(viewPat.id)).length===0&&<div style={{color:"#94a3b8",fontSize:13}}>Нет записей</div>}
               </div>
               <div style={{display:"flex",gap:8,marginTop:16,flexWrap:"wrap"}}>
                 <button className="btn" onClick={()=>{setDischargePat(viewPat);setModal("discharge");}} style={{background:"#f0fdf4",color:"#0e7c6b",padding:"9px 14px"}}>📄 Выписка</button>
               <button className="btn" onClick={()=>{setModal(null);setTimelinePat(viewPat);setTimeout(()=>setModal("timeline"),50);}} style={{background:"#faf5ff",color:"#7c3aed",padding:"9px 14px"}}>📋 История</button>
-                <button className="btn" onClick={()=>{setEditAppt({...EMPTY_APPT,patientId:viewPat.id,doctor:viewPat.doctor,date:today()});setModal("addAppt");}} style={{background:"#f0fdf4",color:"#10b981",padding:"9px 14px"}}>📅 Записьати</button>
+                <button className="btn" onClick={()=>{setEditAppt({...EMPTY_APPT,patientId:viewPat.id,doctor:viewPat.doctor,date:today()});setModal("addAppt");}} style={{background:"#f0fdf4",color:"#10b981",padding:"9px 14px"}}>📅 Записать</button>
                 {viewPat.nextVisitDate&&<button className="btn" onClick={()=>{setModal(null);setMessengerPat(viewPat);}} style={{background:"#25d366",color:"#fff",padding:"9px 14px",display:"flex",alignItems:"center",gap:5}}>{WA_SVG} WA/TG</button>}
                 <button className="btn" onClick={()=>{setEditPat({...viewPat});setModal("editPat");}} style={{flex:1,background:"#0e7c6b",color:"#fff",padding:"9px"}}>✏️ Редактировать</button>
                 <button className="btn" onClick={()=>setDeleteTarget({type:"patient",id:viewPat.id,name:fullName(viewPat)})} style={{background:"#fef2f2",color:"#dc2626",padding:"9px 14px"}}>🗑</button>
@@ -2219,7 +2221,7 @@ export default function MedKarta({ supabase, session, profile }) {
             <div style={{padding:"20px 24px"}}>
               {(()=>{
                 const events = getTimeline(timelinePat.id);
-                if(events.length===0) return <div style={{textAlign:"center",color:"#94a3b8",padding:"30px"}}>Нет записьей в історії</div>;
+                if(events.length===0) return <div style={{textAlign:"center",color:"#94a3b8",padding:"30px"}}>Нет записей в истории</div>;
                 return events.map((ev,i) => (
                   <div key={i} style={{display:"flex",gap:14,marginBottom:0,position:"relative",animationDelay:`${i*0.05}s`}} className="fade-item">
                     <div style={{display:"flex",flexDirection:"column",alignItems:"center",position:"relative"}}>
