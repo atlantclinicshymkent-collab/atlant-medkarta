@@ -1153,7 +1153,7 @@ function DischargeSummaryModal({ patient, protocols, appointments, procCatalog, 
               <table style={{width:"100%",borderCollapse:"collapse",border:"1px solid #e2e8f0",borderRadius:10,overflow:"hidden"}}>
                 <thead>
                   <tr style={{background:"#f0fdf4"}}>
-                    {["Процедура","Выполнено","Препараты","Примечания","Стоимость"].map(h=>(
+                    {["Процедура","Выполнено","Препараты","Примечания"].map(h=>(
                       <th key={h} style={{padding:"8px 12px",textAlign:"left",fontSize:11,fontWeight:700,color:"#166534",borderBottom:"1px solid #e2e8f0"}}>{h}</th>
                     ))}
                   </tr>
@@ -1165,15 +1165,8 @@ function DischargeSummaryModal({ patient, protocols, appointments, procCatalog, 
                       <td style={{padding:"7px 12px",fontSize:13}}><b style={{color:"#0e7c6b"}}>{proc.sessions}</b><span style={{color:"#94a3b8"}}>/{proc.total}</span></td>
                       <td style={{padding:"7px 12px",fontSize:12,color:"#475569"}}>{proc.medications.length>0?proc.medications.join(", "):"—"}</td>
                       <td style={{padding:"7px 12px",fontSize:12,color:"#64748b"}}>{proc.notes||"—"}</td>
-                      <td style={{padding:"7px 12px",fontSize:12,color:"#0e7c6b",fontWeight:600}}>{proc.price?`${(proc.price*proc.sessions).toLocaleString()} ₸`:"—"}</td>
                     </tr>
                   ))}
-                  {completedProcedures.some(p=>p.price>0)&&(
-                    <tr style={{background:"#f0fdf4",borderTop:"2px solid #bbf7d0"}}>
-                      <td colSpan={4} style={{padding:"8px 12px",fontWeight:700,fontSize:13,textAlign:"right"}}>Итого:</td>
-                      <td style={{padding:"8px 12px",fontWeight:800,fontSize:14,color:"#0e7c6b"}}>{completedProcedures.reduce((s,p)=>s+(p.price*p.sessions),0).toLocaleString()} ₸</td>
-                    </tr>
-                  )}
                 </tbody>
               </table>
             </div>
@@ -1246,6 +1239,194 @@ function DischargeSummaryModal({ patient, protocols, appointments, procCatalog, 
   );
 }
 
+// ═══════════════════════════════════════════
+// INFORMED CONSENT MODAL (Информированное согласие)
+// ═══════════════════════════════════════════
+function ConsentModal({ patient, doctor, procedures, onClose }) {
+  const printRef = useRef(null);
+  const [customProcedures, setCustomProcedures] = useState(
+    procedures && procedures.length > 0
+      ? procedures.map(p => p.procedureName || p.name || p).filter(Boolean).join(", ")
+      : "физиотерапевтические процедуры, инъекции, мануальная терапия"
+  );
+  const [complications, setComplications] = useState(
+    "временное усиление болевых ощущений, локальные гематомы в месте инъекций, аллергические реакции на препараты, вегетативные реакции (головокружение, тошнота), обострение хронических заболеваний"
+  );
+
+  const handlePrint = () => {
+    const content = printRef.current;
+    if (!content) return;
+    const printWin = window.open('', '_blank', 'width=800,height=900');
+    printWin.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Согласие — ${fullName(patient)}</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'DM Sans',Arial,sans-serif;padding:20mm;color:#1a2332;font-size:14px;line-height:1.8}
+        h1{font-size:18px;text-align:center;margin-bottom:20px;text-transform:uppercase;letter-spacing:.05em}
+        h2{font-size:13px;margin:16px 0 8px;color:#064e3b;text-transform:uppercase;letter-spacing:.06em}
+        .sig-line{border-bottom:1px solid #333;width:200px;display:inline-block;margin:0 8px}
+        @page{margin:20mm}
+      </style></head><body>`);
+    printWin.document.write(content.innerHTML);
+    printWin.document.write('</body></html>');
+    printWin.document.close();
+    printWin.focus();
+    setTimeout(() => { printWin.print(); printWin.close(); }, 400);
+  };
+
+  const handlePDF = () => {
+    const content = printRef.current;
+    if (!content) return;
+    const printWin = window.open('', '_blank', 'width=800,height=900');
+    printWin.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Согласие — ${fullName(patient)}</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'DM Sans',Arial,sans-serif;padding:20mm;color:#1a2332;font-size:14px;line-height:1.8}
+        h1{font-size:18px;text-align:center;margin-bottom:20px;text-transform:uppercase;letter-spacing:.05em}
+        h2{font-size:13px;margin:16px 0 8px;color:#064e3b;text-transform:uppercase;letter-spacing:.06em}
+        .sig-line{border-bottom:1px solid #333;width:200px;display:inline-block;margin:0 8px}
+        @page{margin:20mm}
+      </style>
+      <script>window.onafterprint=function(){window.close();};<\/script>
+    </head><body>`);
+    printWin.document.write(`<div style="text-align:center;margin-bottom:16px;padding:8px;background:#f0fdf4;border-radius:8px;font-size:12px;color:#064e3b">
+      💡 Чтобы скачать PDF: выберите <b>«Сохранить как PDF»</b> в диалоге печати
+    </div>`);
+    printWin.document.write(content.innerHTML);
+    printWin.document.write('</body></html>');
+    printWin.document.close();
+    printWin.focus();
+    setTimeout(() => { printWin.print(); }, 400);
+  };
+
+  return (
+    <div className="modal-bg" onClick={onClose}>
+      <div className="modal" style={{width:760,maxHeight:"95vh",overflow:"auto"}} onClick={e=>e.stopPropagation()}>
+        <div style={{background:"linear-gradient(135deg,#1e3a5f,#2563eb)",padding:"18px 24px",borderRadius:"18px 18px 0 0",display:"flex",justifyContent:"space-between",alignItems:"center"}} className="no-print">
+          <div>
+            <div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:"#fff"}}>📝 Информированное согласие</div>
+            <div style={{color:"rgba(255,255,255,.65)",fontSize:13,marginTop:2}}>{fullName(patient)}</div>
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <button className="btn" onClick={handlePrint} style={{background:"#fff",color:"#1e3a5f",padding:"8px 16px",fontWeight:700}}>🖨️ Печать</button>
+            <button className="btn" onClick={handlePDF} style={{background:"rgba(255,255,255,.2)",color:"#fff",padding:"8px 16px",fontWeight:700}}>📥 PDF</button>
+            <button className="btn" onClick={onClose} style={{background:"rgba(255,255,255,.15)",color:"#fff",padding:"5px 11px"}}>✕</button>
+          </div>
+        </div>
+
+        {/* Editable fields */}
+        <div style={{padding:"16px 24px",background:"#f8fafc",borderBottom:"1px solid #e2e8f0"}} className="no-print">
+          <div style={{fontSize:11,fontWeight:700,color:"#64748b",marginBottom:8,textTransform:"uppercase",letterSpacing:".06em"}}>✏️ Редактировать перед печатью</div>
+          <div className="field" style={{marginBottom:8}}><label>Перечень процедур / манипуляций</label>
+            <textarea rows={2} value={customProcedures} onChange={e=>setCustomProcedures(e.target.value)} style={{width:"100%",padding:"8px 12px",border:"1.5px solid #dde4ef",borderRadius:8,fontSize:13,resize:"vertical"}}/>
+          </div>
+          <div className="field"><label>Возможные осложнения</label>
+            <textarea rows={2} value={complications} onChange={e=>setComplications(e.target.value)} style={{width:"100%",padding:"8px 12px",border:"1.5px solid #dde4ef",borderRadius:8,fontSize:13,resize:"vertical"}}/>
+          </div>
+        </div>
+
+        {/* Printable content */}
+        <div ref={printRef} style={{padding:"28px 32px"}}>
+          <div style={{textAlign:"center",marginBottom:20}}>
+            <div style={{fontSize:13,color:"#64748b",marginBottom:4}}>ТОО «Atlant Clinic»</div>
+            <div style={{fontSize:12,color:"#94a3b8"}}>г. Шымкент, ул. Акпан Батыр, 46</div>
+          </div>
+
+          <h1 style={{fontSize:18,textAlign:"center",marginBottom:20,textTransform:"uppercase",letterSpacing:".05em",fontFamily:"'DM Serif Display',serif"}}>
+            Информированное добровольное согласие<br/>на проведение медицинских манипуляций
+          </h1>
+
+          <div style={{fontSize:14,lineHeight:2,marginBottom:16}}>
+            <p style={{marginBottom:12}}>
+              Я, <b>{fullName(patient)}</b>,
+              {patient.dob ? ` ${fmt(patient.dob)} г.р.,` : ""}
+              {patient.iin ? ` ИИН: ${patient.iin},` : ""}
+              настоящим подтверждаю, что даю добровольное информированное согласие на проведение следующих медицинских манипуляций и процедур:
+            </p>
+
+            <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:8,padding:"12px 16px",marginBottom:16}}>
+              <b>{customProcedures}</b>
+            </div>
+
+            {patient.diagnosis && (
+              <p style={{marginBottom:12}}>
+                <b>Диагноз:</b> {patient.diagnosis}
+              </p>
+            )}
+
+            <p style={{marginBottom:12}}>
+              <b>Лечащий врач:</b> {doctor || patient.doctor || "—"}
+            </p>
+
+            <p style={{marginBottom:12}}>Мне в доступной форме разъяснены:</p>
+
+            <div style={{paddingLeft:20,marginBottom:16}}>
+              <p style={{marginBottom:6}}>1. Характер и объём предстоящих медицинских манипуляций;</p>
+              <p style={{marginBottom:6}}>2. Ожидаемые результаты лечения;</p>
+              <p style={{marginBottom:6}}>3. Возможные осложнения и побочные эффекты, в том числе:</p>
+              <div style={{background:"#fef3c7",border:"1px solid #fde68a",borderRadius:8,padding:"10px 14px",margin:"8px 0 12px 12px",fontSize:13}}>
+                {complications}
+              </div>
+              <p style={{marginBottom:6}}>4. Альтернативные методы лечения;</p>
+              <p style={{marginBottom:6}}>5. Последствия отказа от предлагаемых манипуляций;</p>
+              <p style={{marginBottom:6}}>6. Необходимость соблюдения рекомендаций врача в процессе и после лечения.</p>
+            </div>
+
+            <p style={{marginBottom:12}}>
+              Я подтверждаю, что имел(а) возможность задать врачу вопросы относительно предстоящего лечения и получил(а) на них исчерпывающие ответы.
+            </p>
+
+            <p style={{marginBottom:12}}>
+              Я осознаю, что медицина не является точной наукой и что гарантия достижения конкретного результата лечения невозможна.
+            </p>
+
+            <p style={{marginBottom:12,fontWeight:700}}>
+              Претензий к лечащему врачу и медицинскому персоналу ТОО «Atlant Clinic» в связи с возможными осложнениями, не связанными с ненадлежащим оказанием медицинской помощи, не имею.
+            </p>
+
+            <p style={{marginBottom:20}}>
+              Настоящее согласие дано добровольно, без какого-либо принуждения.
+            </p>
+          </div>
+
+          {/* Signatures */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:40,marginTop:32}}>
+            <div>
+              <div style={{fontSize:12,color:"#64748b",fontWeight:700,marginBottom:24,textTransform:"uppercase",letterSpacing:".05em"}}>Пациент:</div>
+              <div style={{marginBottom:20}}>
+                <span style={{fontSize:13}}>ФИО: </span><span style={{borderBottom:"1px solid #333",display:"inline-block",width:"100%",minWidth:180,minHeight:18}}></span>
+              </div>
+              <div style={{marginBottom:20}}>
+                <span style={{fontSize:13}}>Подпись: </span><span style={{borderBottom:"1px solid #333",display:"inline-block",width:"70%",minWidth:120,minHeight:18}}></span>
+              </div>
+              <div>
+                <span style={{fontSize:13}}>Дата: </span><span style={{fontSize:13,fontWeight:600}}>{fmt(today())}</span>
+              </div>
+            </div>
+            <div>
+              <div style={{fontSize:12,color:"#64748b",fontWeight:700,marginBottom:24,textTransform:"uppercase",letterSpacing:".05em"}}>Врач:</div>
+              <div style={{marginBottom:20}}>
+                <span style={{fontSize:13}}>ФИО: </span><span style={{fontSize:13,fontWeight:600}}>{doctor || patient.doctor || "—"}</span>
+              </div>
+              <div style={{marginBottom:20}}>
+                <span style={{fontSize:13}}>Подпись: </span><span style={{borderBottom:"1px solid #333",display:"inline-block",width:"70%",minWidth:120,minHeight:18}}></span>
+              </div>
+              <div>
+                <span style={{fontSize:13}}>Дата: </span><span style={{fontSize:13,fontWeight:600}}>{fmt(today())}</span>
+              </div>
+            </div>
+          </div>
+
+          <div style={{textAlign:"center",marginTop:32,fontSize:11,color:"#94a3b8",borderTop:"1px solid #e2e8f0",paddingTop:12}}>
+            ТОО «Atlant Clinic» · г. Шымкент, ул. Акпан Батыр, 46 · Документ сформирован {fmt(today())}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function MedKarta({ supabase, session, profile }) {
   const [patients, setPatients] = useState([]);
   const [appointments, setAppointments] = useState([]);
@@ -1275,6 +1456,7 @@ export default function MedKarta({ supabase, session, profile }) {
   const [messengerPat, setMessengerPat] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [dischargePat, setDischargePat] = useState(null);
+  const [consentPat, setConsentPat] = useState(null);
   const [toast, setToast] = useState(null);
   const [sortBy, setSortBy] = useState("lastName");
   const [timelinePat, setTimelinePat] = useState(null);
@@ -1678,6 +1860,7 @@ export default function MedKarta({ supabase, session, profile }) {
     {id:"podiatech",label:"🦶 Podiatech",count:podiatech.length},
     {id:"doctors",label:"👨‍⚕️ Специалисты",count:doctors.length},
     {id:"analytics",label:"📊 Аналитика",count:null},
+    {id:"reports",label:"📋 Отчёты",count:null},
     {id:"reminders",label:"🔔 Напоминания",count:reminders.length,urgent:urgentCount},
   ];
 
@@ -1786,6 +1969,7 @@ export default function MedKarta({ supabase, session, profile }) {
                         <div style={{display:"flex",gap:3,justifyContent:"flex-end"}}>
                           {p.nextVisitDate&&<MsgBtns patient={p} setMessengerPat={setMessengerPat}/>}
                           <button className="btn" onClick={()=>{setDischargePat(p);setModal("discharge");}} title="Выписка" style={{background:"#f0fdf4",color:"#0e7c6b",padding:"5px 8px"}}>📄</button>
+                          <button className="btn" onClick={()=>{setConsentPat(p);setModal("consent");}} title="Согласие" style={{background:"#eff6ff",color:"#2563eb",padding:"5px 8px"}}>📝</button>
                           <button className="btn" onClick={()=>{setTimelinePat(p);setModal("timeline");}} title="История" style={{background:"#faf5ff",color:"#7c3aed",padding:"5px 8px"}}>📋</button>
                           <button className="btn" onClick={()=>{setEditPat({...p});setModal("editPat");}} style={{background:"#eff6ff",color:"#2563eb",padding:"5px 8px"}}>✏️</button>
                           <button className="btn" onClick={()=>setDeleteTarget({type:"patient",id:p.id,name:fullName(p)})} style={{background:"#fef2f2",color:"#dc2626",padding:"5px 8px"}}>🗑</button>
@@ -2384,6 +2568,230 @@ export default function MedKarta({ supabase, session, profile }) {
         </>}
 
         {/* ════════════════════════════════════════ */}
+        {/* TAB: REPORTS                             */}
+        {/* ════════════════════════════════════════ */}
+        {tab==="reports"&&(()=>{
+          // We use viewPat state fields to store report dates (hacky but avoids adding more useState)
+          const getRepState = () => {
+            try { return JSON.parse(localStorage.getItem("mk2_report_state")||"{}"); } catch { return {}; }
+          };
+          const setRepState = (upd) => {
+            const cur = getRepState();
+            const next = {...cur,...upd};
+            localStorage.setItem("mk2_report_state", JSON.stringify(next));
+            // force re-render
+          };
+
+          // Calculate period defaults
+          const now = new Date();
+          const isSaturday = now.getDay() === 6;
+          const isLastDay = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate() === now.getDate();
+          const weekStart = (()=>{ const d=new Date(); d.setDate(d.getDate()-d.getDay()+1); return d.toISOString().slice(0,10); })();
+          const monthStart = now.toISOString().slice(0,8)+"01";
+
+          const [repFrom, setRepFrom] = useState(weekStart);
+          const [repTo, setRepTo] = useState(today());
+          const [repDoctor, setRepDoctor] = useState("all");
+
+          // Filter appointments for period
+          const repAppts = appointments.filter(a => a.date >= repFrom && a.date <= repTo && (repDoctor==="all"||a.doctor===repDoctor));
+          const doneAppts = repAppts.filter(a=>a.status==="done");
+          const scheduledAppts = repAppts.filter(a=>a.status==="scheduled");
+          const cancelledAppts = repAppts.filter(a=>a.status==="cancelled"||a.status==="missed");
+
+          // Revenue calculation
+          const revenueByProc = {};
+          let totalRevenue = 0;
+          protocols.forEach(pr => {
+            pr.procedures.forEach(proc => {
+              if (proc.completedSessions > 0) {
+                const cat = procCatalog.find(c=>c.name===proc.procedureName);
+                if (cat?.price) {
+                  const amount = cat.price * proc.completedSessions;
+                  revenueByProc[proc.procedureName] = (revenueByProc[proc.procedureName]||0) + amount;
+                  totalRevenue += amount;
+                }
+              }
+            });
+          });
+
+          // Revenue for the period (approximate — based on done appointments and their protocols)
+          const periodPatientIds = new Set(doneAppts.map(a=>a.patientId));
+          let periodRevenue = 0;
+          const periodRevenueByDoctor = {};
+          const periodRevenueByProc = {};
+          doneAppts.forEach(a => {
+            // Find protocols for this patient with completed sessions
+            const patProtos = protocols.filter(pr=>String(pr.patientId)===String(a.patientId));
+            patProtos.forEach(pr=>{
+              pr.procedures.forEach(proc=>{
+                const cat = procCatalog.find(c=>c.name===proc.procedureName);
+                if(cat?.price && proc.completedSessions>0) {
+                  // Approximate: distribute evenly per completed session across done appointments
+                  const perSession = cat.price;
+                  // We count 1 session per done appointment for this procedure
+                  periodRevenue += perSession;
+                  periodRevenueByDoctor[a.doctor] = (periodRevenueByDoctor[a.doctor]||0) + perSession;
+                  periodRevenueByProc[proc.procedureName] = (periodRevenueByProc[proc.procedureName]||0) + perSession;
+                }
+              });
+            });
+          });
+
+          // Doctor stats for period
+          const repDoctorStats = {};
+          repAppts.forEach(a => {
+            if(!repDoctorStats[a.doctor]) repDoctorStats[a.doctor]={done:0,scheduled:0,cancelled:0,total:0};
+            repDoctorStats[a.doctor].total++;
+            if(a.status==="done") repDoctorStats[a.doctor].done++;
+            else if(a.status==="scheduled") repDoctorStats[a.doctor].scheduled++;
+            else repDoctorStats[a.doctor].cancelled++;
+          });
+
+          const handlePrintReport = (title, contentId) => {
+            const content = document.getElementById(contentId);
+            if(!content) return;
+            const printWin = window.open('','_blank','width=900,height=700');
+            printWin.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>
+              <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;padding:15mm;font-size:12px;color:#333}
+              h1{font-size:16px;margin-bottom:12px;text-align:center}h2{font-size:13px;margin:14px 0 6px;color:#064e3b}
+              table{width:100%;border-collapse:collapse;margin:8px 0}th,td{padding:5px 8px;border:1px solid #ccc;text-align:left;font-size:11px}
+              th{background:#f0f2f5;font-weight:700}.right{text-align:right}@page{margin:10mm}</style></head><body>`);
+            printWin.document.write(content.innerHTML);
+            printWin.document.write('</body></html>');
+            printWin.document.close();
+            printWin.focus();
+            setTimeout(()=>{printWin.print();printWin.close();},400);
+          };
+
+          const autoLabel = isSaturday ? "📅 Суббота — еженедельный отчёт" : isLastDay ? "📅 Последний день месяца — ежемесячный отчёт" : null;
+
+          return <>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18,flexWrap:"wrap",gap:12}}>
+            <div>
+              <div style={{fontFamily:"'DM Serif Display',serif",fontSize:22}}>📋 Отчёты</div>
+              <div style={{fontSize:13,color:"#64748b",marginTop:2}}>Записи и доходы за период</div>
+            </div>
+            {autoLabel&&<div style={{background:"#fef3c7",border:"1px solid #fde68a",borderRadius:10,padding:"8px 16px",fontSize:13,color:"#92400e",fontWeight:600}}>{autoLabel}</div>}
+          </div>
+
+          {/* Period selector */}
+          <div className="card" style={{padding:"14px 18px",marginBottom:16,display:"flex",gap:12,alignItems:"center",flexWrap:"wrap"}}>
+            <div className="field" style={{minWidth:140}}><label>С</label><input type="date" value={repFrom} onChange={e=>setRepFrom(e.target.value)} style={{padding:"7px 10px",border:"1.5px solid #dde4ef",borderRadius:8,fontSize:13}}/></div>
+            <div className="field" style={{minWidth:140}}><label>По</label><input type="date" value={repTo} onChange={e=>setRepTo(e.target.value)} style={{padding:"7px 10px",border:"1.5px solid #dde4ef",borderRadius:8,fontSize:13}}/></div>
+            <div className="field" style={{minWidth:160}}><label>Врач</label>
+              <select value={repDoctor} onChange={e=>setRepDoctor(e.target.value)} style={{padding:"7px 10px",border:"1.5px solid #dde4ef",borderRadius:8,fontSize:13}}>
+                <option value="all">Все врачи</option>
+                {doctorNames.map(d=><option key={d} value={d}>{d.split(" ").slice(0,2).join(" ")}</option>)}
+              </select>
+            </div>
+            <div style={{display:"flex",gap:6,marginTop:16}}>
+              <button className="btn" onClick={()=>{setRepFrom(weekStart);setRepTo(today());}} style={{background:"#f0fdf4",color:"#0e7c6b",padding:"6px 12px",fontSize:11,border:"1px solid #bbf7d0"}}>Эта неделя</button>
+              <button className="btn" onClick={()=>{setRepFrom(monthStart);setRepTo(today());}} style={{background:"#eff6ff",color:"#2563eb",padding:"6px 12px",fontSize:11,border:"1px solid #bfdbfe"}}>Этот месяц</button>
+            </div>
+          </div>
+
+          {/* Summary cards */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:20}}>
+            {[
+              {l:"Всего записей",v:repAppts.length,c:"#2563eb",i:"📅"},
+              {l:"Проведено",v:doneAppts.length,c:"#10b981",i:"✅"},
+              {l:"Запланировано",v:scheduledAppts.length,c:"#f59e0b",i:"⏳"},
+              {l:"Отмена / Неявка",v:cancelledAppts.length,c:"#dc2626",i:"❌"},
+            ].map(s=>(
+              <div key={s.l} className="card" style={{padding:"14px 18px",borderLeft:`4px solid ${s.c}`}}>
+                <div style={{fontSize:22}}>{s.i}</div>
+                <div style={{fontSize:28,fontWeight:700,fontFamily:"'DM Serif Display',serif",color:s.c}}>{s.v}</div>
+                <div style={{fontSize:12,color:"#64748b"}}>{s.l}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+
+            {/* Report 1: Appointments */}
+            <div className="card" style={{padding:"20px"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                <div style={{fontSize:14,fontWeight:700,color:"#1a2332"}}>📅 Отчёт по записям</div>
+                <button className="btn" onClick={()=>handlePrintReport(`Отчёт по записям ${fmt(repFrom)}–${fmt(repTo)}`,"report-appts")} style={{background:"#f1f5f9",color:"#475569",padding:"5px 12px",fontSize:11}}>🖨️ Печать</button>
+              </div>
+              <div id="report-appts">
+                <h1 style={{fontSize:16,marginBottom:8,textAlign:"center"}}>Отчёт по записям</h1>
+                <div style={{textAlign:"center",fontSize:12,color:"#64748b",marginBottom:12}}>Период: {fmt(repFrom)} — {fmt(repTo)}{repDoctor!=="all"?` · Врач: ${repDoctor}`:""}</div>
+                <h2 style={{fontSize:12,fontWeight:700,color:"#064e3b",margin:"12px 0 6px"}}>По врачам:</h2>
+                <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,marginBottom:12}}>
+                  <thead><tr style={{background:"#f0f2f5"}}><th style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"left"}}>Врач</th><th style={{padding:"6px 10px",border:"1px solid #e2e8f0"}}>Проведено</th><th style={{padding:"6px 10px",border:"1px solid #e2e8f0"}}>Заплан.</th><th style={{padding:"6px 10px",border:"1px solid #e2e8f0"}}>Отмена</th><th style={{padding:"6px 10px",border:"1px solid #e2e8f0"}}>Всего</th></tr></thead>
+                  <tbody>
+                    {Object.entries(repDoctorStats).map(([doc,st])=>(
+                      <tr key={doc}><td style={{padding:"5px 10px",border:"1px solid #f0f4f8"}}>{doc.split(" ").slice(0,2).join(" ")}</td><td style={{padding:"5px 10px",border:"1px solid #f0f4f8",textAlign:"center",color:"#10b981",fontWeight:600}}>{st.done}</td><td style={{padding:"5px 10px",border:"1px solid #f0f4f8",textAlign:"center",color:"#f59e0b"}}>{st.scheduled}</td><td style={{padding:"5px 10px",border:"1px solid #f0f4f8",textAlign:"center",color:"#dc2626"}}>{st.cancelled}</td><td style={{padding:"5px 10px",border:"1px solid #f0f4f8",textAlign:"center",fontWeight:700}}>{st.total}</td></tr>
+                    ))}
+                    <tr style={{background:"#f0fdf4",fontWeight:700}}><td style={{padding:"6px 10px",border:"1px solid #e2e8f0"}}>Итого</td><td style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"center"}}>{doneAppts.length}</td><td style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"center"}}>{scheduledAppts.length}</td><td style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"center"}}>{cancelledAppts.length}</td><td style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"center"}}>{repAppts.length}</td></tr>
+                  </tbody>
+                </table>
+                <div style={{fontSize:11,color:"#94a3b8",textAlign:"right"}}>Atlant Clinic · {fmt(today())}</div>
+              </div>
+            </div>
+
+            {/* Report 2: Revenue */}
+            <div className="card" style={{padding:"20px"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                <div style={{fontSize:14,fontWeight:700,color:"#1a2332"}}>💰 Отчёт по сумме услуг</div>
+                <button className="btn" onClick={()=>handlePrintReport(`Отчёт по доходам ${fmt(repFrom)}–${fmt(repTo)}`,"report-revenue")} style={{background:"#f1f5f9",color:"#475569",padding:"5px 12px",fontSize:11}}>🖨️ Печать</button>
+              </div>
+              <div id="report-revenue">
+                <h1 style={{fontSize:16,marginBottom:8,textAlign:"center"}}>Отчёт по сумме оказанных услуг</h1>
+                <div style={{textAlign:"center",fontSize:12,color:"#64748b",marginBottom:12}}>Период: {fmt(repFrom)} — {fmt(repTo)}</div>
+
+                <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:10,padding:"14px 18px",marginBottom:14,textAlign:"center"}}>
+                  <div style={{fontSize:11,color:"#166534",fontWeight:700,textTransform:"uppercase",letterSpacing:".05em",marginBottom:4}}>Итого за период</div>
+                  <div style={{fontSize:28,fontWeight:800,color:"#0e7c6b",fontFamily:"'DM Serif Display',serif"}}>{periodRevenue.toLocaleString()} ₸</div>
+                  <div style={{fontSize:12,color:"#64748b"}}>{doneAppts.length} проведённых приёмов · {periodPatientIds.size} пациентов</div>
+                </div>
+
+                <h2 style={{fontSize:12,fontWeight:700,color:"#064e3b",margin:"12px 0 6px"}}>По врачам:</h2>
+                <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,marginBottom:12}}>
+                  <thead><tr style={{background:"#f0f2f5"}}><th style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"left"}}>Врач</th><th style={{padding:"6px 10px",border:"1px solid #e2e8f0"}}>Приёмов</th><th style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"right"}}>Сумма</th></tr></thead>
+                  <tbody>
+                    {Object.entries(periodRevenueByDoctor).sort((a,b)=>b[1]-a[1]).map(([doc,sum])=>(
+                      <tr key={doc}><td style={{padding:"5px 10px",border:"1px solid #f0f4f8"}}>{doc.split(" ").slice(0,2).join(" ")}</td><td style={{padding:"5px 10px",border:"1px solid #f0f4f8",textAlign:"center"}}>{(repDoctorStats[doc]||{}).done||0}</td><td style={{padding:"5px 10px",border:"1px solid #f0f4f8",textAlign:"right",fontWeight:600,color:"#0e7c6b"}}>{sum.toLocaleString()} ₸</td></tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                <h2 style={{fontSize:12,fontWeight:700,color:"#064e3b",margin:"12px 0 6px"}}>По процедурам:</h2>
+                <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,marginBottom:12}}>
+                  <thead><tr style={{background:"#f0f2f5"}}><th style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"left"}}>Процедура</th><th style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"right"}}>Сумма</th></tr></thead>
+                  <tbody>
+                    {Object.entries(periodRevenueByProc).sort((a,b)=>b[1]-a[1]).map(([proc,sum])=>{
+                      const cat=procCatalog.find(c=>c.name===proc);
+                      return <tr key={proc}><td style={{padding:"5px 10px",border:"1px solid #f0f4f8"}}>{cat?.icon||"📋"} {proc}</td><td style={{padding:"5px 10px",border:"1px solid #f0f4f8",textAlign:"right",fontWeight:600,color:"#0e7c6b"}}>{sum.toLocaleString()} ₸</td></tr>;
+                    })}
+                    <tr style={{background:"#f0fdf4",fontWeight:700}}><td style={{padding:"6px 10px",border:"1px solid #e2e8f0"}}>Итого</td><td style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"right",color:"#0e7c6b"}}>{periodRevenue.toLocaleString()} ₸</td></tr>
+                  </tbody>
+                </table>
+                <div style={{fontSize:11,color:"#94a3b8",textAlign:"right"}}>Atlant Clinic · {fmt(today())}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Auto-report notification */}
+          {(isSaturday||isLastDay)&&(
+            <div style={{marginTop:16,background:"#fef3c7",border:"1px solid #fde68a",borderRadius:12,padding:"16px 20px",display:"flex",alignItems:"center",gap:14}}>
+              <span style={{fontSize:28}}>🔔</span>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:700,fontSize:14,color:"#92400e"}}>{isSaturday?"Еженедельный отчёт (суббота)":"Ежемесячный отчёт (последний день месяца)"}</div>
+                <div style={{fontSize:13,color:"#78350f",marginTop:2}}>Рекомендуем распечатать оба отчёта для архива</div>
+              </div>
+              <div style={{display:"flex",gap:6}}>
+                <button className="btn" onClick={()=>handlePrintReport(`Еженедельный отчёт по записям ${fmt(repFrom)}–${fmt(repTo)}`,"report-appts")} style={{background:"#fff",color:"#92400e",padding:"8px 14px",fontSize:12,border:"1px solid #fde68a"}}>🖨️ Записи</button>
+                <button className="btn" onClick={()=>handlePrintReport(`Еженедельный отчёт по доходам ${fmt(repFrom)}–${fmt(repTo)}`,"report-revenue")} style={{background:"#fff",color:"#92400e",padding:"8px 14px",fontSize:12,border:"1px solid #fde68a"}}>🖨️ Доходы</button>
+              </div>
+            </div>
+          )}
+          </>;
+        })()}
+
+        {/* ════════════════════════════════════════ */}
         {/* TAB: REMINDERS                          */}
         {/* ════════════════════════════════════════ */}
         {tab==="reminders"&&<>
@@ -2431,6 +2839,7 @@ export default function MedKarta({ supabase, session, profile }) {
 
       {messengerPat&&<MessengerModal patient={messengerPat} onClose={()=>setMessengerPat(null)}/>}
       {modal==="discharge"&&dischargePat&&<DischargeSummaryModal patient={dischargePat} protocols={protocols} appointments={appointments} procCatalog={procCatalog} onClose={()=>{setModal(null);setDischargePat(null);}}/>}
+      {modal==="consent"&&consentPat&&<ConsentModal patient={consentPat} doctor={consentPat.doctor||""} procedures={protocols.filter(pr=>String(pr.patientId)===String(consentPat.id)&&pr.status==="active").flatMap(pr=>pr.procedures)} onClose={()=>{setModal(null);setConsentPat(null);}}/>}
 
       {/* Patient view modal */}
       {modal==="viewPat"&&viewPat&&(
@@ -2594,6 +3003,7 @@ export default function MedKarta({ supabase, session, profile }) {
 
               <div style={{display:"flex",gap:8,marginTop:16,flexWrap:"wrap"}}>
                 <button className="btn" onClick={()=>{setDischargePat(viewPat);setModal("discharge");}} style={{background:"#f0fdf4",color:"#0e7c6b",padding:"9px 14px"}}>📄 Выписка</button>
+                <button className="btn" onClick={()=>{setConsentPat(viewPat);setModal("consent");}} style={{background:"#eff6ff",color:"#2563eb",padding:"9px 14px"}}>📝 Согласие</button>
               <button className="btn" onClick={()=>{setModal(null);setTimelinePat(viewPat);setTimeout(()=>setModal("timeline"),50);}} style={{background:"#faf5ff",color:"#7c3aed",padding:"9px 14px"}}>📋 История</button>
                 <button className="btn" onClick={()=>{setEditAppt({...EMPTY_APPT,patientId:viewPat.id,doctor:viewPat.doctor,date:today()});setModal("addAppt");}} style={{background:"#f0fdf4",color:"#10b981",padding:"9px 14px"}}>📅 Записать</button>
                 {viewPat.nextVisitDate&&<button className="btn" onClick={()=>{setModal(null);setMessengerPat(viewPat);}} style={{background:"#25d366",color:"#fff",padding:"9px 14px",display:"flex",alignItems:"center",gap:5}}>{WA_SVG} WA/TG</button>}
