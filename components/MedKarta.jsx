@@ -1463,6 +1463,16 @@ export default function MedKarta({ supabase, session, profile }) {
   const [podiatechSubTab, setPodiatechSubTab] = useState("diag");
   const [protocolSubTab, setProtocolSubTab] = useState("templates");
 
+  // ─── Report states ───
+  const weekStart = useMemo(() => { const d=new Date(); d.setDate(d.getDate()-d.getDay()+1); return d.toISOString().slice(0,10); }, []);
+  const [repFrom, setRepFrom] = useState(weekStart);
+  const [repTo, setRepTo] = useState(today());
+  const [repDoctor, setRepDoctor] = useState("all");
+
+  // ─── Role-based access ───
+  const isAdmin = !profile || profile.role === "admin";
+  const currentDoctorName = profile?.full_name || "";
+
   const doctorNames = useMemo(() => doctors.map(d => d.name), [doctors]);
 
   // ─── Storage: Supabase (primary) with localStorage fallback ───
@@ -1853,16 +1863,17 @@ export default function MedKarta({ supabase, session, profile }) {
 
   if (!loaded) return <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",fontSize:18,color:"#64748b",fontFamily:"'DM Sans',sans-serif"}}>⏳ Загрузка…</div>;
 
-  const TABS = [
+  const ALL_TABS = [
     {id:"patients",label:"👤 Пациенты",count:patients.length},
     {id:"appointments",label:"📅 Записи",count:appointments.filter(a=>a.status==="scheduled").length},
-    {id:"protocols",label:"💊 Протоколы",count:protocolTemplates.length},
-    {id:"podiatech",label:"🦶 Podiatech",count:podiatech.length},
-    {id:"doctors",label:"👨‍⚕️ Специалисты",count:doctors.length},
-    {id:"analytics",label:"📊 Аналитика",count:null},
-    {id:"reports",label:"📋 Отчёты",count:null},
+    {id:"protocols",label:"💊 Протоколы",count:protocolTemplates.length,adminOnly:true},
+    {id:"podiatech",label:"🦶 Podiatech",count:podiatech.length,adminOnly:true},
+    {id:"doctors",label:"👨‍⚕️ Специалисты",count:doctors.length,adminOnly:true},
+    {id:"analytics",label:"📊 Аналитика",count:null,adminOnly:true},
+    {id:"reports",label:"📋 Отчёты",count:null,adminOnly:true},
     {id:"reminders",label:"🔔 Напоминания",count:reminders.length,urgent:urgentCount},
   ];
+  const TABS = isAdmin ? ALL_TABS : ALL_TABS.filter(t=>!t.adminOnly);
 
   return (
     <div style={{fontFamily:"'DM Sans',sans-serif",minHeight:"100vh",background:"#f0f2f5"}}>
@@ -1884,8 +1895,8 @@ export default function MedKarta({ supabase, session, profile }) {
             </div>
           </div>
           <div style={{display:"flex",gap:8}}>
-            <button className="btn" onClick={exportExcel} style={{background:"rgba(255,255,255,.1)",color:"#fff",padding:"8px 16px",border:"1px solid rgba(255,255,255,.2)"}}>📥 Excel</button>
-            <button className="btn" onClick={()=>{setEditPat({...EMPTY_PATIENT});setModal("addPat");}} style={{background:"#fff",color:"#064e3b",padding:"8px 18px",fontWeight:700}}>＋ Пациент</button>
+            {isAdmin&&<button className="btn" onClick={exportExcel} style={{background:"rgba(255,255,255,.1)",color:"#fff",padding:"8px 16px",border:"1px solid rgba(255,255,255,.2)"}}>📥 Excel</button>}
+            {isAdmin&&<button className="btn" onClick={()=>{setEditPat({...EMPTY_PATIENT});setModal("addPat");}} style={{background:"#fff",color:"#064e3b",padding:"8px 18px",fontWeight:700}}>＋ Пациент</button>}
             {profile&&<div style={{display:"flex",alignItems:"center",gap:8,marginLeft:8}}>
               <div style={{fontSize:11,color:"rgba(255,255,255,.6)",textAlign:"right",lineHeight:1.3}}>
                 <div style={{fontWeight:600,color:"#fff"}}>{profile.full_name||profile.email}</div>
@@ -1971,8 +1982,8 @@ export default function MedKarta({ supabase, session, profile }) {
                           <button className="btn" onClick={()=>{setDischargePat(p);setModal("discharge");}} title="Выписка" style={{background:"#f0fdf4",color:"#0e7c6b",padding:"5px 8px"}}>📄</button>
                           <button className="btn" onClick={()=>{setConsentPat(p);setModal("consent");}} title="Согласие" style={{background:"#eff6ff",color:"#2563eb",padding:"5px 8px"}}>📝</button>
                           <button className="btn" onClick={()=>{setTimelinePat(p);setModal("timeline");}} title="История" style={{background:"#faf5ff",color:"#7c3aed",padding:"5px 8px"}}>📋</button>
-                          <button className="btn" onClick={()=>{setEditPat({...p});setModal("editPat");}} style={{background:"#eff6ff",color:"#2563eb",padding:"5px 8px"}}>✏️</button>
-                          <button className="btn" onClick={()=>setDeleteTarget({type:"patient",id:p.id,name:fullName(p)})} style={{background:"#fef2f2",color:"#dc2626",padding:"5px 8px"}}>🗑</button>
+                          {isAdmin&&<button className="btn" onClick={()=>{setEditPat({...p});setModal("editPat");}} style={{background:"#eff6ff",color:"#2563eb",padding:"5px 8px"}}>✏️</button>}
+                          {isAdmin&&<button className="btn" onClick={()=>setDeleteTarget({type:"patient",id:p.id,name:fullName(p)})} style={{background:"#fef2f2",color:"#dc2626",padding:"5px 8px"}}>🗑</button>}
                         </div>
                       </td>
                     </tr>
@@ -2570,75 +2581,36 @@ export default function MedKarta({ supabase, session, profile }) {
         {/* ════════════════════════════════════════ */}
         {/* TAB: REPORTS                             */}
         {/* ════════════════════════════════════════ */}
-        {tab==="reports"&&(()=>{
-          // We use viewPat state fields to store report dates (hacky but avoids adding more useState)
-          const getRepState = () => {
-            try { return JSON.parse(localStorage.getItem("mk2_report_state")||"{}"); } catch { return {}; }
-          };
-          const setRepState = (upd) => {
-            const cur = getRepState();
-            const next = {...cur,...upd};
-            localStorage.setItem("mk2_report_state", JSON.stringify(next));
-            // force re-render
-          };
-
-          // Calculate period defaults
+        {tab==="reports"&&<>
+          {(()=>{
           const now = new Date();
           const isSaturday = now.getDay() === 6;
           const isLastDay = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate() === now.getDate();
-          const weekStart = (()=>{ const d=new Date(); d.setDate(d.getDate()-d.getDay()+1); return d.toISOString().slice(0,10); })();
           const monthStart = now.toISOString().slice(0,8)+"01";
 
-          const [repFrom, setRepFrom] = useState(weekStart);
-          const [repTo, setRepTo] = useState(today());
-          const [repDoctor, setRepDoctor] = useState("all");
-
-          // Filter appointments for period
           const repAppts = appointments.filter(a => a.date >= repFrom && a.date <= repTo && (repDoctor==="all"||a.doctor===repDoctor));
           const doneAppts = repAppts.filter(a=>a.status==="done");
           const scheduledAppts = repAppts.filter(a=>a.status==="scheduled");
           const cancelledAppts = repAppts.filter(a=>a.status==="cancelled"||a.status==="missed");
 
-          // Revenue calculation
-          const revenueByProc = {};
-          let totalRevenue = 0;
-          protocols.forEach(pr => {
-            pr.procedures.forEach(proc => {
-              if (proc.completedSessions > 0) {
-                const cat = procCatalog.find(c=>c.name===proc.procedureName);
-                if (cat?.price) {
-                  const amount = cat.price * proc.completedSessions;
-                  revenueByProc[proc.procedureName] = (revenueByProc[proc.procedureName]||0) + amount;
-                  totalRevenue += amount;
-                }
-              }
-            });
-          });
-
-          // Revenue for the period (approximate — based on done appointments and their protocols)
           const periodPatientIds = new Set(doneAppts.map(a=>a.patientId));
           let periodRevenue = 0;
           const periodRevenueByDoctor = {};
           const periodRevenueByProc = {};
           doneAppts.forEach(a => {
-            // Find protocols for this patient with completed sessions
             const patProtos = protocols.filter(pr=>String(pr.patientId)===String(a.patientId));
             patProtos.forEach(pr=>{
               pr.procedures.forEach(proc=>{
                 const cat = procCatalog.find(c=>c.name===proc.procedureName);
                 if(cat?.price && proc.completedSessions>0) {
-                  // Approximate: distribute evenly per completed session across done appointments
-                  const perSession = cat.price;
-                  // We count 1 session per done appointment for this procedure
-                  periodRevenue += perSession;
-                  periodRevenueByDoctor[a.doctor] = (periodRevenueByDoctor[a.doctor]||0) + perSession;
-                  periodRevenueByProc[proc.procedureName] = (periodRevenueByProc[proc.procedureName]||0) + perSession;
+                  periodRevenue += cat.price;
+                  periodRevenueByDoctor[a.doctor] = (periodRevenueByDoctor[a.doctor]||0) + cat.price;
+                  periodRevenueByProc[proc.procedureName] = (periodRevenueByProc[proc.procedureName]||0) + cat.price;
                 }
               });
             });
           });
 
-          // Doctor stats for period
           const repDoctorStats = {};
           repAppts.forEach(a => {
             if(!repDoctorStats[a.doctor]) repDoctorStats[a.doctor]={done:0,scheduled:0,cancelled:0,total:0};
@@ -2651,31 +2623,25 @@ export default function MedKarta({ supabase, session, profile }) {
           const handlePrintReport = (title, contentId) => {
             const content = document.getElementById(contentId);
             if(!content) return;
-            const printWin = window.open('','_blank','width=900,height=700');
-            printWin.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>
-              <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;padding:15mm;font-size:12px;color:#333}
-              h1{font-size:16px;margin-bottom:12px;text-align:center}h2{font-size:13px;margin:14px 0 6px;color:#064e3b}
-              table{width:100%;border-collapse:collapse;margin:8px 0}th,td{padding:5px 8px;border:1px solid #ccc;text-align:left;font-size:11px}
-              th{background:#f0f2f5;font-weight:700}.right{text-align:right}@page{margin:10mm}</style></head><body>`);
-            printWin.document.write(content.innerHTML);
-            printWin.document.write('</body></html>');
-            printWin.document.close();
-            printWin.focus();
-            setTimeout(()=>{printWin.print();printWin.close();},400);
+            const pw = window.open('','_blank','width=900,height=700');
+            pw.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;padding:15mm;font-size:12px;color:#333}h1{font-size:16px;margin-bottom:12px;text-align:center}h2{font-size:13px;margin:14px 0 6px;color:#064e3b}table{width:100%;border-collapse:collapse;margin:8px 0}th,td{padding:5px 8px;border:1px solid #ccc;text-align:left;font-size:11px}th{background:#f0f2f5;font-weight:700}@page{margin:10mm}</style></head><body>`);
+            pw.document.write(content.innerHTML);
+            pw.document.write('</body></html>');
+            pw.document.close();pw.focus();
+            setTimeout(()=>{pw.print();pw.close();},400);
           };
 
-          const autoLabel = isSaturday ? "📅 Суббота — еженедельный отчёт" : isLastDay ? "📅 Последний день месяца — ежемесячный отчёт" : null;
+          const autoLabel = isSaturday ? "Суббота — еженедельный отчёт" : isLastDay ? "Последний день месяца" : null;
 
           return <>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18,flexWrap:"wrap",gap:12}}>
             <div>
-              <div style={{fontFamily:"'DM Serif Display',serif",fontSize:22}}>📋 Отчёты</div>
+              <div style={{fontFamily:"'DM Serif Display',serif",fontSize:22}}>Отчёты</div>
               <div style={{fontSize:13,color:"#64748b",marginTop:2}}>Записи и доходы за период</div>
             </div>
             {autoLabel&&<div style={{background:"#fef3c7",border:"1px solid #fde68a",borderRadius:10,padding:"8px 16px",fontSize:13,color:"#92400e",fontWeight:600}}>{autoLabel}</div>}
           </div>
 
-          {/* Period selector */}
           <div className="card" style={{padding:"14px 18px",marginBottom:16,display:"flex",gap:12,alignItems:"center",flexWrap:"wrap"}}>
             <div className="field" style={{minWidth:140}}><label>С</label><input type="date" value={repFrom} onChange={e=>setRepFrom(e.target.value)} style={{padding:"7px 10px",border:"1.5px solid #dde4ef",borderRadius:8,fontSize:13}}/></div>
             <div className="field" style={{minWidth:140}}><label>По</label><input type="date" value={repTo} onChange={e=>setRepTo(e.target.value)} style={{padding:"7px 10px",border:"1.5px solid #dde4ef",borderRadius:8,fontSize:13}}/></div>
@@ -2691,14 +2657,8 @@ export default function MedKarta({ supabase, session, profile }) {
             </div>
           </div>
 
-          {/* Summary cards */}
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:20}}>
-            {[
-              {l:"Всего записей",v:repAppts.length,c:"#2563eb",i:"📅"},
-              {l:"Проведено",v:doneAppts.length,c:"#10b981",i:"✅"},
-              {l:"Запланировано",v:scheduledAppts.length,c:"#f59e0b",i:"⏳"},
-              {l:"Отмена / Неявка",v:cancelledAppts.length,c:"#dc2626",i:"❌"},
-            ].map(s=>(
+            {[{l:"Всего записей",v:repAppts.length,c:"#2563eb",i:"📅"},{l:"Проведено",v:doneAppts.length,c:"#10b981",i:"✅"},{l:"Запланировано",v:scheduledAppts.length,c:"#f59e0b",i:"⏳"},{l:"Отмена/Неявка",v:cancelledAppts.length,c:"#dc2626",i:"❌"}].map(s=>(
               <div key={s.l} className="card" style={{padding:"14px 18px",borderLeft:`4px solid ${s.c}`}}>
                 <div style={{fontSize:22}}>{s.i}</div>
                 <div style={{fontSize:28,fontWeight:700,fontFamily:"'DM Serif Display',serif",color:s.c}}>{s.v}</div>
@@ -2708,88 +2668,54 @@ export default function MedKarta({ supabase, session, profile }) {
           </div>
 
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
-
-            {/* Report 1: Appointments */}
             <div className="card" style={{padding:"20px"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-                <div style={{fontSize:14,fontWeight:700,color:"#1a2332"}}>📅 Отчёт по записям</div>
-                <button className="btn" onClick={()=>handlePrintReport(`Отчёт по записям ${fmt(repFrom)}–${fmt(repTo)}`,"report-appts")} style={{background:"#f1f5f9",color:"#475569",padding:"5px 12px",fontSize:11}}>🖨️ Печать</button>
+                <div style={{fontSize:14,fontWeight:700}}>📅 Отчёт по записям</div>
+                <button className="btn" onClick={()=>handlePrintReport("Отчёт по записям","report-appts")} style={{background:"#f1f5f9",color:"#475569",padding:"5px 12px",fontSize:11}}>🖨️</button>
               </div>
               <div id="report-appts">
                 <h1 style={{fontSize:16,marginBottom:8,textAlign:"center"}}>Отчёт по записям</h1>
-                <div style={{textAlign:"center",fontSize:12,color:"#64748b",marginBottom:12}}>Период: {fmt(repFrom)} — {fmt(repTo)}{repDoctor!=="all"?` · Врач: ${repDoctor}`:""}</div>
-                <h2 style={{fontSize:12,fontWeight:700,color:"#064e3b",margin:"12px 0 6px"}}>По врачам:</h2>
-                <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,marginBottom:12}}>
-                  <thead><tr style={{background:"#f0f2f5"}}><th style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"left"}}>Врач</th><th style={{padding:"6px 10px",border:"1px solid #e2e8f0"}}>Проведено</th><th style={{padding:"6px 10px",border:"1px solid #e2e8f0"}}>Заплан.</th><th style={{padding:"6px 10px",border:"1px solid #e2e8f0"}}>Отмена</th><th style={{padding:"6px 10px",border:"1px solid #e2e8f0"}}>Всего</th></tr></thead>
-                  <tbody>
-                    {Object.entries(repDoctorStats).map(([doc,st])=>(
-                      <tr key={doc}><td style={{padding:"5px 10px",border:"1px solid #f0f4f8"}}>{doc.split(" ").slice(0,2).join(" ")}</td><td style={{padding:"5px 10px",border:"1px solid #f0f4f8",textAlign:"center",color:"#10b981",fontWeight:600}}>{st.done}</td><td style={{padding:"5px 10px",border:"1px solid #f0f4f8",textAlign:"center",color:"#f59e0b"}}>{st.scheduled}</td><td style={{padding:"5px 10px",border:"1px solid #f0f4f8",textAlign:"center",color:"#dc2626"}}>{st.cancelled}</td><td style={{padding:"5px 10px",border:"1px solid #f0f4f8",textAlign:"center",fontWeight:700}}>{st.total}</td></tr>
-                    ))}
-                    <tr style={{background:"#f0fdf4",fontWeight:700}}><td style={{padding:"6px 10px",border:"1px solid #e2e8f0"}}>Итого</td><td style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"center"}}>{doneAppts.length}</td><td style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"center"}}>{scheduledAppts.length}</td><td style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"center"}}>{cancelledAppts.length}</td><td style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"center"}}>{repAppts.length}</td></tr>
-                  </tbody>
-                </table>
-                <div style={{fontSize:11,color:"#94a3b8",textAlign:"right"}}>Atlant Clinic · {fmt(today())}</div>
+                <div style={{textAlign:"center",fontSize:12,color:"#64748b",marginBottom:12}}>{fmt(repFrom)} — {fmt(repTo)}{repDoctor!=="all"?` · ${repDoctor}`:""}</div>
+                <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}><thead><tr style={{background:"#f0f2f5"}}><th style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"left"}}>Врач</th><th style={{padding:"6px 10px",border:"1px solid #e2e8f0"}}>Провед.</th><th style={{padding:"6px 10px",border:"1px solid #e2e8f0"}}>Заплан.</th><th style={{padding:"6px 10px",border:"1px solid #e2e8f0"}}>Отмена</th><th style={{padding:"6px 10px",border:"1px solid #e2e8f0"}}>Всего</th></tr></thead><tbody>
+                {Object.entries(repDoctorStats).map(([doc,st])=>(<tr key={doc}><td style={{padding:"5px 10px",border:"1px solid #f0f4f8"}}>{doc.split(" ").slice(0,2).join(" ")}</td><td style={{padding:"5px 10px",border:"1px solid #f0f4f8",textAlign:"center",color:"#10b981",fontWeight:600}}>{st.done}</td><td style={{padding:"5px 10px",border:"1px solid #f0f4f8",textAlign:"center",color:"#f59e0b"}}>{st.scheduled}</td><td style={{padding:"5px 10px",border:"1px solid #f0f4f8",textAlign:"center",color:"#dc2626"}}>{st.cancelled}</td><td style={{padding:"5px 10px",border:"1px solid #f0f4f8",textAlign:"center",fontWeight:700}}>{st.total}</td></tr>))}
+                <tr style={{background:"#f0fdf4",fontWeight:700}}><td style={{padding:"6px 10px",border:"1px solid #e2e8f0"}}>Итого</td><td style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"center"}}>{doneAppts.length}</td><td style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"center"}}>{scheduledAppts.length}</td><td style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"center"}}>{cancelledAppts.length}</td><td style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"center"}}>{repAppts.length}</td></tr>
+                </tbody></table>
               </div>
             </div>
-
-            {/* Report 2: Revenue */}
             <div className="card" style={{padding:"20px"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-                <div style={{fontSize:14,fontWeight:700,color:"#1a2332"}}>💰 Отчёт по сумме услуг</div>
-                <button className="btn" onClick={()=>handlePrintReport(`Отчёт по доходам ${fmt(repFrom)}–${fmt(repTo)}`,"report-revenue")} style={{background:"#f1f5f9",color:"#475569",padding:"5px 12px",fontSize:11}}>🖨️ Печать</button>
+                <div style={{fontSize:14,fontWeight:700}}>💰 Сумма услуг</div>
+                <button className="btn" onClick={()=>handlePrintReport("Отчёт по доходам","report-revenue")} style={{background:"#f1f5f9",color:"#475569",padding:"5px 12px",fontSize:11}}>🖨️</button>
               </div>
               <div id="report-revenue">
-                <h1 style={{fontSize:16,marginBottom:8,textAlign:"center"}}>Отчёт по сумме оказанных услуг</h1>
-                <div style={{textAlign:"center",fontSize:12,color:"#64748b",marginBottom:12}}>Период: {fmt(repFrom)} — {fmt(repTo)}</div>
-
                 <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:10,padding:"14px 18px",marginBottom:14,textAlign:"center"}}>
-                  <div style={{fontSize:11,color:"#166534",fontWeight:700,textTransform:"uppercase",letterSpacing:".05em",marginBottom:4}}>Итого за период</div>
+                  <div style={{fontSize:11,color:"#166534",fontWeight:700,textTransform:"uppercase",marginBottom:4}}>Итого за период</div>
                   <div style={{fontSize:28,fontWeight:800,color:"#0e7c6b",fontFamily:"'DM Serif Display',serif"}}>{periodRevenue.toLocaleString()} ₸</div>
-                  <div style={{fontSize:12,color:"#64748b"}}>{doneAppts.length} проведённых приёмов · {periodPatientIds.size} пациентов</div>
+                  <div style={{fontSize:12,color:"#64748b"}}>{doneAppts.length} приёмов · {periodPatientIds.size} пациентов</div>
                 </div>
-
-                <h2 style={{fontSize:12,fontWeight:700,color:"#064e3b",margin:"12px 0 6px"}}>По врачам:</h2>
-                <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,marginBottom:12}}>
-                  <thead><tr style={{background:"#f0f2f5"}}><th style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"left"}}>Врач</th><th style={{padding:"6px 10px",border:"1px solid #e2e8f0"}}>Приёмов</th><th style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"right"}}>Сумма</th></tr></thead>
-                  <tbody>
-                    {Object.entries(periodRevenueByDoctor).sort((a,b)=>b[1]-a[1]).map(([doc,sum])=>(
-                      <tr key={doc}><td style={{padding:"5px 10px",border:"1px solid #f0f4f8"}}>{doc.split(" ").slice(0,2).join(" ")}</td><td style={{padding:"5px 10px",border:"1px solid #f0f4f8",textAlign:"center"}}>{(repDoctorStats[doc]||{}).done||0}</td><td style={{padding:"5px 10px",border:"1px solid #f0f4f8",textAlign:"right",fontWeight:600,color:"#0e7c6b"}}>{sum.toLocaleString()} ₸</td></tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                <h2 style={{fontSize:12,fontWeight:700,color:"#064e3b",margin:"12px 0 6px"}}>По процедурам:</h2>
-                <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,marginBottom:12}}>
-                  <thead><tr style={{background:"#f0f2f5"}}><th style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"left"}}>Процедура</th><th style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"right"}}>Сумма</th></tr></thead>
-                  <tbody>
-                    {Object.entries(periodRevenueByProc).sort((a,b)=>b[1]-a[1]).map(([proc,sum])=>{
-                      const cat=procCatalog.find(c=>c.name===proc);
-                      return <tr key={proc}><td style={{padding:"5px 10px",border:"1px solid #f0f4f8"}}>{cat?.icon||"📋"} {proc}</td><td style={{padding:"5px 10px",border:"1px solid #f0f4f8",textAlign:"right",fontWeight:600,color:"#0e7c6b"}}>{sum.toLocaleString()} ₸</td></tr>;
-                    })}
-                    <tr style={{background:"#f0fdf4",fontWeight:700}}><td style={{padding:"6px 10px",border:"1px solid #e2e8f0"}}>Итого</td><td style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"right",color:"#0e7c6b"}}>{periodRevenue.toLocaleString()} ₸</td></tr>
-                  </tbody>
-                </table>
-                <div style={{fontSize:11,color:"#94a3b8",textAlign:"right"}}>Atlant Clinic · {fmt(today())}</div>
+                <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,marginBottom:8}}><thead><tr style={{background:"#f0f2f5"}}><th style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"left"}}>Врач</th><th style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"right"}}>Сумма</th></tr></thead><tbody>
+                {Object.entries(periodRevenueByDoctor).sort((a,b)=>b[1]-a[1]).map(([doc,sum])=>(<tr key={doc}><td style={{padding:"5px 10px",border:"1px solid #f0f4f8"}}>{doc.split(" ").slice(0,2).join(" ")}</td><td style={{padding:"5px 10px",border:"1px solid #f0f4f8",textAlign:"right",fontWeight:600,color:"#0e7c6b"}}>{sum.toLocaleString()} ₸</td></tr>))}
+                </tbody></table>
+                <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}><thead><tr style={{background:"#f0f2f5"}}><th style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"left"}}>Процедура</th><th style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"right"}}>Сумма</th></tr></thead><tbody>
+                {Object.entries(periodRevenueByProc).sort((a,b)=>b[1]-a[1]).map(([proc,sum])=>{const cat=procCatalog.find(c=>c.name===proc);return <tr key={proc}><td style={{padding:"5px 10px",border:"1px solid #f0f4f8"}}>{cat?.icon||""} {proc}</td><td style={{padding:"5px 10px",border:"1px solid #f0f4f8",textAlign:"right",fontWeight:600,color:"#0e7c6b"}}>{sum.toLocaleString()} ₸</td></tr>;})}
+                <tr style={{background:"#f0fdf4",fontWeight:700}}><td style={{padding:"6px 10px",border:"1px solid #e2e8f0"}}>Итого</td><td style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"right",color:"#0e7c6b"}}>{periodRevenue.toLocaleString()} ₸</td></tr>
+                </tbody></table>
               </div>
             </div>
           </div>
 
-          {/* Auto-report notification */}
-          {(isSaturday||isLastDay)&&(
-            <div style={{marginTop:16,background:"#fef3c7",border:"1px solid #fde68a",borderRadius:12,padding:"16px 20px",display:"flex",alignItems:"center",gap:14}}>
-              <span style={{fontSize:28}}>🔔</span>
-              <div style={{flex:1}}>
-                <div style={{fontWeight:700,fontSize:14,color:"#92400e"}}>{isSaturday?"Еженедельный отчёт (суббота)":"Ежемесячный отчёт (последний день месяца)"}</div>
-                <div style={{fontSize:13,color:"#78350f",marginTop:2}}>Рекомендуем распечатать оба отчёта для архива</div>
-              </div>
-              <div style={{display:"flex",gap:6}}>
-                <button className="btn" onClick={()=>handlePrintReport(`Еженедельный отчёт по записям ${fmt(repFrom)}–${fmt(repTo)}`,"report-appts")} style={{background:"#fff",color:"#92400e",padding:"8px 14px",fontSize:12,border:"1px solid #fde68a"}}>🖨️ Записи</button>
-                <button className="btn" onClick={()=>handlePrintReport(`Еженедельный отчёт по доходам ${fmt(repFrom)}–${fmt(repTo)}`,"report-revenue")} style={{background:"#fff",color:"#92400e",padding:"8px 14px",fontSize:12,border:"1px solid #fde68a"}}>🖨️ Доходы</button>
-              </div>
+          {(isSaturday||isLastDay)&&<div style={{marginTop:16,background:"#fef3c7",border:"1px solid #fde68a",borderRadius:12,padding:"16px 20px",display:"flex",alignItems:"center",gap:14}}>
+            <span style={{fontSize:28}}>🔔</span>
+            <div style={{flex:1}}><div style={{fontWeight:700,fontSize:14,color:"#92400e"}}>{isSaturday?"Еженедельный":"Ежемесячный"} отчёт</div><div style={{fontSize:13,color:"#78350f",marginTop:2}}>Рекомендуем распечатать для архива</div></div>
+            <div style={{display:"flex",gap:6}}>
+              <button className="btn" onClick={()=>handlePrintReport("Отчёт записи","report-appts")} style={{background:"#fff",color:"#92400e",padding:"8px 14px",fontSize:12,border:"1px solid #fde68a"}}>🖨️ Записи</button>
+              <button className="btn" onClick={()=>handlePrintReport("Отчёт доходы","report-revenue")} style={{background:"#fff",color:"#92400e",padding:"8px 14px",fontSize:12,border:"1px solid #fde68a"}}>🖨️ Доходы</button>
             </div>
-          )}
+          </div>}
           </>;
-        })()}
+          })()}
+        </>}
+
 
         {/* ════════════════════════════════════════ */}
         {/* TAB: REMINDERS                          */}
@@ -3007,8 +2933,8 @@ export default function MedKarta({ supabase, session, profile }) {
               <button className="btn" onClick={()=>{setModal(null);setTimelinePat(viewPat);setTimeout(()=>setModal("timeline"),50);}} style={{background:"#faf5ff",color:"#7c3aed",padding:"9px 14px"}}>📋 История</button>
                 <button className="btn" onClick={()=>{setEditAppt({...EMPTY_APPT,patientId:viewPat.id,doctor:viewPat.doctor,date:today()});setModal("addAppt");}} style={{background:"#f0fdf4",color:"#10b981",padding:"9px 14px"}}>📅 Записать</button>
                 {viewPat.nextVisitDate&&<button className="btn" onClick={()=>{setModal(null);setMessengerPat(viewPat);}} style={{background:"#25d366",color:"#fff",padding:"9px 14px",display:"flex",alignItems:"center",gap:5}}>{WA_SVG} WA/TG</button>}
-                <button className="btn" onClick={()=>{setEditPat({...viewPat});setModal("editPat");}} style={{flex:1,background:"#0e7c6b",color:"#fff",padding:"9px"}}>✏️ Редактировать</button>
-                <button className="btn" onClick={()=>setDeleteTarget({type:"patient",id:viewPat.id,name:fullName(viewPat)})} style={{background:"#fef2f2",color:"#dc2626",padding:"9px 14px"}}>🗑</button>
+                {isAdmin&&<button className="btn" onClick={()=>{setEditPat({...viewPat});setModal("editPat");}} style={{flex:1,background:"#0e7c6b",color:"#fff",padding:"9px"}}>✏️ Редактировать</button>}
+                {isAdmin&&<button className="btn" onClick={()=>setDeleteTarget({type:"patient",id:viewPat.id,name:fullName(viewPat)})} style={{background:"#fef2f2",color:"#dc2626",padding:"9px 14px"}}>🗑</button>}
                 <button className="btn" onClick={()=>setModal(null)} style={{background:"#f1f5f9",color:"#475569",padding:"9px 14px"}}>✕</button>
               </div>
             </div>
