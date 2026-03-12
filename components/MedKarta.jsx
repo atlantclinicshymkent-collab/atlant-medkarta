@@ -30,7 +30,7 @@ const SAMPLE_PROCEDURES = [
   { id:5, name: "Карбокситерапия", category: "Инъекции", icon: "💨", color: "#10b981", defaultSessions: 6, price: 5000 },
   { id:6, name: "Электрофизиопроцедура", category: "Физиотерапия", icon: "⚙️", color: "#64748b", defaultSessions: 10, price: 3500 },
   { id:7, name: "Комп. вытяжение позвоночника", category: "Мануальная", icon: "🦴", color: "#a855f7", defaultSessions: 10, price: 5000 },
-  { id:8, name: "Мануальнаяя терапия", category: "Мануальная", icon: "🤲", color: "#ec4899", defaultSessions: 8, price: 7000 },
+  { id:8, name: "Мануальная терапия", category: "Мануальная", icon: "🤲", color: "#ec4899", defaultSessions: 8, price: 7000 },
   { id:9, name: "Внутрисуставная инъекция (УЗИ)", category: "Инъекции", icon: "💉", color: "#ef4444", defaultSessions: 3, price: 15000 },
   { id:10, name: "PRP-терапия", category: "Инъекции", icon: "🩸", color: "#dc2626", defaultSessions: 3, price: 25000 },
   { id:11, name: "Блокада", category: "Инъекции", icon: "🎯", color: "#f59e0b", defaultSessions: 1, price: 10000 },
@@ -127,7 +127,7 @@ const SAMPLE_PROTOCOLS = [
   { id:203, patientId:4, name:"Комплексное лечение грыжи L5-S1", procedures:[
     { procedureName:"УВТ (ударно-волновая)", totalSessions:5, completedSessions:2, notes:"Поясничный отдел", medications:[] },
     { procedureName:"Комп. вытяжение позвоночника", totalSessions:10, completedSessions:3, notes:"", medications:[] },
-    { procedureName:"Мануальнаяя терапия", totalSessions:8, completedSessions:2, notes:"", medications:[] },
+    { procedureName:"Мануальная терапия", totalSessions:8, completedSessions:2, notes:"", medications:[] },
     { procedureName:"Фармакотерапия", totalSessions:1, completedSessions:1, notes:"", medications:["Мелоксикам","Тизанидин","Мильгамма"] },
   ], startDate:"2026-02-28", status:"active", doctor:"Андрухів Макар Романович", diagnosis:"Межпозвоночная грыжа (L5-S1)" },
   { id:204, patientId:3, name:"Лечение плантарного фасциита", procedures:[
@@ -136,13 +136,38 @@ const SAMPLE_PROTOCOLS = [
   ], startDate:"2025-11-01", status:"completed", doctor:"Андрухів Макар Романович", diagnosis:"Плантарный фасциит" },
 ];
 
+const SAMPLE_PROTOCOL_TEMPLATES = [
+  { id:"t1", name:"Курс TEKAR-терапии", diagnosis:"Остеохондроз поясничного отдела", procedures:[
+    { procedureName:"TEKAR-терапия", totalSessions:10, notes:"Поясничный отдел", medications:[] }
+  ]},
+  { id:"t2", name:"Курс инъекций гиалуроновой кислоты", diagnosis:"Гонартроз (коленный сустав)", procedures:[
+    { procedureName:"Внутрисуставная инъекция (УЗИ)", totalSessions:3, notes:"Коленный сустав", medications:["Ostenil Plus"] }
+  ]},
+  { id:"t3", name:"Комплексное лечение грыжи", diagnosis:"Межпозвоночная грыжа (L5-S1)", procedures:[
+    { procedureName:"УВТ (ударно-волновая)", totalSessions:5, notes:"Поясничный отдел", medications:[] },
+    { procedureName:"Комп. вытяжение позвоночника", totalSessions:10, notes:"", medications:[] },
+    { procedureName:"Мануальная терапия", totalSessions:8, notes:"", medications:[] },
+    { procedureName:"Фармакотерапия", totalSessions:1, notes:"", medications:["Мелоксикам","Тизанидин","Мильгамма"] },
+  ]},
+  { id:"t4", name:"Лечение плантарного фасциита", diagnosis:"Плантарный фасциит", procedures:[
+    { procedureName:"УВТ (ударно-волновая)", totalSessions:5, notes:"Пяточная шпора", medications:[] },
+    { procedureName:"Карбокситерапия", totalSessions:4, notes:"", medications:[] },
+  ]},
+  { id:"t5", name:"Комплексное лечение артроза", diagnosis:"Гонартроз (коленный сустав)", procedures:[
+    { procedureName:"TEKAR-терапия", totalSessions:10, notes:"Коленный сустав", medications:[] },
+    { procedureName:"Внутрисуставная инъекция (УЗИ)", totalSessions:3, notes:"", medications:["Ostenil Plus"] },
+    { procedureName:"Электрофизиопроцедура", totalSessions:10, notes:"", medications:[] },
+    { procedureName:"Фармакотерапия", totalSessions:1, notes:"", medications:["Мелоксикам","Хондроитин сульфат"] },
+  ]},
+];
+
 const SAMPLE_PODIATECH = [
   { id:301, patientId:3, date:"2025-12-10", footType:"Плоскостопие (II ст.)", halluxValgus:true, archIndex:"0.31", pressureNotes:"Перегрузка медиального склепіння, смещение центра давления латерально", insoleStatus:"delivered", insoleDeliveryDate:"2026-01-10", notes:"Корекція повздовжнього склепіння + розвантаження I плюсно-фалангового суглоба" },
   { id:302, patientId:4, date:"2026-03-01", footType:"Плоскостопие (I ст.)", halluxValgus:false, archIndex:"0.38", pressureNotes:"Незначительное снижение повздовжнього склепіння, равномерное распределение давления", insoleStatus:"production", insoleDeliveryDate:"", notes:"Профилактические стельки для коррекции биомеханики ходьбы" },
 ];
 
 const uid = () => Date.now() + Math.random();
-const calcAge = (dob) => !dob ? "—" : Math.floor((Date.now() - new Date(dob)) / (1000*60*60*24*365.25)) + " р.";
+const calcAge = (dob) => !dob ? "—" : Math.floor((Date.now() - new Date(dob)) / (1000*60*60*24*365.25)) + " л.";
 const fmt = (d) => { if (!d) return "—"; const [y,m,day]=d.split("-"); return `${day}.${m}.${y}`; };
 const today = () => new Date().toISOString().slice(0,10);
 const daysUntil = (d) => !d ? null : Math.ceil((new Date(d) - new Date(today())) / 86400000);
@@ -272,7 +297,7 @@ function MessengerModal({ patient, onClose }) {
       <div className="modal" style={{width:520,maxHeight:"92vh",overflow:"auto"}} onClick={e=>e.stopPropagation()}>
         <div style={{background:"linear-gradient(135deg,#064e3b,#0e7c6b)",padding:"18px 24px",borderRadius:"18px 18px 0 0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div>
-            <div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:"#fff"}}>📨 Надіслати напоминания</div>
+            <div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:"#fff"}}>📨 Отправить напоминание</div>
             <div style={{color:"rgba(255,255,255,.65)",fontSize:13,marginTop:2}}>{fullName(patient)} · {phone?formatPhone(patient.phone):"телефон не указан"}</div>
           </div>
           <button className="btn" onClick={onClose} style={{background:"rgba(255,255,255,.15)",color:"#fff",padding:"5px 11px"}}>✕</button>
@@ -303,7 +328,7 @@ function MessengerModal({ patient, onClose }) {
                 <span style={{fontSize:26}}>{copied?"✅":"📋"}</span><span style={{fontSize:13,fontWeight:700}}>{copied?"Скопировано!":"Копировать"}</span>
               </button>
             </div>
-            {!phone&&<div style={{marginTop:10,fontSize:12,color:"#ef4444",background:"#fef2f2",padding:"8px 12px",borderRadius:8}}>⚠️ Телефон не указан. Додайте номер у картці.</div>}
+            {!phone&&<div style={{marginTop:10,fontSize:12,color:"#ef4444",background:"#fef2f2",padding:"8px 12px",borderRadius:8}}>⚠️ Телефон не указан. Добавьте номер в карте пациента.</div>}
           </div>
         </div>
       </div>
@@ -323,9 +348,29 @@ function MsgBtns({ patient, setMessengerPat }) {
 // ═══════════════════════════════════════════
 // PATIENT FORM
 // ═══════════════════════════════════════════
-function PatientForm({form,setForm,isAdd,onSave,onClose,doctorNames}) {
+function PatientForm({form,setForm,isAdd,onSave,onClose,doctorNames,onBulkBook}) {
   const s=(k,v)=>setForm(f=>({...f,[k]:v}));
   const valid=form.lastName?.trim()&&form.firstName?.trim();
+  const [showBulk, setShowBulk] = useState(false);
+  const [bulkDays, setBulkDays] = useState(7);
+  const [bulkTime, setBulkTime] = useState("10:00");
+  const [bulkType, setBulkType] = useState("Процедура");
+  const [bulkNote, setBulkNote] = useState("");
+  const [bulkWorkdays, setBulkWorkdays] = useState(true);
+  const [bulkDone, setBulkDone] = useState(false);
+
+  const generateDates = () => {
+    const dates = [];
+    let d = new Date(); d.setDate(d.getDate() + 1);
+    while (dates.length < bulkDays) {
+      const dow = d.getDay();
+      if (!bulkWorkdays || (dow >= 1 && dow <= 6)) dates.push(d.toISOString().slice(0,10));
+      d = new Date(d); d.setDate(d.getDate() + 1);
+    }
+    return dates;
+  };
+  const previewDates = showBulk ? generateDates() : [];
+
   return (
     <div className="modal-bg" onClick={onClose}>
       <div className="modal" style={{width:600,maxHeight:"93vh",overflow:"auto"}} onClick={e=>e.stopPropagation()}>
@@ -381,11 +426,59 @@ function PatientForm({form,setForm,isAdd,onSave,onClose,doctorNames}) {
           <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:10,padding:"12px 14px"}}>
             <div style={{fontSize:11,fontWeight:700,color:"#166534",marginBottom:8,textTransform:"uppercase",letterSpacing:".06em"}}>🔔 Напоминания</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-              <div className="field"><label>Дата наступного визиту</label><input type="date" value={form.nextVisitDate||""} onChange={e=>s("nextVisitDate",e.target.value)}/></div>
+              <div className="field"><label>Дата следующего визита</label><input type="date" value={form.nextVisitDate||""} onChange={e=>s("nextVisitDate",e.target.value)}/></div>
               <div className="field"><label>Цель / примечание</label><input value={form.nextVisitNote||""} onChange={e=>s("nextVisitNote",e.target.value)} placeholder="Контроль, процедура…"/></div>
             </div>
           </div>
           <div className="field"><label>Примечания</label><textarea rows={2} value={form.notes||""} onChange={e=>s("notes",e.target.value)} placeholder="Дополнительная информация…" style={{resize:"vertical"}}/></div>
+
+          {/* Bulk booking — only when editing existing patient */}
+          {!isAdd&&form.id&&onBulkBook&&(
+            <div>
+              <button className="btn" onClick={()=>{setShowBulk(!showBulk);setBulkDone(false);}} style={{background:showBulk?"#eff6ff":"#f8fafc",color:showBulk?"#2563eb":"#64748b",padding:"8px 14px",fontSize:12,border:"1px solid "+(showBulk?"#bfdbfe":"#e2e8f0"),borderRadius:8,width:"100%",textAlign:"left"}}>
+                📅 Записать на курс ({bulkDays} дней)… {showBulk?"▲":"▼"}
+              </button>
+              {showBulk&&!bulkDone&&(
+                <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:"0 0 10px 10px",padding:"12px 14px",marginTop:-1}}>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}}>
+                    <div className="field"><label>Кол-во дней</label>
+                      <select value={bulkDays} onChange={e=>setBulkDays(+e.target.value)} style={{padding:"6px 8px",border:"1.5px solid #bfdbfe",borderRadius:7,fontSize:13}}>
+                        {[3,5,7,10,14,21].map(n=><option key={n} value={n}>{n} дней</option>)}
+                      </select>
+                    </div>
+                    <div className="field"><label>Время</label>
+                      <input type="time" value={bulkTime} onChange={e=>setBulkTime(e.target.value)} style={{padding:"6px 8px",border:"1.5px solid #bfdbfe",borderRadius:7,fontSize:13}}/>
+                    </div>
+                    <div className="field"><label>Тип</label>
+                      <select value={bulkType} onChange={e=>setBulkType(e.target.value)} style={{padding:"6px 8px",border:"1.5px solid #bfdbfe",borderRadius:7,fontSize:13}}>
+                        {APPT_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:8}}>
+                    <label style={{display:"flex",alignItems:"center",gap:6,fontSize:12,cursor:"pointer"}}>
+                      <input type="checkbox" checked={bulkWorkdays} onChange={e=>setBulkWorkdays(e.target.checked)} style={{accentColor:"#2563eb"}}/>
+                      Только рабочие дни (Пн–Сб)
+                    </label>
+                  </div>
+                  <div className="field" style={{marginBottom:10}}><label>Примечание</label>
+                    <input value={bulkNote} onChange={e=>setBulkNote(e.target.value)} placeholder="Процедура, курс…" style={{padding:"6px 8px",border:"1.5px solid #bfdbfe",borderRadius:7,fontSize:13,width:"100%"}}/>
+                  </div>
+                  <div style={{fontSize:11,color:"#475569",marginBottom:8}}>
+                    Будет создано <b>{previewDates.length}</b> записей: {previewDates.slice(0,5).map(d=>fmt(d)).join(", ")}{previewDates.length>5?"…":""}
+                    <br/>Врач: <b>{form.doctor||"—"}</b> · Время: <b>{bulkTime}</b>
+                  </div>
+                  <button className="btn" onClick={()=>{onBulkBook({patientId:form.id,doctor:form.doctor||"",dates:generateDates(),time:bulkTime,type:bulkType,note:bulkNote});setBulkDone(true);}} style={{background:"#2563eb",color:"#fff",padding:"9px 18px",fontSize:13,width:"100%"}}>📅 Создать {previewDates.length} записей</button>
+                </div>
+              )}
+              {showBulk&&bulkDone&&(
+                <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:"0 0 10px 10px",padding:"12px 14px",marginTop:-1,textAlign:"center",fontSize:13,color:"#166534",fontWeight:600}}>
+                  ✅ Записи успешно созданы!
+                </div>
+              )}
+            </div>
+          )}
+
           <div style={{display:"flex",gap:10,marginTop:4}}>
             <button className="btn" onClick={()=>valid&&onSave(form)} disabled={!valid} style={{flex:1,background:valid?"#0e7c6b":"#e2e8f0",color:valid?"#fff":"#94a3b8",padding:"12px",fontSize:15}}>{isAdd?"➕ Добавить пациента":"💾 Сохранить"}</button>
             <button className="btn" onClick={onClose} style={{background:"#f1f5f9",color:"#475569",padding:"12px 20px"}}>Отменить</button>
@@ -399,13 +492,57 @@ function PatientForm({form,setForm,isAdd,onSave,onClose,doctorNames}) {
 // ═══════════════════════════════════════════
 // APPOINTMENT FORM (with inline new patient)
 // ═══════════════════════════════════════════
-function ApptForm({form,setForm,isAdd,patients,onSave,onClose,doctorNames,onCreatePatient}) {
+function ApptForm({form,setForm,isAdd,patients,onSave,onClose,doctorNames,onCreatePatient,onViewPatient,onBulkBook}) {
   const s=(k,v)=>setForm(f=>({...f,[k]:v}));
   const [newPat, setNewPat] = useState(false);
   const [np, setNp] = useState({lastName:"",firstName:"",patronymic:"",phone:"",diagnosis:""});
   const npSet = (k,v) => setNp(prev=>({...prev,[k]:v}));
   const npValid = np.lastName?.trim() && np.firstName?.trim();
   const valid = newPat ? (npValid && form.date && form.doctor) : (form.patientId && form.date && form.doctor);
+  const selectedPatient = !newPat && form.patientId ? patients.find(p=>String(p.id)===String(form.patientId)) : null;
+
+  // Multi-day scheduling state
+  const [showMulti, setShowMulti] = useState(false);
+  const [multiDays, setMultiDays] = useState([]);
+  const [multiDone, setMultiDone] = useState(false);
+
+  const addMultiDay = () => {
+    const lastDay = multiDays.length > 0 ? multiDays[multiDays.length-1] : null;
+    const nextDate = lastDay ? (()=>{ const d=new Date(lastDay.date+"T00:00:00"); d.setDate(d.getDate()+1); while(d.getDay()===0) d.setDate(d.getDate()+1); return d.toISOString().slice(0,10); })() : (()=>{ const d=new Date(); d.setDate(d.getDate()+1); return d.toISOString().slice(0,10); })();
+    setMultiDays(prev=>[...prev, {
+      date: nextDate,
+      time: lastDay?.time || form.time || "10:00",
+      doctor: lastDay?.doctor || form.doctor || doctorNames[0] || "",
+      type: lastDay?.type || form.type || "Процедура",
+      notes: lastDay?.notes || form.notes || "",
+    }]);
+  };
+
+  const addMultiDaysBulk = (count) => {
+    const days = [];
+    const lastDay = multiDays.length > 0 ? multiDays[multiDays.length-1] : null;
+    let d = lastDay ? new Date(lastDay.date+"T00:00:00") : new Date();
+    d.setDate(d.getDate() + 1);
+    const baseTime = lastDay?.time || form.time || "10:00";
+    const baseDoctor = lastDay?.doctor || form.doctor || doctorNames[0] || "";
+    const baseType = lastDay?.type || form.type || "Процедура";
+    const baseNotes = lastDay?.notes || form.notes || "";
+    for (let i = 0; i < count; i++) {
+      while (d.getDay() === 0) d.setDate(d.getDate() + 1); // skip Sunday
+      days.push({ date: d.toISOString().slice(0,10), time: baseTime, doctor: baseDoctor, type: baseType, notes: baseNotes });
+      d = new Date(d); d.setDate(d.getDate() + 1);
+    }
+    setMultiDays(prev => [...prev, ...days]);
+  };
+
+  const updateMultiDay = (i, k, v) => setMultiDays(prev=>prev.map((d,j)=>j===i?{...d,[k]:v}:d));
+  const removeMultiDay = (i) => setMultiDays(prev=>prev.filter((_,j)=>j!==i));
+
+  // Apply doctor/time to all days from a specific row
+  const applyToAll = (i, field) => {
+    const val = multiDays[i][field];
+    setMultiDays(prev=>prev.map(d=>({...d,[field]:val})));
+  };
 
   const handleSave = () => {
     if (!valid) return;
@@ -423,7 +560,7 @@ function ApptForm({form,setForm,isAdd,patients,onSave,onClose,doctorNames,onCrea
     <div className="modal-bg" onClick={onClose}>
       <div className="modal" style={{width:540,maxHeight:"93vh",overflow:"auto"}} onClick={e=>e.stopPropagation()}>
         <div style={{padding:"18px 24px",borderBottom:"1px solid #f0f4f8",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <div style={{fontFamily:"'DM Serif Display',serif",fontSize:19}}>{isAdd?"Новый запись на прием":"Редактирование записьу"}</div>
+          <div style={{fontFamily:"'DM Serif Display',serif",fontSize:19}}>{isAdd?"Новая запись на приём":"Редактирование записи"}</div>
           <button className="btn" onClick={onClose} style={{background:"#f1f5f9",color:"#64748b",padding:"5px 11px"}}>✕</button>
         </div>
         <div style={{padding:"20px 24px",display:"flex",flexDirection:"column",gap:12}}>
@@ -441,6 +578,17 @@ function ApptForm({form,setForm,isAdd,patients,onSave,onClose,doctorNames,onCrea
               {[...patients].sort((a,b)=>a.lastName.localeCompare(b.lastName,"uk")).map(p=><option key={p.id} value={p.id}>{fullName(p)}</option>)}
             </select>
           </div>}
+
+          {/* Patient info card with link */}
+          {selectedPatient&&!isAdd&&(
+            <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:10,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontWeight:700,fontSize:14,color:"#064e3b"}}>{fullName(selectedPatient)}</div>
+                <div style={{fontSize:12,color:"#475569",marginTop:2}}>{selectedPatient.diagnosis||"—"} · {selectedPatient.phone?formatPhone(selectedPatient.phone):"—"}</div>
+              </div>
+              {onViewPatient&&<button className="btn" onClick={()=>onViewPatient(selectedPatient)} style={{background:"#0e7c6b",color:"#fff",padding:"7px 14px",fontSize:12,whiteSpace:"nowrap",flexShrink:0}}>👤 Карта пациента</button>}
+            </div>
+          )}
 
           {/* New patient fields */}
           {newPat&&<div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:12,padding:"14px 16px"}}>
@@ -469,7 +617,7 @@ function ApptForm({form,setForm,isAdd,patients,onSave,onClose,doctorNames,onCrea
               {doctorNames.map(d=><option key={d} value={d}>{d}</option>)}
             </select>
           </div>
-          <div className="field"><label>Тип приему</label>
+          <div className="field"><label>Тип приёма</label>
             <select value={form.type||APPT_TYPES[0]} onChange={e=>s("type",e.target.value)}>
               {APPT_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
             </select>
@@ -480,8 +628,57 @@ function ApptForm({form,setForm,isAdd,patients,onSave,onClose,doctorNames,onCrea
             </select>
           </div>}
           <div className="field"><label>Примечания</label><textarea rows={2} value={form.notes||""} onChange={e=>s("notes",e.target.value)} placeholder="Цель визита, подготовка…" style={{resize:"vertical"}}/></div>
+
+          {/* Multi-day scheduling */}
+          {!newPat&&form.patientId&&onBulkBook&&(
+            <div>
+              <button className="btn" onClick={()=>{setShowMulti(!showMulti);setMultiDone(false);if(!showMulti&&multiDays.length===0)addMultiDaysBulk(7);}} style={{background:showMulti?"#eff6ff":"#f8fafc",color:showMulti?"#2563eb":"#64748b",padding:"8px 14px",fontSize:12,border:"1px solid "+(showMulti?"#bfdbfe":"#e2e8f0"),borderRadius:8,width:"100%",textAlign:"left"}}>
+                📅 Записать на несколько дней вперёд ({multiDays.length} дн.)… {showMulti?"▲":"▼"}
+              </button>
+              {showMulti&&!multiDone&&(
+                <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:"0 0 10px 10px",padding:"12px 14px",marginTop:-1}}>
+                  <div style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap"}}>
+                    {[3,5,7,10,14].map(n=>(
+                      <button key={n} className="btn" onClick={()=>{setMultiDays([]);setTimeout(()=>addMultiDaysBulk(n),0);}} style={{background:multiDays.length===n?"#2563eb":"#fff",color:multiDays.length===n?"#fff":"#2563eb",padding:"5px 12px",fontSize:11,border:"1px solid #bfdbfe",borderRadius:6}}>{n} дней</button>
+                    ))}
+                    <button className="btn" onClick={addMultiDay} style={{background:"#fff",color:"#0e7c6b",padding:"5px 12px",fontSize:11,border:"1px solid #bbf7d0",borderRadius:6}}>＋ Ещё день</button>
+                  </div>
+                  <div style={{maxHeight:300,overflowY:"auto",marginBottom:10}}>
+                    {multiDays.map((day,i)=>(
+                      <div key={i} style={{display:"grid",gridTemplateColumns:"30px 1fr 80px 1fr 30px",gap:6,alignItems:"center",marginBottom:6,padding:"6px 8px",background:i%2===0?"#fff":"#f8fafc",borderRadius:8,border:"1px solid #e8edf3"}}>
+                        <span style={{fontSize:11,color:"#94a3b8",fontWeight:700,textAlign:"center"}}>{i+1}</span>
+                        <input type="date" value={day.date} onChange={e=>updateMultiDay(i,"date",e.target.value)} style={{padding:"5px 6px",border:"1px solid #dde4ef",borderRadius:6,fontSize:12}}/>
+                        <input type="time" value={day.time} onChange={e=>updateMultiDay(i,"time",e.target.value)} style={{padding:"5px 6px",border:"1px solid #dde4ef",borderRadius:6,fontSize:12}}/>
+                        <select value={day.doctor} onChange={e=>updateMultiDay(i,"doctor",e.target.value)} style={{padding:"5px 6px",border:"1px solid #dde4ef",borderRadius:6,fontSize:11}}>
+                          {doctorNames.map(d=><option key={d} value={d}>{d.split(" ").slice(0,2).join(" ")}</option>)}
+                        </select>
+                        <button onClick={()=>removeMultiDay(i)} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626",fontSize:14,padding:0}}>×</button>
+                      </div>
+                    ))}
+                  </div>
+                  {multiDays.length>0&&(
+                    <div style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap"}}>
+                      <button className="btn" onClick={()=>applyToAll(0,"doctor")} style={{background:"#fff",color:"#475569",padding:"4px 10px",fontSize:10,border:"1px solid #e2e8f0",borderRadius:6}}>Врач первого → всем</button>
+                      <button className="btn" onClick={()=>applyToAll(0,"time")} style={{background:"#fff",color:"#475569",padding:"4px 10px",fontSize:10,border:"1px solid #e2e8f0",borderRadius:6}}>Время первого → всем</button>
+                    </div>
+                  )}
+                  <div style={{fontSize:11,color:"#475569",marginBottom:8}}>
+                    Будет создано <b>{multiDays.length}</b> записей · Тип: <b>{form.type||"Процедура"}</b>
+                    {form.notes?<span> · Примечание: {form.notes}</span>:""}
+                  </div>
+                  <button className="btn" disabled={multiDays.length===0} onClick={()=>{onBulkBook(multiDays.map(d=>({patientId:+form.patientId,doctor:d.doctor,date:d.date,time:d.time,type:d.type||form.type||"Процедура",note:d.notes||form.notes||""})));setMultiDone(true);}} style={{background:multiDays.length>0?"#2563eb":"#e2e8f0",color:multiDays.length>0?"#fff":"#94a3b8",padding:"9px 18px",fontSize:13,width:"100%"}}>📅 Создать {multiDays.length} записей</button>
+                </div>
+              )}
+              {showMulti&&multiDone&&(
+                <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:"0 0 10px 10px",padding:"12px 14px",marginTop:-1,textAlign:"center",fontSize:13,color:"#166534",fontWeight:600}}>
+                  ✅ {multiDays.length} записей успешно созданы!
+                </div>
+              )}
+            </div>
+          )}
+
           <div style={{display:"flex",gap:10,marginTop:4}}>
-            <button className="btn" onClick={handleSave} disabled={!valid} style={{flex:1,background:valid?"#0e7c6b":"#e2e8f0",color:valid?"#fff":"#94a3b8",padding:"12px",fontSize:15}}>{isAdd?(newPat?"👤📅 Создать пациента і запись":"📅 Создать запись"):"💾 Сохранить"}</button>
+            <button className="btn" onClick={handleSave} disabled={!valid} style={{flex:1,background:valid?"#0e7c6b":"#e2e8f0",color:valid?"#fff":"#94a3b8",padding:"12px",fontSize:15}}>{isAdd?(newPat?"👤📅 Создать пациента и запись":"📅 Создать запись"):"💾 Сохранить"}</button>
             <button className="btn" onClick={onClose} style={{background:"#f1f5f9",color:"#475569",padding:"12px 20px"}}>Отменить</button>
           </div>
         </div>
@@ -529,7 +726,7 @@ function ProtocolForm({form,setForm,isAdd,patients,onSave,onClose,doctorNames,pr
             </div>
             <div className="field"><label>Дата начала</label><input type="date" value={form.startDate||""} onChange={e=>s("startDate",e.target.value)}/></div>
           </div>
-          <div className="field"><label>Название протокола *</label><input value={form.name||""} onChange={e=>s("name",e.target.value)} placeholder="Курс TEKAR + мануальна терапія"/></div>
+          <div className="field"><label>Название протокола *</label><input value={form.name||""} onChange={e=>s("name",e.target.value)} placeholder="Курс TEKAR + мануальная терапия"/></div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
             <div className="field"><label>Врач</label>
               <select value={form.doctor||""} onChange={e=>s("doctor",e.target.value)}>
@@ -631,7 +828,7 @@ function PodiatechForm({form,setForm,isAdd,patients,onSave,onClose}) {
                 {[...patients].sort((a,b)=>a.lastName.localeCompare(b.lastName,"uk")).map(p=><option key={p.id} value={p.id}>{fullName(p)}</option>)}
               </select>
             </div>
-            <div className="field"><label>Дата діагностики</label><input type="date" value={form.date||""} onChange={e=>s("date",e.target.value)}/></div>
+            <div className="field"><label>Дата диагностики</label><input type="date" value={form.date||""} onChange={e=>s("date",e.target.value)}/></div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
             <div className="field"><label>Тип стопы *</label>
@@ -650,19 +847,19 @@ function PodiatechForm({form,setForm,isAdd,patients,onSave,onClose}) {
           </div>
           <div className="field"><label>Результаты барографии / подоскопии</label><textarea rows={3} value={form.pressureNotes||""} onChange={e=>s("pressureNotes",e.target.value)} placeholder="Распределение давления, зоны перегрузки…" style={{resize:"vertical"}}/></div>
           <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:10,padding:"12px 14px"}}>
-            <div style={{fontSize:11,fontWeight:700,color:"#1e40af",marginBottom:8,textTransform:"uppercase",letterSpacing:".06em"}}>🥿 Ортопедичні стельки</div>
+            <div style={{fontSize:11,fontWeight:700,color:"#1e40af",marginBottom:8,textTransform:"uppercase",letterSpacing:".06em"}}>🥿 Ортопедические стельки</div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
               <div className="field"><label>Статус стелек</label>
                 <select value={form.insoleStatus||"ordered"} onChange={e=>s("insoleStatus",e.target.value)}>
                   {Object.entries(INSOLE_STATUSES).map(([k,v])=><option key={k} value={k}>{v}</option>)}
                 </select>
               </div>
-              <div className="field"><label>Дата готовности / видачі</label><input type="date" value={form.insoleDeliveryDate||""} onChange={e=>s("insoleDeliveryDate",e.target.value)}/></div>
+              <div className="field"><label>Дата готовности / выдачи</label><input type="date" value={form.insoleDeliveryDate||""} onChange={e=>s("insoleDeliveryDate",e.target.value)}/></div>
             </div>
           </div>
           <div className="field"><label>Рекомендации / примечания</label><textarea rows={2} value={form.notes||""} onChange={e=>s("notes",e.target.value)} placeholder="Тип коррекции, особенности…" style={{resize:"vertical"}}/></div>
           <div style={{display:"flex",gap:10,marginTop:4}}>
-            <button className="btn" onClick={()=>valid&&onSave(form)} disabled={!valid} style={{flex:1,background:valid?"#2563eb":"#e2e8f0",color:valid?"#fff":"#94a3b8",padding:"12px",fontSize:15}}>{isAdd?"🦶 Сохранить діагностику":"💾 Сохранить"}</button>
+            <button className="btn" onClick={()=>valid&&onSave(form)} disabled={!valid} style={{flex:1,background:valid?"#2563eb":"#e2e8f0",color:valid?"#fff":"#94a3b8",padding:"12px",fontSize:15}}>{isAdd?"🦶 Сохранить диагностику":"💾 Сохранить"}</button>
             <button className="btn" onClick={onClose} style={{background:"#f1f5f9",color:"#475569",padding:"12px 20px"}}>Отменить</button>
           </div>
         </div>
@@ -699,7 +896,7 @@ function DoctorForm({form,setForm,isAdd,onSave,onClose}) {
             <div className="field"><label>Email</label><input type="email" value={form.email||""} onChange={e=>s("email",e.target.value)} placeholder="doctor@atlant.kz"/></div>
           </div>
           <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:10,padding:"12px 14px"}}>
-            <div style={{fontSize:11,fontWeight:700,color:"#166534",marginBottom:10,textTransform:"uppercase",letterSpacing:".06em"}}>📅 График роботи</div>
+            <div style={{fontSize:11,fontWeight:700,color:"#166534",marginBottom:10,textTransform:"uppercase",letterSpacing:".06em"}}>📅 График работы</div>
             <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
               {WEEKDAYS.map(day=>(
                 <button key={day} className="btn" onClick={()=>toggleDay(day)} style={{
@@ -765,7 +962,7 @@ function StockOpForm({form,setForm,patients,stock,onSave,onClose}) {
           )}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
             <div className="field"><label>Количество *</label><input type="number" min={1} max={isOut?available||999:999} value={form.qty||""} onChange={e=>s("qty",+e.target.value)}/></div>
-            {!isOut&&<><div className="field"><label>Собістоимость (₸)</label><input type="number" min={0} value={form.cost||""} onChange={e=>s("cost",+e.target.value)} placeholder="0"/></div>
+            {!isOut&&<><div className="field"><label>Себестоимость (₸)</label><input type="number" min={0} value={form.cost||""} onChange={e=>s("cost",+e.target.value)} placeholder="0"/></div>
             <div className="field"><label>Цена для пац. (₸)</label><input type="number" min={0} value={form.price||""} onChange={e=>s("price",+e.target.value)} placeholder="0"/></div></>}
           </div>
           {isOut&&(
@@ -779,7 +976,7 @@ function StockOpForm({form,setForm,patients,stock,onSave,onClose}) {
           <div className="field"><label>Дата</label><input type="date" value={form.date||""} onChange={e=>s("date",e.target.value)}/></div>
           <div className="field"><label>Примечания</label><input value={form.notes||""} onChange={e=>s("notes",e.target.value)} placeholder="Модель, артикул, партия…"/></div>
           <div style={{display:"flex",gap:10,marginTop:4}}>
-            <button className="btn" onClick={()=>valid&&onSave(form)} disabled={!valid||(isOut&&form.qty>available)} style={{flex:1,background:valid&&!(isOut&&form.qty>available)?isOut?"#ea580c":"#0e7c6b":"#e2e8f0",color:valid?"#fff":"#94a3b8",padding:"12px",fontSize:15}}>{isOut?"📤 Оформить видачу":"📥 Оформить приход"}</button>
+            <button className="btn" onClick={()=>valid&&onSave(form)} disabled={!valid||(isOut&&form.qty>available)} style={{flex:1,background:valid&&!(isOut&&form.qty>available)?isOut?"#ea580c":"#0e7c6b":"#e2e8f0",color:valid?"#fff":"#94a3b8",padding:"12px",fontSize:15}}>{isOut?"📤 Оформить выдачу":"📥 Оформить приход"}</button>
             <button className="btn" onClick={onClose} style={{background:"#f1f5f9",color:"#475569",padding:"12px 20px"}}>Отменить</button>
           </div>
         </div>
@@ -818,22 +1015,61 @@ function DischargeSummaryModal({ patient, protocols, appointments, procCatalog, 
   const improvLabels = ["","Без изменений","Незначительное улучшение","Небольшое улучшение","Умеренное улучшение","Заметное улучшение","Хорошее улучшение","Значительное улучшение","Существенное улучшение","Выраженное улучшение","Полное восстановление"];
   const improvColors = ["","#dc2626","#f97316","#f59e0b","#eab308","#84cc16","#22c55e","#16a34a","#15803d","#166534","#0e7c6b"];
 
-  const handlePrint = () => window.print();
+  const printRef = useRef(null);
+
+  const handlePrint = () => {
+    // Open print dialog — browser syncs with connected printer
+    const content = printRef.current;
+    if (!content) { window.print(); return; }
+    const printWin = window.open('', '_blank', 'width=800,height=900');
+    printWin.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Выписка — ${fullName(patient)}</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'DM Sans',Arial,sans-serif;padding:20mm;color:#1a2332;font-size:13px;line-height:1.6}
+        h1{font-size:20px;margin-bottom:8px} h2{font-size:14px;margin:12px 0 6px;color:#064e3b;text-transform:uppercase;letter-spacing:.06em}
+        table{width:100%;border-collapse:collapse;margin:8px 0} th,td{padding:6px 10px;border:1px solid #ccc;text-align:left;font-size:12px}
+        th{background:#f0f2f5;font-weight:700} .chip{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600}
+        .header{text-align:center;border-bottom:2px solid #064e3b;padding-bottom:12px;margin-bottom:16px}
+        .footer{border-top:1px solid #ccc;margin-top:24px;padding-top:12px;display:flex;justify-content:space-between}
+        .progress{height:8px;border-radius:4px;background:#e8edf3;overflow:hidden;margin:4px 0}
+        .progress-fill{height:100%;border-radius:4px}
+        @page{margin:15mm}
+      </style></head><body>`);
+    printWin.document.write(content.innerHTML);
+    printWin.document.write('</body></html>');
+    printWin.document.close();
+    printWin.focus();
+    setTimeout(() => { printWin.print(); printWin.close(); }, 400);
+  };
 
   const handlePDF = () => {
-    const printCSS = `
-      @media print {
-        body > *:not(.discharge-print-wrapper) { display: none !important; }
-        .discharge-print-wrapper { display: block !important; position: fixed; inset: 0; background: white; z-index: 9999; overflow: auto; padding: 20px; }
-        .no-print { display: none !important; }
-        @page { margin: 15mm; }
-      }
-    `;
-    const style = document.createElement('style');
-    style.textContent = printCSS;
-    document.head.appendChild(style);
-    window.print();
-    setTimeout(() => document.head.removeChild(style), 1000);
+    // Same as print but prompts "Save as PDF" — works in all browsers
+    const content = printRef.current;
+    if (!content) { window.print(); return; }
+    const printWin = window.open('', '_blank', 'width=800,height=900');
+    printWin.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Выписка — ${fullName(patient)}</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'DM Sans',Arial,sans-serif;padding:20mm;color:#1a2332;font-size:13px;line-height:1.6}
+        h1{font-size:20px;margin-bottom:8px} h2{font-size:14px;margin:12px 0 6px;color:#064e3b;text-transform:uppercase;letter-spacing:.06em}
+        table{width:100%;border-collapse:collapse;margin:8px 0} th,td{padding:6px 10px;border:1px solid #ccc;text-align:left;font-size:12px}
+        th{background:#f0f2f5;font-weight:700}
+        .header{text-align:center;border-bottom:2px solid #064e3b;padding-bottom:12px;margin-bottom:16px}
+        .footer{border-top:1px solid #ccc;margin-top:24px;padding-top:12px;display:flex;justify-content:space-between}
+        @page{margin:15mm}
+      </style>
+      <script>window.onafterprint=function(){window.close();};<\/script>
+    </head><body>`);
+    printWin.document.write(`<div style="text-align:center;margin-bottom:16px;padding:8px;background:#f0fdf4;border-radius:8px;font-size:12px;color:#064e3b">
+      💡 Чтобы скачать PDF: в диалоге печати выберите <b>«Сохранить как PDF»</b> вместо принтера
+    </div>`);
+    printWin.document.write(content.innerHTML);
+    printWin.document.write('</body></html>');
+    printWin.document.close();
+    printWin.focus();
+    setTimeout(() => { printWin.print(); }, 400);
   };
 
   return (
@@ -873,7 +1109,7 @@ function DischargeSummaryModal({ patient, protocols, appointments, procCatalog, 
         </div>
 
         {/* PRINTABLE DISCHARGE DOCUMENT */}
-        <div className="discharge-print-wrapper" style={{padding:"28px 32px"}}>
+        <div className="discharge-print-wrapper" ref={printRef} style={{padding:"28px 32px"}}>
           {/* Header */}
           <div style={{textAlign:"center",marginBottom:24,borderBottom:"2px solid #0e7c6b",paddingBottom:16}}>
             <div style={{fontFamily:"'DM Serif Display',serif",fontSize:26,color:"#042f2e"}}>🏥 Atlant Clinic</div>
@@ -1019,6 +1255,7 @@ export default function MedKarta({ supabase, session, profile }) {
   const [stock, setStock] = useState([]);
   const [stockLog, setStockLog] = useState([]);
   const [procCatalog, setProcCatalog] = useState([]);
+  const [protocolTemplates, setProtocolTemplates] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [tab, setTab] = useState("patients");
   const [search, setSearch] = useState("");
@@ -1033,14 +1270,16 @@ export default function MedKarta({ supabase, session, profile }) {
   const [editDoctor, setEditDoctor] = useState(null);
   const [editStockOp, setEditStockOp] = useState(null);
   const [editProc, setEditProc] = useState(null);
+  const [editTemplate, setEditTemplate] = useState(null);
   const [viewPat, setViewPat] = useState(null);
   const [messengerPat, setMessengerPat] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [dischargePat, setDischargePat] = useState(null);
   const [toast, setToast] = useState(null);
   const [sortBy, setSortBy] = useState("lastName");
   const [timelinePat, setTimelinePat] = useState(null);
   const [podiatechSubTab, setPodiatechSubTab] = useState("diag");
-  const [protocolSubTab, setProtocolSubTab] = useState("protocols");
+  const [protocolSubTab, setProtocolSubTab] = useState("templates");
 
   const doctorNames = useMemo(() => doctors.map(d => d.name), [doctors]);
 
@@ -1063,13 +1302,14 @@ export default function MedKarta({ supabase, session, profile }) {
   const mapStock_ = (r) => ({ id:r.id, type:r.type||"", size:r.size||0, cost:r.cost||0, price:r.price||0, qty:r.qty||0, notes:r.notes||"" });
   const mapStockLog_ = (r) => ({ id:r.id, date:r.date||"", opType:r.op_type||"in", insoleType:r.insole_type||"", size:r.size||0, qty:r.qty||0, cost:r.cost||0, price:r.price||0, patientId:r.patient_id||null, notes:r.notes||"" });
   const mapProc_ = (r) => ({ id:r.id, name:r.name||"", category:r.category||"Другое", icon:r.icon||"📋", color:r.color||"#64748b", defaultSessions:r.default_sessions||5, price:r.price||0 });
+  const mapTemplate_ = (r) => ({ id:r.id, name:r.name||"", diagnosis:r.diagnosis||"", procedures:r.procedures||[] });
 
   // Load from Supabase, fallback to localStorage
   useEffect(() => {
     const loadFromSupabase = async () => {
       if (!supabase) return false;
       try {
-        const [pR,aR,prR,dR,poR,stR,slR,pcR] = await Promise.all([
+        const [pR,aR,prR,dR,poR,stR,slR,pcR,ptR] = await Promise.all([
           supabase.from("patients").select("*").order("last_name"),
           supabase.from("appointments").select("*").order("date",{ascending:false}),
           supabase.from("protocols").select("*").order("created_at",{ascending:false}),
@@ -1078,6 +1318,7 @@ export default function MedKarta({ supabase, session, profile }) {
           supabase.from("insole_stock").select("*"),
           supabase.from("insole_stock_log").select("*").order("date",{ascending:false}),
           supabase.from("procedure_catalog").select("*").order("name"),
+          supabase.from("protocol_templates").select("*").order("name").catch(()=>({data:null,error:true})),
         ]);
         if (pR.error) return false;
         setPatients((pR.data||[]).map(mapPat));
@@ -1088,6 +1329,7 @@ export default function MedKarta({ supabase, session, profile }) {
         setStock((stR.data||[]).map(mapStock_));
         setStockLog((slR.data||[]).map(mapStockLog_));
         setProcCatalog((pcR.data||[]).length>0?(pcR.data||[]).map(mapProc_):SAMPLE_PROCEDURES);
+        setProtocolTemplates((ptR?.data||[]).length>0?(ptR.data||[]).map(mapTemplate_):SAMPLE_PROTOCOL_TEMPLATES);
         return true;
       } catch(e) { console.error("Supabase load error:", e); return false; }
     };
@@ -1103,6 +1345,7 @@ export default function MedKarta({ supabase, session, profile }) {
         setStock(loadLocal("mk2_stock", SAMPLE_STOCK));
         setStockLog(loadLocal("mk2_stocklog", SAMPLE_STOCK_LOG));
         setProcCatalog(loadLocal("mk2_proccatalog", SAMPLE_PROCEDURES));
+        setProtocolTemplates(loadLocal("mk2_protocoltemplates", SAMPLE_PROTOCOL_TEMPLATES));
       }
       setLoaded(true);
     });
@@ -1122,6 +1365,9 @@ export default function MedKarta({ supabase, session, profile }) {
     sub("doctors", async () => { const {data}=await supabase.from("doctors").select("*").order("name"); if(data) setDoctors(data.map(mapDoc)); });
     sub("podiatech", async () => { const {data}=await supabase.from("podiatech").select("*").order("date",{ascending:false}); if(data) setPodiatech(data.map(mapPodio)); });
     sub("insole_stock", async () => { const {data}=await supabase.from("insole_stock").select("*"); if(data) setStock(data.map(mapStock_)); });
+    sub("insole_stock_log", async () => { const {data}=await supabase.from("insole_stock_log").select("*").order("date",{ascending:false}); if(data) setStockLog(data.map(mapStockLog_)); });
+    sub("procedure_catalog", async () => { const {data}=await supabase.from("procedure_catalog").select("*").order("name"); if(data&&data.length>0) setProcCatalog(data.map(mapProc_)); });
+    sub("protocol_templates", async () => { const {data}=await supabase.from("protocol_templates").select("*").order("name"); if(data) setProtocolTemplates(data.map(mapTemplate_)); });
     return () => chs.forEach(ch => supabase.removeChannel(ch));
   }, [usingSupabase]);
 
@@ -1136,7 +1382,8 @@ export default function MedKarta({ supabase, session, profile }) {
     saveLocal("mk2_stock", stock);
     saveLocal("mk2_stocklog", stockLog);
     saveLocal("mk2_proccatalog", procCatalog);
-  }, [patients, appointments, protocols, podiatech, doctors, stock, stockLog, procCatalog, loaded, usingSupabase]);
+    saveLocal("mk2_protocoltemplates", protocolTemplates);
+  }, [patients, appointments, protocols, podiatech, doctors, stock, stockLog, procCatalog, protocolTemplates, loaded, usingSupabase]);
 
   // ─── Email notification on appointment creation ───
   const sendApptEmail = async (appt, patient) => {
@@ -1153,12 +1400,12 @@ export default function MedKarta({ supabase, session, profile }) {
           html: `
             <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">
               <div style="background:linear-gradient(135deg,#042f2e,#0e7c6b);padding:20px 24px;color:#fff">
-                <h2 style="margin:0;font-size:18px">🏥 Atlant Clinic — Новый запись</h2>
+                <h2 style="margin:0;font-size:18px">🏥 Atlant Clinic — Новая запись</h2>
               </div>
               <div style="padding:20px 24px">
                 <p style="margin:0 0 12px"><strong>Пациент:</strong> ${patName}</p>
                 <p style="margin:0 0 12px"><strong>Дата:</strong> ${fmt(appt.date)}</p>
-                <p style="margin:0 0 12px"><strong>Час:</strong> ${appt.time || "не указано"}</p>
+                <p style="margin:0 0 12px"><strong>Время:</strong> ${appt.time || "не указано"}</p>
                 <p style="margin:0 0 12px"><strong>Тип:</strong> ${appt.type}</p>
                 ${appt.notes ? `<p style="margin:0 0 12px"><strong>Примечания:</strong> ${appt.notes}</p>` : ""}
                 ${patient?.phone ? `<p style="margin:0 0 12px"><strong>Телефон:</strong> ${formatPhone(patient.phone)}</p>` : ""}
@@ -1242,12 +1489,18 @@ export default function MedKarta({ supabase, session, profile }) {
     setModal(null); showToast(modal==="addProtocol"?"Протокол создан":"Протокол обновлён");
   };
   const deleteProtocol = async (id) => { if(usingSupabase&&supabase) await supabase.from("protocols").delete().eq("id",id); setProtocols(prev=>prev.filter(p=>p.id!==id)); setDeleteTarget(null); showToast("Протокол удалён","error"); };
-  const savePodiatech = (form) => {
-    if (modal==="addPodiatech") setPodiatech(prev=>[...prev,{...form,id:uid()}]);
-    else setPodiatech(prev=>prev.map(p=>p.id===form.id?form:p));
+  const savePodiatech = async (form) => {
+    if (usingSupabase && supabase) {
+      const row = { patient_id:Number(form.patientId), date:form.date||null, foot_type:form.footType||"", hallux_valgus:form.halluxValgus||false, arch_index:form.archIndex||"", pressure_notes:form.pressureNotes||"", insole_status:form.insoleStatus||"ordered", insole_delivery_date:form.insoleDeliveryDate||null, notes:form.notes||"" };
+      if (modal==="addPodiatech") { const {data,error}=await supabase.from("podiatech").insert(row).select().single(); if(!error&&data) setPodiatech(prev=>[...prev,mapPodio(data)]); }
+      else { const {data,error}=await supabase.from("podiatech").update(row).eq("id",form.id).select().single(); if(!error&&data) setPodiatech(prev=>prev.map(p=>p.id===form.id?mapPodio(data):p)); }
+    } else {
+      if (modal==="addPodiatech") setPodiatech(prev=>[...prev,{...form,id:uid()}]);
+      else setPodiatech(prev=>prev.map(p=>p.id===form.id?form:p));
+    }
     setModal(null); showToast(modal==="addPodiatech"?"Диагностика сохранена":"Данные обновлены");
   };
-  const deletePodiatech = (id) => { setPodiatech(prev=>prev.filter(p=>p.id!==id)); setDeleteTarget(null); showToast("Запись удалена","error"); };
+  const deletePodiatech = async (id) => { if(usingSupabase&&supabase) await supabase.from("podiatech").delete().eq("id",id); setPodiatech(prev=>prev.filter(p=>p.id!==id)); setDeleteTarget(null); showToast("Запись удалена","error"); };
   const saveDoctor = async (form) => {
     if (usingSupabase && supabase) {
       const row={name:form.name,specialization:form.specialization||"",phone:form.phone||"",email:form.email||"",schedule:form.schedule||[],notes:form.notes||""};
@@ -1269,55 +1522,114 @@ export default function MedKarta({ supabase, session, profile }) {
   };
   const deleteDoctor = (id) => { setDoctors(prev=>prev.filter(d=>d.id!==id)); setDeleteTarget(null); showToast("Специалист удалён","error"); };
 
-  const saveStockOp = (form) => {
+  const saveStockOp = async (form) => {
     const logEntry = { ...form, id: uid(), date: form.date || today() };
-    setStockLog(prev => [...prev, logEntry]);
-    // Update stock
-    setStock(prev => {
-      const existing = prev.find(s => s.type === form.insoleType && s.size === +form.size);
+    if (usingSupabase && supabase) {
+      // Insert stock log
+      const logRow = { date:logEntry.date, op_type:form.opType, insole_type:form.insoleType, size:+form.size, qty:+form.qty, cost:+form.cost||0, price:+form.price||0, patient_id:form.patientId||null, notes:form.notes||"" };
+      const {data:logData}=await supabase.from("insole_stock_log").insert(logRow).select().single();
+      if(logData) setStockLog(prev=>[...prev,mapStockLog_(logData)]);
+      // Update stock
+      const existing = stock.find(s => s.type === form.insoleType && s.size === +form.size);
       if (form.opType === "in") {
         if (existing) {
-          return prev.map(s => s.id === existing.id ? { ...s, qty: s.qty + (+form.qty), cost: +form.cost || s.cost, price: +form.price || s.price, notes: form.notes || s.notes } : s);
+          const newQty = existing.qty + (+form.qty);
+          const {data,error}=await supabase.from("insole_stock").update({qty:newQty, cost:+form.cost||existing.cost, price:+form.price||existing.price, notes:form.notes||existing.notes}).eq("id",existing.id).select().single();
+          if(!error&&data) setStock(prev=>prev.map(s=>s.id===existing.id?mapStock_(data):s));
         } else {
-          return [...prev, { id: uid(), type: form.insoleType, size: +form.size, cost: +form.cost || 0, price: +form.price || 0, qty: +form.qty, notes: form.notes }];
+          const stockRow = { type:form.insoleType, size:+form.size, cost:+form.cost||0, price:+form.price||0, qty:+form.qty, notes:form.notes||"" };
+          const {data,error}=await supabase.from("insole_stock").insert(stockRow).select().single();
+          if(!error&&data) setStock(prev=>[...prev,mapStock_(data)]);
         }
       } else {
         if (existing) {
           const newQty = Math.max(0, existing.qty - (+form.qty));
-          return prev.map(s => s.id === existing.id ? { ...s, qty: newQty } : s);
+          const {data,error}=await supabase.from("insole_stock").update({qty:newQty}).eq("id",existing.id).select().single();
+          if(!error&&data) setStock(prev=>prev.map(s=>s.id===existing.id?mapStock_(data):s));
         }
-        return prev;
       }
-    });
+    } else {
+      setStockLog(prev => [...prev, logEntry]);
+      setStock(prev => {
+        const existing = prev.find(s => s.type === form.insoleType && s.size === +form.size);
+        if (form.opType === "in") {
+          if (existing) {
+            return prev.map(s => s.id === existing.id ? { ...s, qty: s.qty + (+form.qty), cost: +form.cost || s.cost, price: +form.price || s.price, notes: form.notes || s.notes } : s);
+          } else {
+            return [...prev, { id: uid(), type: form.insoleType, size: +form.size, cost: +form.cost || 0, price: +form.price || 0, qty: +form.qty, notes: form.notes }];
+          }
+        } else {
+          if (existing) {
+            const newQty = Math.max(0, existing.qty - (+form.qty));
+            return prev.map(s => s.id === existing.id ? { ...s, qty: newQty } : s);
+          }
+          return prev;
+        }
+      });
+    }
     setModal(null);
     showToast(form.opType === "in" ? "Приход оформлен" : "Выдача оформлена");
   };
   const deleteStockItem = (id) => { setStock(prev => prev.filter(s => s.id !== id)); setDeleteTarget(null); showToast("Позиция удалена","error"); };
-  const saveProcCatalogItem = (form) => {
-    if (modal==="addProc") setProcCatalog(prev=>[...prev,{...form,id:uid()}]);
-    else setProcCatalog(prev=>prev.map(p=>p.id===form.id?form:p));
+  const saveProcCatalogItem = async (form) => {
+    if (usingSupabase && supabase) {
+      const row = { name:form.name, category:form.category||"Другое", icon:form.icon||"📋", color:form.color||"#64748b", default_sessions:form.defaultSessions||5, price:form.price||0 };
+      if (modal==="addProc") { const {data,error}=await supabase.from("procedure_catalog").insert(row).select().single(); if(!error&&data) setProcCatalog(prev=>[...prev,mapProc_(data)]); }
+      else { const {data,error}=await supabase.from("procedure_catalog").update(row).eq("id",form.id).select().single(); if(!error&&data) setProcCatalog(prev=>prev.map(p=>p.id===form.id?mapProc_(data):p)); }
+    } else {
+      if (modal==="addProc") setProcCatalog(prev=>[...prev,{...form,id:uid()}]);
+      else setProcCatalog(prev=>prev.map(p=>p.id===form.id?form:p));
+    }
     setModal(null); showToast(modal==="addProc"?"Процедура добавлена":"Процедура обновлена");
   };
-  const deleteProcCatalogItem = (id) => { setProcCatalog(prev=>prev.filter(p=>p.id!==id)); setDeleteTarget(null); showToast("Процедура удалена","error"); };
+  const deleteProcCatalogItem = async (id) => { if(usingSupabase&&supabase) await supabase.from("procedure_catalog").delete().eq("id",id); setProcCatalog(prev=>prev.filter(p=>p.id!==id)); setDeleteTarget(null); showToast("Процедура удалена","error"); };
+
+  // ─── Protocol Templates CRUD ───
+  const saveTemplate = async (form) => {
+    if (usingSupabase && supabase) {
+      const row = { name:form.name, diagnosis:form.diagnosis||"", procedures:form.procedures||[] };
+      if (modal==="addTemplate") { const {data,error}=await supabase.from("protocol_templates").insert(row).select().single(); if(!error&&data) setProtocolTemplates(prev=>[...prev,mapTemplate_(data)]); }
+      else { const {data,error}=await supabase.from("protocol_templates").update(row).eq("id",form.id).select().single(); if(!error&&data) setProtocolTemplates(prev=>prev.map(t=>t.id===form.id?mapTemplate_(data):t)); }
+    } else {
+      if (modal==="addTemplate") setProtocolTemplates(prev=>[...prev,{...form,id:uid()}]);
+      else setProtocolTemplates(prev=>prev.map(t=>t.id===form.id?form:t));
+    }
+    setModal(null); showToast(modal==="addTemplate"?"Шаблон создан":"Шаблон обновлён");
+  };
+  const deleteTemplate = async (id) => { if(usingSupabase&&supabase) await supabase.from("protocol_templates").delete().eq("id",id); setProtocolTemplates(prev=>prev.filter(t=>t.id!==id)); setDeleteTarget(null); showToast("Шаблон удалён","error"); };
+
+  // Apply template to patient — creates protocol pre-filled from template
+  const applyTemplateToPatient = (template, patient) => {
+    setEditProtocol({
+      patientId: patient.id,
+      name: template.name,
+      procedures: template.procedures.map(p=>({...p, completedSessions:0})),
+      startDate: today(),
+      status: "active",
+      doctor: patient.doctor || "",
+      diagnosis: template.diagnosis || patient.diagnosis || "",
+    });
+    setModal("addProtocol");
+  };
 
   const exportExcel = () => {
     const wb = XLSX.utils.book_new();
-    const pr=[["Фамилия","Имя","Отчество","Дата рожд.","Вік","Телефон","Диагноз","Врач","Статус","Ост. визит","Наст. визит","Мета","Примечания"]];
+    const pr=[["Фамилия","Имя","Отчество","Дата рожд.","Возраст","Телефон","Диагноз","Врач","Статус","Посл. визит","След. визит","Цель","Примечания"]];
     patients.forEach(p=>pr.push([p.lastName,p.firstName,p.patronymic,fmt(p.dob),calcAge(p.dob),p.phone?formatPhone(p.phone):"",p.diagnosis,p.doctor,STATUSES[p.status]||p.status,fmt(p.lastVisit),fmt(p.nextVisitDate),p.nextVisitNote,p.notes]));
     const ws1=XLSX.utils.aoa_to_sheet(pr); ws1["!cols"]=[14,12,14,12,6,18,24,22,14,13,13,20,22].map(w=>({wch:w}));
     XLSX.utils.book_append_sheet(wb,ws1,"Пациенты");
-    const ar=[["Дата","Час","Пациент","Врач","Тип","Статус","Примечания"]];
+    const ar=[["Дата","Время","Пациент","Врач","Тип","Статус","Примечания"]];
     [...appointments].sort((a,b)=>a.date.localeCompare(b.date)).forEach(a=>{const p=getP(a.patientId);ar.push([fmt(a.date),a.time,p?fullName(p):"—",a.doctor,a.type,APPT_STATUSES[a.status]||a.status,a.notes]);});
     const ws2=XLSX.utils.aoa_to_sheet(ar); ws2["!cols"]=[12,8,22,22,20,14,28].map(w=>({wch:w}));
-    XLSX.utils.book_append_sheet(wb,ws2,"Записьи");
+    XLSX.utils.book_append_sheet(wb,ws2,"Записи");
     const protRows=[["Пациент","Протокол","Врач","Диагноз","Дата начала","Статус","Процедуры"]];
     protocols.forEach(pr=>{const p=getP(pr.patientId);protRows.push([p?fullName(p):"—",pr.name,pr.doctor,pr.diagnosis,fmt(pr.startDate),pr.status,pr.procedures.map(proc=>`${proc.procedureName}: ${proc.completedSessions}/${proc.totalSessions}`).join("; ")]);});
     const ws3=XLSX.utils.aoa_to_sheet(protRows); ws3["!cols"]=[22,28,22,24,13,12,50].map(w=>({wch:w}));
-    XLSX.utils.book_append_sheet(wb,ws3,"Протоколи");
-    const docRows=[["ПІБ","Специализация","Телефон","Email","График","Примечания"]];
+    XLSX.utils.book_append_sheet(wb,ws3,"Протоколы");
+    const docRows=[["ФИО","Специализация","Телефон","Email","График","Примечания"]];
     doctors.forEach(d=>docRows.push([d.name,d.specialization||"",d.phone?formatPhone(d.phone):"",d.email||"",(d.schedule||[]).join(", "),d.notes||""]));
     const ws4=XLSX.utils.aoa_to_sheet(docRows); ws4["!cols"]=[28,16,18,22,20,28].map(w=>({wch:w}));
-    XLSX.utils.book_append_sheet(wb,ws4,"Специалисти");
+    XLSX.utils.book_append_sheet(wb,ws4,"Специалисты");
     XLSX.writeFile(wb,`Atlant_МедКарта_${today()}.xlsx`);
     showToast("Excel скачан 📥");
   };
@@ -1361,10 +1673,10 @@ export default function MedKarta({ supabase, session, profile }) {
 
   const TABS = [
     {id:"patients",label:"👤 Пациенты",count:patients.length},
-    {id:"appointments",label:"📅 Записьи",count:appointments.filter(a=>a.status==="scheduled").length},
-    {id:"protocols",label:"💊 Протоколы",count:protocols.filter(p=>p.status==="active").length},
+    {id:"appointments",label:"📅 Записи",count:appointments.filter(a=>a.status==="scheduled").length},
+    {id:"protocols",label:"💊 Протоколы",count:protocolTemplates.length},
     {id:"podiatech",label:"🦶 Podiatech",count:podiatech.length},
-    {id:"doctors",label:"👨‍⚕️ Специалисти",count:doctors.length},
+    {id:"doctors",label:"👨‍⚕️ Специалисты",count:doctors.length},
     {id:"analytics",label:"📊 Аналитика",count:null},
     {id:"reminders",label:"🔔 Напоминания",count:reminders.length,urgent:urgentCount},
   ];
@@ -1394,9 +1706,9 @@ export default function MedKarta({ supabase, session, profile }) {
             {profile&&<div style={{display:"flex",alignItems:"center",gap:8,marginLeft:8}}>
               <div style={{fontSize:11,color:"rgba(255,255,255,.6)",textAlign:"right",lineHeight:1.3}}>
                 <div style={{fontWeight:600,color:"#fff"}}>{profile.full_name||profile.email}</div>
-                <div>{profile.role==="admin"?"Адмін":"Врач"}</div>
+                <div>{profile.role==="admin"?"Админ":"Врач"}</div>
               </div>
-              <button className="btn" onClick={()=>supabase?.auth.signOut()} style={{background:"rgba(255,255,255,.1)",color:"#fff",padding:"6px 12px",border:"1px solid rgba(255,255,255,.2)",fontSize:12}}>Вийти</button>
+              <button className="btn" onClick={()=>supabase?.auth.signOut()} style={{background:"rgba(255,255,255,.1)",color:"#fff",padding:"6px 12px",border:"1px solid rgba(255,255,255,.2)",fontSize:12}}>Выйти</button>
             </div>}
           </div>
         </div>
@@ -1424,7 +1736,7 @@ export default function MedKarta({ supabase, session, profile }) {
         {/* ════════════════════════════════════════ */}
         {tab==="patients"&&<>
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:20}}>
-            {[{l:"Всего",v:patients.length,i:"👥",c:"#0e7c6b"},{l:"Спостерігаються",v:patients.filter(p=>p.status==="active").length,i:"🟢",c:"#10b981"},{l:"Виписані",v:patients.filter(p=>p.status==="discharged").length,i:"📋",c:"#6366f1"},{l:"Активных протоколов",v:protocols.filter(p=>p.status==="active").length,i:"💊",c:"#f59e0b"}].map(s=>(
+            {[{l:"Всего",v:patients.length,i:"👥",c:"#0e7c6b"},{l:"Наблюдаются",v:patients.filter(p=>p.status==="active").length,i:"🟢",c:"#10b981"},{l:"Выписаны",v:patients.filter(p=>p.status==="discharged").length,i:"📋",c:"#6366f1"},{l:"Активных протоколов",v:protocols.filter(p=>p.status==="active").length,i:"💊",c:"#f59e0b"}].map(s=>(
               <div key={s.l} className="card" style={{padding:"14px 18px",borderLeft:`4px solid ${s.c}`}}>
                 <div style={{fontSize:22,marginBottom:2}}>{s.i}</div>
                 <div style={{fontSize:28,fontWeight:700,fontFamily:"'DM Serif Display',serif",color:s.c}}>{s.v}</div>
@@ -1448,14 +1760,14 @@ export default function MedKarta({ supabase, session, profile }) {
             <table style={{width:"100%",borderCollapse:"collapse"}}>
               <thead>
                 <tr style={{background:"#f8fafc",borderBottom:"2px solid #e8edf5"}}>
-                  {[["lastName","ПІБ"],["dob","Дата рожд."],["phone","Телефон"],["diagnosis","Диагноз"],["doctor","Врач"],["nextVisitDate","Наст. визит"],["status","Статус"]].map(([k,l])=>(
+                  {[["lastName","ФИО"],["dob","Дата рожд."],["phone","Телефон"],["diagnosis","Диагноз"],["doctor","Врач"],["nextVisitDate","След. визит"],["status","Статус"]].map(([k,l])=>(
                     <th key={k} onClick={()=>setSortBy(k)} style={{padding:"11px 14px",textAlign:"left",cursor:"pointer"}}>{l}{sortBy===k?" ▲":""}</th>
                   ))}
                   <th style={{padding:"11px 14px",textAlign:"right"}}>Действия</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredPats.length===0&&<tr><td colSpan={8} style={{textAlign:"center",padding:"52px",color:"#94a3b8",fontSize:15}}>Пациентів не найдено</td></tr>}
+                {filteredPats.length===0&&<tr><td colSpan={8} style={{textAlign:"center",padding:"52px",color:"#94a3b8",fontSize:15}}>Пациентов не найдено</td></tr>}
                 {filteredPats.map(p=>{
                   const days=daysUntil(p.nextVisitDate);
                   const overdue=days!==null&&days<0; const soon=days!==null&&days>=0&&days<=3;
@@ -1599,7 +1911,7 @@ export default function MedKarta({ supabase, session, profile }) {
           {/* All upcoming appointments list below calendar */}
           {allDayAppts.filter(a=>!a.time).length>0&&(
             <div style={{marginTop:16}}>
-              <div style={{fontSize:12,fontWeight:700,color:"#64748b",marginBottom:8,textTransform:"uppercase",letterSpacing:".07em"}}>Записьи без вказаного часу</div>
+              <div style={{fontSize:12,fontWeight:700,color:"#64748b",marginBottom:8,textTransform:"uppercase",letterSpacing:".07em"}}>Записи без указанного времени</div>
               <div style={{display:"flex",flexDirection:"column",gap:6}}>
                 {allDayAppts.filter(a=>!a.time).map(a=>{
                   const p=getP(a.patientId);
@@ -1619,22 +1931,22 @@ export default function MedKarta({ supabase, session, profile }) {
         })()}
 
         {/* ════════════════════════════════════════ */}
-        {/* TAB: PROTOCOLS                          */}
+        {/* TAB: PROTOCOLS (Templates Library)      */}
         {/* ════════════════════════════════════════ */}
         {tab==="protocols"&&<>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,flexWrap:"wrap",gap:12}}>
             <div>
-              <div style={{fontFamily:"'DM Serif Display',serif",fontSize:22}}>Протоколи та процедури</div>
-              <div style={{fontSize:13,color:"#64748b",marginTop:2}}>Курсы лечения · Прайс процедур</div>
+              <div style={{fontFamily:"'DM Serif Display',serif",fontSize:22}}>Протоколы и процедуры</div>
+              <div style={{fontSize:13,color:"#64748b",marginTop:2}}>Шаблоны протоколов · Прайс процедур</div>
             </div>
             <div style={{display:"flex",gap:8}}>
-              {protocolSubTab==="protocols"&&<button className="btn" onClick={()=>{setEditProtocol({patientId:"",name:"",procedures:[{procedureName:"",totalSessions:5,completedSessions:0,notes:""}],startDate:today(),status:"active",doctor:"",diagnosis:""});setModal("addProtocol");}} style={{background:"#0e7c6b",color:"#fff",padding:"8px 16px"}}>＋ Протокол</button>}
+              {protocolSubTab==="templates"&&<button className="btn" onClick={()=>{setEditTemplate({name:"",diagnosis:"",procedures:[{procedureName:"",totalSessions:5,notes:"",medications:[]}]});setModal("addTemplate");}} style={{background:"#0e7c6b",color:"#fff",padding:"8px 16px"}}>＋ Шаблон протокола</button>}
               {protocolSubTab==="catalog"&&<button className="btn" onClick={()=>{setEditProc({name:"",category:"Физиотерапия",icon:"⚡",color:"#8b5cf6",defaultSessions:5,price:0});setModal("addProc");}} style={{background:"#0e7c6b",color:"#fff",padding:"8px 16px"}}>＋ Процедура</button>}
             </div>
           </div>
 
           <div style={{display:"flex",gap:4,marginBottom:16}}>
-            {[{id:"protocols",label:"💊 Протоколы",count:protocols.filter(p=>p.status==="active").length},{id:"catalog",label:"📋 Прайс процедур",count:procCatalog.length}].map(st=>(
+            {[{id:"templates",label:"💊 Шаблоны протоколов",count:protocolTemplates.length},{id:"catalog",label:"📋 Прайс процедур",count:procCatalog.length}].map(st=>(
               <div key={st.id} className={`tab${protocolSubTab===st.id?" active":""}`} onClick={()=>setProtocolSubTab(st.id)}>
                 {st.label}
                 <span style={{marginLeft:6,background:protocolSubTab===st.id?"rgba(255,255,255,.25)":"rgba(14,124,107,.1)",color:protocolSubTab===st.id?"#fff":"#0e7c6b",borderRadius:10,padding:"1px 7px",fontSize:11,fontWeight:700}}>{st.count}</span>
@@ -1642,63 +1954,52 @@ export default function MedKarta({ supabase, session, profile }) {
             ))}
           </div>
 
-          {/* ─── PROTOCOLS SUB-TAB ─── */}
-          {protocolSubTab==="protocols"&&<>
-            {protocols.length===0
-              ?<div className="card" style={{padding:"52px",textAlign:"center",color:"#94a3b8"}}>Протоколів поки нет</div>
+          {/* ─── TEMPLATES SUB-TAB ─── */}
+          {protocolSubTab==="templates"&&<>
+            {protocolTemplates.length===0
+              ?<div className="card" style={{padding:"52px",textAlign:"center",color:"#94a3b8"}}>
+                <div style={{fontSize:40,marginBottom:12}}>💊</div>
+                <div style={{fontSize:16,fontWeight:600,marginBottom:6}}>Шаблонов пока нет</div>
+                <div style={{fontSize:13}}>Создайте шаблон протокола, который можно будет назначать пациентам</div>
+              </div>
               :<div style={{display:"flex",flexDirection:"column",gap:14}}>
-                {[...protocols].sort((a,b)=>a.status==="active"?-1:b.status==="active"?1:0).map(pr=>{
-                  const p=getP(pr.patientId);
-                  const totalAll = pr.procedures.reduce((s,proc)=>s+proc.totalSessions,0);
-                  const doneAll = pr.procedures.reduce((s,proc)=>s+proc.completedSessions,0);
-                  const pct = totalAll>0?Math.round(doneAll/totalAll*100):0;
-                  const statusColor = pr.status==="active"?"#0e7c6b":pr.status==="completed"?"#6366f1":"#f59e0b";
-                  const statusLabel = pr.status==="active"?"Активный":pr.status==="completed"?"Завершён":"Приостановлено";
-                  const totalPrice = pr.procedures.reduce((s,proc)=>{const cat=procCatalog.find(c=>c.name===proc.procedureName);return s+(cat?.price||0)*proc.totalSessions;},0);
+                {protocolTemplates.map(tmpl=>{
+                  const totalSessions = tmpl.procedures.reduce((s,p)=>s+p.totalSessions,0);
+                  const totalPrice = tmpl.procedures.reduce((s,proc)=>{const cat=procCatalog.find(c=>c.name===proc.procedureName);return s+(cat?.price||0)*proc.totalSessions;},0);
+                  // Count how many active patient protocols use this template name
+                  const usedCount = protocols.filter(pr=>pr.name===tmpl.name && pr.status==="active").length;
                   return (
-                    <div key={pr.id} className="card" style={{padding:0,overflow:"hidden",borderLeft:`4px solid ${statusColor}`}}>
+                    <div key={tmpl.id} className="card" style={{padding:0,overflow:"hidden",borderLeft:"4px solid #0e7c6b"}}>
                       <div style={{padding:"16px 20px",display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:12}}>
                         <div style={{flex:1,minWidth:200}}>
                           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                            <span style={{fontFamily:"'DM Serif Display',serif",fontSize:17}}>{pr.name}</span>
-                            <span className="chip" style={{background:statusColor+"22",color:statusColor}}>{statusLabel}</span>
+                            <span style={{fontFamily:"'DM Serif Display',serif",fontSize:17}}>{tmpl.name}</span>
+                            {usedCount>0&&<span className="chip" style={{background:"#0e7c6b22",color:"#0e7c6b",fontSize:10}}>Назначен: {usedCount} пац.</span>}
                           </div>
-                          <div style={{fontSize:13,color:"#64748b"}}>{p?fullName(p):"—"} · {pr.doctor} · {pr.diagnosis}</div>
-                          <div style={{fontSize:12,color:"#94a3b8",marginTop:2}}>Начало: {fmt(pr.startDate)}{totalPrice>0?` · Стоимость курсу: ${totalPrice.toLocaleString()} ₸`:""}</div>
-                        </div>
-                        <div style={{textAlign:"right",minWidth:100}}>
-                          <div style={{fontSize:28,fontWeight:700,fontFamily:"'DM Serif Display',serif",color:statusColor}}>{pct}%</div>
-                          <div style={{fontSize:12,color:"#64748b"}}>{doneAll} / {totalAll} сеансов</div>
+                          {tmpl.diagnosis&&<div style={{fontSize:13,color:"#64748b"}}>🩺 {tmpl.diagnosis}</div>}
+                          <div style={{fontSize:12,color:"#94a3b8",marginTop:2}}>{tmpl.procedures.length} процедур · {totalSessions} сеансов{totalPrice>0?` · ${totalPrice.toLocaleString()} ₸`:""}</div>
                         </div>
                       </div>
-                      <div style={{padding:"0 20px 8px"}}>
-                        <div className="progress-bar" style={{marginBottom:12}}>
-                          <div className="progress-fill" style={{width:`${pct}%`,background:`linear-gradient(90deg,${statusColor},${statusColor}aa)`}}/>
-                        </div>
-                        <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:12}}>
-                          {pr.procedures.map((proc,i)=>{
+                      <div style={{padding:"0 20px 12px"}}>
+                        <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                          {tmpl.procedures.map((proc,i)=>{
                             const cat = procCatalog.find(c=>c.name===proc.procedureName);
-                            const procPct = proc.totalSessions>0?Math.round(proc.completedSessions/proc.totalSessions*100):0;
                             return (
                               <div key={i} style={{background:"#f8fafc",borderRadius:10,padding:"8px 12px",border:"1px solid #e8edf3",minWidth:140,flex:"1 1 140px"}}>
                                 <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
                                   <span style={{fontSize:15}}>{cat?.icon||"📋"}</span>
                                   <span style={{fontSize:12,fontWeight:700,color:cat?.color||"#475569"}}>{proc.procedureName||"—"}</span>
                                 </div>
-                                <div className="progress-bar" style={{height:6,marginBottom:4}}>
-                                  <div className="progress-fill" style={{width:`${procPct}%`,background:cat?.color||"#64748b"}}/>
-                                </div>
-                                <div style={{fontSize:11,color:"#64748b"}}>{proc.completedSessions}/{proc.totalSessions}{cat?.price?` · ${(cat.price*proc.totalSessions).toLocaleString()} ₸`:""} {proc.notes&&`· ${proc.notes}`}</div>
-                                {(proc.medications||[]).length>0&&<div style={{fontSize:10,color:"#92400e",marginTop:3,display:"flex",flexWrap:"wrap",gap:3}}>{proc.medications.map(m=><span key={m} style={{background:"#fef3c7",padding:"1px 6px",borderRadius:4}}>💊{m}</span>)}</div>}
+                                <div style={{fontSize:11,color:"#64748b"}}>{proc.totalSessions} сеансов{cat?.price?` · ${(cat.price*proc.totalSessions).toLocaleString()} ₸`:""}{proc.notes?` · ${proc.notes}`:""}</div>
+                                {(proc.medications||[]).length>0&&<div style={{fontSize:10,color:"#92400e",marginTop:3,display:"flex",flexWrap:"wrap",gap:3}}>{proc.medications.map(m=><span key={m} style={{background:"#fef3c7",padding:"1px 6px",borderRadius:4}}>💊 {m}</span>)}</div>}
                               </div>
                             );
                           })}
                         </div>
                       </div>
                       <div style={{borderTop:"1px solid #f0f4f8",padding:"10px 20px",display:"flex",gap:6,justifyContent:"flex-end"}}>
-                        {pr.status==="active"&&<button className="btn" onClick={async ()=>{const updated={...pr,procedures:pr.procedures.map(proc=>({...proc,completedSessions:Math.min(proc.completedSessions+1,proc.totalSessions)}))};if(usingSupabase&&supabase)await supabase.from("protocols").update({procedures:updated.procedures}).eq("id",pr.id);setProtocols(prev=>prev.map(p=>p.id===pr.id?updated:p));showToast("+1 сеанс добавлено");}} style={{background:"#f0fdf4",color:"#10b981",padding:"6px 14px",fontSize:12}}>＋1 сеанс</button>}
-                        <button className="btn" onClick={()=>{setEditProtocol({...pr,procedures:pr.procedures.map(p=>({...p}))});setModal("editProtocol");}} style={{background:"#eff6ff",color:"#2563eb",padding:"6px 12px",fontSize:12}}>✏️ Редактировать</button>
-                        <button className="btn" onClick={()=>setDeleteTarget({type:"protocol",id:pr.id,name:pr.name})} style={{background:"#fef2f2",color:"#dc2626",padding:"6px 12px",fontSize:12}}>🗑</button>
+                        <button className="btn" onClick={()=>{setEditTemplate({...tmpl,procedures:tmpl.procedures.map(p=>({...p}))});setModal("editTemplate");}} style={{background:"#eff6ff",color:"#2563eb",padding:"6px 12px",fontSize:12}}>✏️ Редактировать</button>
+                        <button className="btn" onClick={()=>setDeleteTarget({type:"template",id:tmpl.id,name:tmpl.name})} style={{background:"#fef2f2",color:"#dc2626",padding:"6px 12px",fontSize:12}}>🗑</button>
                       </div>
                     </div>
                   );
@@ -1713,7 +2014,7 @@ export default function MedKarta({ supabase, session, profile }) {
               const cats = {};
               procCatalog.forEach(p=>{ if(!cats[p.category]) cats[p.category]=[]; cats[p.category].push(p); });
               return Object.entries(cats).length===0
-                ?<div className="card" style={{padding:"52px",textAlign:"center",color:"#94a3b8"}}>Процедур поки нет</div>
+                ?<div className="card" style={{padding:"52px",textAlign:"center",color:"#94a3b8"}}>Процедур пока нет</div>
                 :<div style={{display:"flex",flexDirection:"column",gap:14}}>
                   {Object.entries(cats).map(([cat,items])=>(
                     <div key={cat} className="card" style={{overflow:"hidden"}}>
@@ -1724,7 +2025,7 @@ export default function MedKarta({ supabase, session, profile }) {
                       <table style={{width:"100%",borderCollapse:"collapse"}}>
                         <thead>
                           <tr style={{background:"#f8fafc"}}>
-                            {["","Назва","Сеансов","Цена за сеанс","Стоимость курсу",""].map((h,i)=><th key={i} style={{padding:"8px 14px",textAlign:i===5?"right":"left",fontSize:10}}>{h}</th>)}
+                            {["","Название","Сеансов","Цена за сеанс","Стоимость курса",""].map((h,i)=><th key={i} style={{padding:"8px 14px",textAlign:i===5?"right":"left",fontSize:10}}>{h}</th>)}
                           </tr>
                         </thead>
                         <tbody>
@@ -1862,7 +2163,7 @@ export default function MedKarta({ supabase, session, profile }) {
                   <table style={{width:"100%",borderCollapse:"collapse"}}>
                     <thead>
                       <tr style={{background:"#f8fafc"}}>
-                        {["Размер","Количество","Собістоимость","Цена для пац.","Примечания",""].map((h,i)=><th key={i} style={{padding:"8px 14px",textAlign:i===5?"right":"left",fontSize:10}}>{h}</th>)}
+                        {["Размер","Количество","Себестоимость","Цена для пац.","Примечания",""].map((h,i)=><th key={i} style={{padding:"8px 14px",textAlign:i===5?"right":"left",fontSize:10}}>{h}</th>)}
                       </tr>
                     </thead>
                     <tbody>
@@ -1896,7 +2197,7 @@ export default function MedKarta({ supabase, session, profile }) {
           {/* ─── LOG SUB-TAB ─── */}
           {podiatechSubTab==="log"&&<>
             {stockLog.length===0
-              ?<div className="card" style={{padding:"52px",textAlign:"center",color:"#94a3b8"}}>Операций поки нет</div>
+              ?<div className="card" style={{padding:"52px",textAlign:"center",color:"#94a3b8"}}>Операций пока нет</div>
               :<div className="card" style={{overflow:"hidden"}}>
                 <table style={{width:"100%",borderCollapse:"collapse"}}>
                   <thead>
@@ -1934,7 +2235,7 @@ export default function MedKarta({ supabase, session, profile }) {
         {tab==="doctors"&&<>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18,flexWrap:"wrap",gap:12}}>
             <div>
-              <div style={{fontFamily:"'DM Serif Display',serif",fontSize:22}}>Специалисти клініки</div>
+              <div style={{fontFamily:"'DM Serif Display',serif",fontSize:22}}>Специалисты клиники</div>
               <div style={{fontSize:13,color:"#64748b",marginTop:2}}>Управління врачями та графиком роботи</div>
             </div>
             <button className="btn" onClick={()=>{setEditDoctor({...EMPTY_DOCTOR});setModal("addDoctor");}} style={{background:"#0e7c6b",color:"#fff",padding:"8px 18px"}}>＋ Новый специалист</button>
@@ -1992,7 +2293,7 @@ export default function MedKarta({ supabase, session, profile }) {
                 </div>
               );
             })}
-            {doctors.length===0&&<div className="card" style={{padding:"52px",textAlign:"center",color:"#94a3b8",gridColumn:"1/-1"}}>Специалистів поки нет</div>}
+            {doctors.length===0&&<div className="card" style={{padding:"52px",textAlign:"center",color:"#94a3b8",gridColumn:"1/-1"}}>Специалистов пока нет</div>}
           </div>
         </>}
 
@@ -2153,7 +2454,13 @@ export default function MedKarta({ supabase, session, profile }) {
               <div style={{marginTop:8}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                   <div style={{fontSize:11,fontWeight:700,color:"#0e7c6b",textTransform:"uppercase",letterSpacing:".06em"}}>💊 Протоколы лечения</div>
-                  <button className="btn" onClick={()=>{setEditProtocol({patientId:viewPat.id,name:"",procedures:[{procedureName:"",totalSessions:5,completedSessions:0,notes:""}],startDate:today(),status:"active",doctor:viewPat.doctor||"",diagnosis:viewPat.diagnosis||""});setModal("addProtocol");}} style={{background:"#0e7c6b",color:"#fff",padding:"4px 12px",fontSize:11}}>＋ Протокол</button>
+                  <div style={{display:"flex",gap:4}}>
+                    {protocolTemplates.length>0&&<select value="" onChange={e=>{if(!e.target.value)return;const tmpl=protocolTemplates.find(t=>String(t.id)===e.target.value);if(tmpl)applyTemplateToPatient(tmpl,viewPat);}} style={{padding:"4px 8px",border:"1.5px solid #0e7c6b",borderRadius:8,fontSize:11,color:"#0e7c6b",background:"#f0fdf4",fontWeight:600,cursor:"pointer"}}>
+                      <option value="">＋ Из шаблона…</option>
+                      {protocolTemplates.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}
+                    </select>}
+                    <button className="btn" onClick={()=>{setEditProtocol({patientId:viewPat.id,name:"",procedures:[{procedureName:"",totalSessions:5,completedSessions:0,notes:"",medications:[]}],startDate:today(),status:"active",doctor:viewPat.doctor||"",diagnosis:viewPat.diagnosis||""});setModal("addProtocol");}} style={{background:"#0e7c6b",color:"#fff",padding:"4px 12px",fontSize:11}}>＋ Вручную</button>
+                  </div>
                 </div>
                 {protocols.filter(pr=>String(pr.patientId)===String(viewPat.id)).length>0?
                   protocols.filter(pr=>String(pr.patientId)===String(viewPat.id)).map(pr=>{
@@ -2193,6 +2500,98 @@ export default function MedKarta({ supabase, session, profile }) {
                 ))}
                 {appointments.filter(a=>String(a.patientId)===String(viewPat.id)).length===0&&<div style={{color:"#94a3b8",fontSize:13}}>Нет записей</div>}
               </div>
+
+              {/* Bulk booking — schedule for 7 days ahead */}
+              {(()=>{
+                const [showBulk, setShowBulk] = [viewPat._showBulk||false, (v)=>setViewPat(p=>({...p,_showBulk:v}))];
+                const [bulkDays, setBulkDays] = [viewPat._bulkDays||7, (v)=>setViewPat(p=>({...p,_bulkDays:v}))];
+                const [bulkTime, setBulkTime] = [viewPat._bulkTime||"10:00", (v)=>setViewPat(p=>({...p,_bulkTime:v}))];
+                const [bulkType, setBulkType] = [viewPat._bulkType||"Процедура", (v)=>setViewPat(p=>({...p,_bulkType:v}))];
+                const [bulkNote, setBulkNote] = [viewPat._bulkNote||"", (v)=>setViewPat(p=>({...p,_bulkNote:v}))];
+                const [bulkWorkdays, setBulkWorkdays] = [viewPat._bulkWorkdays!==false, (v)=>setViewPat(p=>({...p,_bulkWorkdays:v}))];
+                const [bulkDone, setBulkDone] = [viewPat._bulkDone||false, (v)=>setViewPat(p=>({...p,_bulkDone:v}))];
+
+                // Generate dates
+                const generateDates = () => {
+                  const dates = [];
+                  let d = new Date();
+                  d.setDate(d.getDate() + 1);
+                  while (dates.length < bulkDays) {
+                    const dow = d.getDay();
+                    if (!bulkWorkdays || (dow >= 1 && dow <= 6)) { // Пн-Сб
+                      dates.push(d.toISOString().slice(0,10));
+                    }
+                    d = new Date(d); d.setDate(d.getDate() + 1);
+                  }
+                  return dates;
+                };
+
+                const handleBulkCreate = async () => {
+                  const dates = generateDates();
+                  const doctor = viewPat.doctor || doctorNames[0] || "";
+                  for (const date of dates) {
+                    const appt = { ...EMPTY_APPT, patientId: viewPat.id, doctor, date, time: bulkTime, type: bulkType, notes: bulkNote, status: "scheduled" };
+                    if (usingSupabase && supabase) {
+                      const row = { patient_id:viewPat.id, doctor, date, time:bulkTime||null, type:bulkType, status:"scheduled", notes:bulkNote||"" };
+                      const {data,error}=await supabase.from("appointments").insert(row).select().single();
+                      if(!error&&data) setAppointments(prev=>[...prev,mapAppt(data)]);
+                    } else {
+                      setAppointments(prev=>[...prev,{...appt,id:uid()}]);
+                    }
+                  }
+                  setBulkDone(true);
+                  showToast(`Создано ${dates.length} записей на приём`);
+                };
+
+                const previewDates = showBulk ? generateDates() : [];
+
+                return (
+                  <div style={{marginTop:10}}>
+                    <button className="btn" onClick={()=>{setShowBulk(!showBulk);setBulkDone(false);}} style={{background:showBulk?"#eff6ff":"#f8fafc",color:showBulk?"#2563eb":"#64748b",padding:"7px 14px",fontSize:12,border:"1px solid "+(showBulk?"#bfdbfe":"#e2e8f0"),borderRadius:8,width:"100%",textAlign:"left"}}>
+                      📅 Записать на курс ({bulkDays} дней)… {showBulk?"▲":"▼"}
+                    </button>
+                    {showBulk&&!bulkDone&&(
+                      <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:"0 0 10px 10px",padding:"12px 14px",marginTop:-1}}>
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}}>
+                          <div className="field"><label>Кол-во дней</label>
+                            <select value={bulkDays} onChange={e=>setBulkDays(+e.target.value)} style={{padding:"6px 8px",border:"1.5px solid #bfdbfe",borderRadius:7,fontSize:13}}>
+                              {[3,5,7,10,14,21].map(n=><option key={n} value={n}>{n} дней</option>)}
+                            </select>
+                          </div>
+                          <div className="field"><label>Время</label>
+                            <input type="time" value={bulkTime} onChange={e=>setBulkTime(e.target.value)} style={{padding:"6px 8px",border:"1.5px solid #bfdbfe",borderRadius:7,fontSize:13}}/>
+                          </div>
+                          <div className="field"><label>Тип</label>
+                            <select value={bulkType} onChange={e=>setBulkType(e.target.value)} style={{padding:"6px 8px",border:"1.5px solid #bfdbfe",borderRadius:7,fontSize:13}}>
+                              {APPT_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
+                            </select>
+                          </div>
+                        </div>
+                        <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:8}}>
+                          <label style={{display:"flex",alignItems:"center",gap:6,fontSize:12,cursor:"pointer"}}>
+                            <input type="checkbox" checked={bulkWorkdays} onChange={e=>setBulkWorkdays(e.target.checked)} style={{accentColor:"#2563eb"}}/>
+                            Только рабочие дни (Пн–Сб)
+                          </label>
+                        </div>
+                        <div className="field" style={{marginBottom:10}}><label>Примечание (для всех записей)</label>
+                          <input value={bulkNote} onChange={e=>setBulkNote(e.target.value)} placeholder="Процедура, курс…" style={{padding:"6px 8px",border:"1.5px solid #bfdbfe",borderRadius:7,fontSize:13,width:"100%"}}/>
+                        </div>
+                        <div style={{fontSize:11,color:"#475569",marginBottom:8}}>
+                          Будет создано <b>{previewDates.length}</b> записей: {previewDates.slice(0,5).map(d=>fmt(d)).join(", ")}{previewDates.length>5?"…":""}
+                          <br/>Врач: <b>{viewPat.doctor||doctorNames[0]||"—"}</b> · Время: <b>{bulkTime}</b>
+                        </div>
+                        <button className="btn" onClick={handleBulkCreate} style={{background:"#2563eb",color:"#fff",padding:"9px 18px",fontSize:13,width:"100%"}}>📅 Создать {previewDates.length} записей</button>
+                      </div>
+                    )}
+                    {showBulk&&bulkDone&&(
+                      <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:"0 0 10px 10px",padding:"12px 14px",marginTop:-1,textAlign:"center",fontSize:13,color:"#166534",fontWeight:600}}>
+                        ✅ Записи успешно созданы!
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
               <div style={{display:"flex",gap:8,marginTop:16,flexWrap:"wrap"}}>
                 <button className="btn" onClick={()=>{setDischargePat(viewPat);setModal("discharge");}} style={{background:"#f0fdf4",color:"#0e7c6b",padding:"9px 14px"}}>📄 Выписка</button>
               <button className="btn" onClick={()=>{setModal(null);setTimelinePat(viewPat);setTimeout(()=>setModal("timeline"),50);}} style={{background:"#faf5ff",color:"#7c3aed",padding:"9px 14px"}}>📋 История</button>
@@ -2248,8 +2647,8 @@ export default function MedKarta({ supabase, session, profile }) {
       )}
 
       {/* Form modals */}
-      {(modal==="addPat"||modal==="editPat")&&editPat&&<PatientForm form={editPat} setForm={setEditPat} isAdd={modal==="addPat"} onSave={savePat} onClose={()=>setModal(null)} doctorNames={doctorNames}/>}
-      {(modal==="addAppt"||modal==="editAppt")&&editAppt&&<ApptForm form={editAppt} setForm={setEditAppt} isAdd={modal==="addAppt"} patients={patients} onSave={saveAppt} onClose={()=>setModal(null)} doctorNames={doctorNames} onCreatePatient={(p)=>setPatients(prev=>[...prev,p])}/>}
+      {(modal==="addPat"||modal==="editPat")&&editPat&&<PatientForm form={editPat} setForm={setEditPat} isAdd={modal==="addPat"} onSave={savePat} onClose={()=>setModal(null)} doctorNames={doctorNames} onBulkBook={async ({patientId,doctor,dates,time,type,note})=>{for(const date of dates){const appt={...EMPTY_APPT,patientId,doctor,date,time,type,notes:note,status:"scheduled"};if(usingSupabase&&supabase){const row={patient_id:patientId,doctor,date,time:time||null,type,status:"scheduled",notes:note||""};const{data,error}=await supabase.from("appointments").insert(row).select().single();if(!error&&data)setAppointments(prev=>[...prev,mapAppt(data)]);}else{setAppointments(prev=>[...prev,{...appt,id:uid()}]);}}showToast(`Создано ${dates.length} записей на приём`);}}/>}
+      {(modal==="addAppt"||modal==="editAppt")&&editAppt&&<ApptForm form={editAppt} setForm={setEditAppt} isAdd={modal==="addAppt"} patients={patients} onSave={saveAppt} onClose={()=>setModal(null)} doctorNames={doctorNames} onCreatePatient={(p)=>setPatients(prev=>[...prev,p])} onViewPatient={(p)=>{setModal(null);setViewPat(p);setTimeout(()=>setModal("viewPat"),50);}} onBulkBook={async (days)=>{for(const d of days){if(usingSupabase&&supabase){const row={patient_id:d.patientId,doctor:d.doctor,date:d.date,time:d.time||null,type:d.type||"Процедура",status:"scheduled",notes:d.note||""};const{data,error}=await supabase.from("appointments").insert(row).select().single();if(!error&&data)setAppointments(prev=>[...prev,mapAppt(data)]);}else{setAppointments(prev=>[...prev,{...EMPTY_APPT,id:uid(),patientId:d.patientId,doctor:d.doctor,date:d.date,time:d.time,type:d.type||"Процедура",notes:d.note||"",status:"scheduled"}]);}}showToast(`Создано ${days.length} записей`);}}/>}
       {(modal==="addProtocol"||modal==="editProtocol")&&editProtocol&&<ProtocolForm form={editProtocol} setForm={setEditProtocol} isAdd={modal==="addProtocol"} patients={patients} onSave={saveProtocol} onClose={()=>setModal(null)} doctorNames={doctorNames} procCatalog={procCatalog}/>}
       {(modal==="addDoctor"||modal==="editDoctor")&&editDoctor&&<DoctorForm form={editDoctor} setForm={setEditDoctor} isAdd={modal==="addDoctor"} onSave={saveDoctor} onClose={()=>setModal(null)}/>}
       {(modal==="addPodiatech"||modal==="editPodiatech")&&editPodiatech&&<PodiatechForm form={editPodiatech} setForm={setEditPodiatech} isAdd={modal==="addPodiatech"} patients={patients} onSave={savePodiatech} onClose={()=>setModal(null)}/>}
@@ -2260,7 +2659,7 @@ export default function MedKarta({ supabase, session, profile }) {
         <div className="modal-bg" onClick={()=>setModal(null)}>
           <div className="modal" style={{width:500,maxHeight:"93vh",overflow:"auto"}} onClick={e=>e.stopPropagation()}>
             <div style={{background:"linear-gradient(135deg,#064e3b,#0e7c6b)",padding:"18px 24px",borderRadius:"18px 18px 0 0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:"#fff"}}>{modal==="addProc"?"📋 Новая процедура":"Редактирование процедури"}</div>
+              <div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:"#fff"}}>{modal==="addProc"?"📋 Новая процедура":"Редактирование процедуры"}</div>
               <button className="btn" onClick={()=>setModal(null)} style={{background:"rgba(255,255,255,.15)",color:"#fff",padding:"5px 11px"}}>✕</button>
             </div>
             <div style={{padding:"20px 24px",display:"flex",flexDirection:"column",gap:12}}>
@@ -2271,7 +2670,7 @@ export default function MedKarta({ supabase, session, profile }) {
                     {PROCEDURE_CATEGORIES.map(c=><option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
-                <div className="field"><label>Сеансов за замовчуванням</label><input type="number" min={1} value={editProc.defaultSessions||5} onChange={e=>setEditProc(f=>({...f,defaultSessions:+e.target.value}))}/></div>
+                <div className="field"><label>Сеансов по умолчанию</label><input type="number" min={1} value={editProc.defaultSessions||5} onChange={e=>setEditProc(f=>({...f,defaultSessions:+e.target.value}))}/></div>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
                 <div className="field"><label>Цена за сеанс (₸)</label><input type="number" min={0} value={editProc.price||0} onChange={e=>setEditProc(f=>({...f,price:+e.target.value}))} placeholder="0"/></div>
@@ -2299,6 +2698,86 @@ export default function MedKarta({ supabase, session, profile }) {
         </div>
       )}
 
+      {/* Protocol Template form */}
+      {(modal==="addTemplate"||modal==="editTemplate")&&editTemplate&&(
+        <div className="modal-bg" onClick={()=>setModal(null)}>
+          <div className="modal" style={{width:640,maxHeight:"93vh",overflow:"auto"}} onClick={e=>e.stopPropagation()}>
+            <div style={{background:"linear-gradient(135deg,#064e3b,#0e7c6b)",padding:"18px 24px",borderRadius:"18px 18px 0 0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:"#fff"}}>{modal==="addTemplate"?"💊 Новый шаблон протокола":"Редактирование шаблона"}</div>
+              <button className="btn" onClick={()=>setModal(null)} style={{background:"rgba(255,255,255,.15)",color:"#fff",padding:"5px 11px"}}>✕</button>
+            </div>
+            <div style={{padding:"20px 24px",display:"flex",flexDirection:"column",gap:12}}>
+              <div className="field"><label>Название шаблона *</label><input value={editTemplate.name||""} onChange={e=>setEditTemplate(f=>({...f,name:e.target.value}))} placeholder="Курс TEKAR-терапии"/></div>
+              <div className="field"><label>Диагноз (рекомендуемый)</label>
+                <input list="diag-list-tmpl" value={editTemplate.diagnosis||""} onChange={e=>setEditTemplate(f=>({...f,diagnosis:e.target.value}))} placeholder="Для какого диагноза"/>
+                <datalist id="diag-list-tmpl">{DIAGNOSES_CATALOG.map(d=><option key={d} value={d}/>)}</datalist>
+              </div>
+
+              <div style={{background:"#f8fafc",borderRadius:12,padding:"14px 16px",border:"1px solid #e2e8f0"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                  <div style={{fontSize:12,fontWeight:700,color:"#0e7c6b",textTransform:"uppercase",letterSpacing:".06em"}}>Процедуры ({(editTemplate.procedures||[]).length})</div>
+                  <button className="btn" onClick={()=>setEditTemplate(f=>({...f,procedures:[...(f.procedures||[]),{procedureName:"",totalSessions:5,notes:"",medications:[]}]}))} style={{background:"#0e7c6b",color:"#fff",padding:"5px 14px",fontSize:12}}>＋ Добавить процедуру</button>
+                </div>
+                {(editTemplate.procedures||[]).map((proc,i) => {
+                  const catItem = procCatalog.find(c=>c.name===proc.procedureName);
+                  const needsMeds = (n) => { const l=(n||"").toLowerCase(); return l.includes("инъекц")||l.includes("фармако")||l.includes("блокад")||l.includes("prp")||l.includes("карбокс"); };
+                  const updateProc = (k,v) => setEditTemplate(f=>({...f,procedures:f.procedures.map((p,j)=>j===i?{...p,[k]:v}:p)}));
+                  const toggleMed = (med) => {
+                    const meds = proc.medications||[];
+                    updateProc("medications", meds.includes(med)?meds.filter(m=>m!==med):[...meds,med]);
+                  };
+                  return (
+                    <div key={i} style={{background:"#fff",borderRadius:10,padding:"12px 14px",marginBottom:8,border:"1px solid #e8edf3"}}>
+                      <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:8}}>
+                        {catItem&&<span style={{fontSize:18}}>{catItem.icon}</span>}
+                        <select value={proc.procedureName} onChange={e=>{updateProc("procedureName",e.target.value);const c=procCatalog.find(c=>c.name===e.target.value);if(c)updateProc("totalSessions",c.defaultSessions);}} style={{flex:1,padding:"7px 10px",border:"1.5px solid #dde4ef",borderRadius:7,fontSize:13}}>
+                          <option value="">— выбрать процедуру —</option>
+                          {procCatalog.map(c=><option key={c.name} value={c.name}>{c.icon} {c.name}</option>)}
+                        </select>
+                        <button className="btn" onClick={()=>setEditTemplate(f=>({...f,procedures:f.procedures.filter((_,j)=>j!==i)}))} style={{background:"#fef2f2",color:"#dc2626",padding:"5px 8px",fontSize:12}}>✕</button>
+                      </div>
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:8}}>
+                        <div className="field"><label>Сеансов</label><input type="number" min={1} value={proc.totalSessions} onChange={e=>updateProc("totalSessions",+e.target.value)}/></div>
+                        <div className="field"><label>Примечания</label><input value={proc.notes||""} onChange={e=>updateProc("notes",e.target.value)} placeholder="Зона, область…"/></div>
+                      </div>
+                      {needsMeds(proc.procedureName)&&(
+                        <div style={{marginTop:8,background:"#fef3c7",border:"1px solid #fde68a",borderRadius:8,padding:"10px 12px"}}>
+                          <div style={{fontSize:11,fontWeight:700,color:"#92400e",marginBottom:8,textTransform:"uppercase",letterSpacing:".06em"}}>💊 Препараты</div>
+                          {(proc.medications||[]).length>0&&(
+                            <div style={{display:"flex",flexWrap:"wrap",gap:4,marginBottom:8}}>
+                              {(proc.medications||[]).map(med=>(
+                                <span key={med} style={{background:"#fff",border:"1px solid #fde68a",borderRadius:6,padding:"3px 8px",fontSize:12,display:"flex",alignItems:"center",gap:4}}>
+                                  {med}
+                                  <button onClick={()=>toggleMed(med)} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626",fontSize:14,padding:0,lineHeight:1}}>×</button>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          <select value="" onChange={e=>{if(e.target.value)toggleMed(e.target.value);e.target.value="";}} style={{width:"100%",padding:"7px 10px",border:"1.5px solid #fde68a",borderRadius:7,fontSize:12,background:"#fff"}}>
+                            <option value="">＋ добавить препарат…</option>
+                            {Object.entries(MEDICATION_CATEGORIES).map(([cat,meds])=>(
+                              <optgroup key={cat} label={cat}>
+                                {meds.filter(m=>!(proc.medications||[]).includes(m)).map(m=><option key={m} value={m}>{m}</option>)}
+                              </optgroup>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                {(editTemplate.procedures||[]).length===0&&<div style={{textAlign:"center",color:"#94a3b8",padding:"16px",fontSize:13}}>Добавьте хотя бы одну процедуру</div>}
+              </div>
+
+              <div style={{display:"flex",gap:10,marginTop:4}}>
+                <button className="btn" onClick={()=>editTemplate.name?.trim()&&(editTemplate.procedures||[]).length>0&&saveTemplate(editTemplate)} disabled={!editTemplate.name?.trim()||(editTemplate.procedures||[]).length===0} style={{flex:1,background:editTemplate.name?.trim()&&(editTemplate.procedures||[]).length>0?"#0e7c6b":"#e2e8f0",color:editTemplate.name?.trim()&&(editTemplate.procedures||[]).length>0?"#fff":"#94a3b8",padding:"12px",fontSize:15}}>{modal==="addTemplate"?"💊 Создать шаблон":"💾 Сохранить"}</button>
+                <button className="btn" onClick={()=>setModal(null)} style={{background:"#f1f5f9",color:"#475569",padding:"12px 20px"}}>Отменить</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Delete confirmation */}
       {deleteTarget&&(
         <div className="modal-bg" onClick={()=>setDeleteTarget(null)}>
@@ -2306,8 +2785,8 @@ export default function MedKarta({ supabase, session, profile }) {
             <div style={{fontSize:42,marginBottom:10}}>🗑️</div>
             <div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,marginBottom:6}}>Удалить?</div>
             <div style={{fontSize:14,color:"#64748b",marginBottom:6}}><b>{deleteTarget.name}</b></div>
-            {deleteTarget.type==="patient"&&<div style={{fontSize:12,color:"#ef4444",marginBottom:16}}>Усі записьи, протоколи та дані Podiatech також будуть видалені.</div>}
-            <div style={{fontSize:12,color:"#94a3b8",marginBottom:22}}>Цю дію не можна отменить.</div>
+            {deleteTarget.type==="patient"&&<div style={{fontSize:12,color:"#ef4444",marginBottom:16}}>Все записи, протоколы и данные Podiatech также будут удалены.</div>}
+            <div style={{fontSize:12,color:"#94a3b8",marginBottom:22}}>Это действие нельзя отменить.</div>
             <div style={{display:"flex",gap:10}}>
               <button className="btn" onClick={()=>{
                 if(deleteTarget.type==="patient") deletePat(deleteTarget.id);
@@ -2317,6 +2796,7 @@ export default function MedKarta({ supabase, session, profile }) {
                 else if(deleteTarget.type==="doctor") deleteDoctor(deleteTarget.id);
                 else if(deleteTarget.type==="stockItem") deleteStockItem(deleteTarget.id);
                 else if(deleteTarget.type==="procCatalog") deleteProcCatalogItem(deleteTarget.id);
+                else if(deleteTarget.type==="template") deleteTemplate(deleteTarget.id);
               }} style={{flex:1,background:"#dc2626",color:"#fff",padding:"11px",fontSize:14}}>Удалить</button>
               <button className="btn" onClick={()=>setDeleteTarget(null)} style={{flex:1,background:"#f1f5f9",color:"#475569",padding:"11px"}}>Отменить</button>
             </div>
