@@ -1613,6 +1613,8 @@ export default function MedKarta({ supabase, session, profile }) {
   const [repFrom, setRepFrom] = useState(weekStart);
   const [repTo, setRepTo] = useState(today());
   const [repDoctor, setRepDoctor] = useState("all");
+  const [repProc, setRepProc] = useState("all");
+  const [repView, setRepView] = useState("summary");
 
   // ─── Role-based access ───
   const isAdmin = !profile || profile.role === "admin";
@@ -2798,12 +2800,116 @@ export default function MedKarta({ supabase, session, profile }) {
                 {doctorNames.map(d=><option key={d} value={d}>{d.split(" ").slice(0,2).join(" ")}</option>)}
               </select>
             </div>
+            <div className="field" style={{minWidth:180}}><label>Процедура</label>
+              <select value={repProc} onChange={e=>setRepProc(e.target.value)} style={{padding:"7px 10px",border:"1.5px solid #dde4ef",borderRadius:8,fontSize:13}}>
+                <option value="all">Все процедуры</option>
+                {procCatalog.map(p=><option key={p.id} value={p.name}>{p.icon} {p.name}</option>)}
+              </select>
+            </div>
             <div style={{display:"flex",gap:6,marginTop:16}}>
               <button className="btn" onClick={()=>{setRepFrom(weekStart);setRepTo(today());}} style={{background:"#f0fdf4",color:"#0e7c6b",padding:"6px 12px",fontSize:11,border:"1px solid #bbf7d0"}}>Эта неделя</button>
               <button className="btn" onClick={()=>{setRepFrom(monthStart);setRepTo(today());}} style={{background:"#eff6ff",color:"#2563eb",padding:"6px 12px",fontSize:11,border:"1px solid #bfdbfe"}}>Этот месяц</button>
+              <button className="btn" onClick={()=>{const d=new Date();d.setMonth(d.getMonth()-1);const ms=new Date(d.getFullYear(),d.getMonth(),1).toISOString().slice(0,10);const me=new Date(d.getFullYear(),d.getMonth()+1,0).toISOString().slice(0,10);setRepFrom(ms);setRepTo(me);}} style={{background:"#fef3c7",color:"#92400e",padding:"6px 12px",fontSize:11,border:"1px solid #fde68a"}}>Прошлый месяц</button>
+            </div>
+            <div style={{display:"flex",gap:6,marginTop:10}}>
+              {[{id:"summary",label:"📊 Сводка"},{id:"procedures",label:"⚡ По процедурам"},{id:"doctors",label:"👨‍⚕️ По специалистам"}].map(v=>(
+                <button key={v.id} className="btn" onClick={()=>setRepView(v.id)} style={{background:repView===v.id?"#0e7c6b":"#f1f5f9",color:repView===v.id?"#fff":"#475569",padding:"7px 14px",fontSize:12,border:"none"}}>{v.label}</button>
+              ))}
             </div>
           </div>
 
+          {/* ═══ PROCEDURE DETAIL REPORT ═══ */}
+          {repView==="procedures"&&(()=>{
+            const procStats = {};
+            protocols.forEach(pr=>{
+              if(repDoctor!=="all" && pr.doctor!==repDoctor) return;
+              const patDone = doneAppts.filter(a=>String(a.patientId)===String(pr.patientId));
+              if(patDone.length===0 && (!pr.startDate || pr.startDate>repTo || pr.startDate<repFrom)) return;
+              pr.procedures.forEach(proc=>{
+                if(repProc!=="all" && proc.procedureName!==repProc) return;
+                const cat=procCatalog.find(c=>c.name===proc.procedureName);
+                if(!procStats[proc.procedureName]) procStats[proc.procedureName]={name:proc.procedureName,icon:cat?.icon||"📋",color:cat?.color||"#64748b",price:cat?.price||0,sessions:0,patients:new Set(),doctors:new Set(),revenue:0};
+                procStats[proc.procedureName].sessions+=proc.completedSessions;
+                procStats[proc.procedureName].patients.add(pr.patientId);
+                if(pr.doctor) procStats[proc.procedureName].doctors.add(pr.doctor);
+                procStats[proc.procedureName].revenue+=(cat?.price||0)*proc.completedSessions;
+              });
+            });
+            const procList=Object.values(procStats).sort((a,b)=>b.sessions-a.sessions);
+            const totalRevProc=procList.reduce((s,p)=>s+p.revenue,0);
+            const totalSessions=procList.reduce((s,p)=>s+p.sessions,0);
+            return <div className="card" style={{padding:"20px",marginBottom:16}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                <div style={{fontSize:14,fontWeight:700}}>⚡ Детальний отчёт по процедурам</div>
+                <button className="btn" onClick={()=>handlePrintReport("Отчёт по процедурам","report-procs-detail")} style={{background:"#f1f5f9",color:"#475569",padding:"5px 12px",fontSize:11}}>🖨️ Печать</button>
+              </div>
+              <div id="report-procs-detail">
+                <div style={{textAlign:"center",fontSize:12,color:"#64748b",marginBottom:12}}>{fmt(repFrom)} — {fmt(repTo)}{repDoctor!=="all"?` · ${repDoctor}`:""}{repProc!=="all"?` · ${repProc}`:""}</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:16}}>
+                  {[{v:totalSessions,l:"Сеансов выполнено",bg:"#f0fdf4",bc:"#bbf7d0",c:"#0e7c6b"},{v:procList.reduce((s,p)=>s+p.patients.size,0),l:"Пациентов",bg:"#eff6ff",bc:"#bfdbfe",c:"#2563eb"},{v:totalRevProc.toLocaleString()+" ₸",l:"Сумма услуг",bg:"#fef3c7",bc:"#fde68a",c:"#92400e"}].map(s=>(
+                    <div key={s.l} style={{background:s.bg,border:`1px solid ${s.bc}`,borderRadius:10,padding:"12px",textAlign:"center"}}><div style={{fontSize:24,fontWeight:800,color:s.c}}>{s.v}</div><div style={{fontSize:11,color:"#64748b"}}>{s.l}</div></div>
+                  ))}
+                </div>
+                <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                  <thead><tr style={{background:"#f0f2f5"}}>{["Процедура","Сеансов","Пациентов","Врачи","Цена/сеанс","Сумма"].map(h=><th key={h} style={{padding:"7px 10px",border:"1px solid #e2e8f0",textAlign:h==="Процедура"?"left":"center",fontSize:11}}>{h}</th>)}</tr></thead>
+                  <tbody>
+                    {procList.map(p=><tr key={p.name}><td style={{padding:"6px 10px",border:"1px solid #f0f4f8"}}><span style={{color:p.color}}>{p.icon}</span> {p.name}</td><td style={{padding:"6px 10px",border:"1px solid #f0f4f8",textAlign:"center",fontWeight:700}}>{p.sessions}</td><td style={{padding:"6px 10px",border:"1px solid #f0f4f8",textAlign:"center"}}>{p.patients.size}</td><td style={{padding:"6px 10px",border:"1px solid #f0f4f8",textAlign:"center",fontSize:11}}>{[...p.doctors].map(d=>d.split(" ").slice(0,2).join(" ")).join(", ")}</td><td style={{padding:"6px 10px",border:"1px solid #f0f4f8",textAlign:"center"}}>{p.price.toLocaleString()} ₸</td><td style={{padding:"6px 10px",border:"1px solid #f0f4f8",textAlign:"right",fontWeight:700,color:"#0e7c6b"}}>{p.revenue.toLocaleString()} ₸</td></tr>)}
+                    <tr style={{background:"#f0fdf4",fontWeight:700}}><td style={{padding:"7px 10px",border:"1px solid #e2e8f0"}}>Итого</td><td style={{padding:"7px 10px",border:"1px solid #e2e8f0",textAlign:"center"}}>{totalSessions}</td><td colSpan={3} style={{padding:"7px 10px",border:"1px solid #e2e8f0"}}></td><td style={{padding:"7px 10px",border:"1px solid #e2e8f0",textAlign:"right",color:"#0e7c6b"}}>{totalRevProc.toLocaleString()} ₸</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>;
+          })()}
+
+          {/* ═══ DOCTOR DETAIL REPORT ═══ */}
+          {repView==="doctors"&&(()=>{
+            return <div className="card" style={{padding:"20px",marginBottom:16}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                <div style={{fontSize:14,fontWeight:700}}>👨‍⚕️ Детальний отчёт по специалистам</div>
+                <button className="btn" onClick={()=>handlePrintReport("Отчёт по специалистам","report-docs-detail")} style={{background:"#f1f5f9",color:"#475569",padding:"5px 12px",fontSize:11}}>🖨️ Печать</button>
+              </div>
+              <div id="report-docs-detail">
+                <div style={{textAlign:"center",fontSize:12,color:"#64748b",marginBottom:16}}>{fmt(repFrom)} — {fmt(repTo)}{repProc!=="all"?` · ${repProc}`:""}</div>
+                {doctorNames.filter(d=>repDoctor==="all"||d===repDoctor).map(doc=>{
+                  const da=repAppts.filter(a=>a.doctor===doc);
+                  if(da.length===0) return null;
+                  const done=da.filter(a=>a.status==="done").length;
+                  const sched=da.filter(a=>a.status==="scheduled").length;
+                  const canc=da.filter(a=>a.status==="cancelled"||a.status==="missed").length;
+                  const pats=new Set(da.map(a=>a.patientId)).size;
+                  const procBreak={};
+                  protocols.filter(pr=>pr.doctor===doc).forEach(pr=>{pr.procedures.forEach(proc=>{
+                    if(repProc!=="all"&&proc.procedureName!==repProc) return;
+                    const cat=procCatalog.find(c=>c.name===proc.procedureName);
+                    if(!procBreak[proc.procedureName]) procBreak[proc.procedureName]={s:0,r:0,i:cat?.icon||"📋"};
+                    procBreak[proc.procedureName].s+=proc.completedSessions;
+                    procBreak[proc.procedureName].r+=(cat?.price||0)*proc.completedSessions;
+                  });});
+                  const totalRev=Object.values(procBreak).reduce((s,p)=>s+p.r,0);
+                  return <div key={doc} style={{border:"1px solid #e2e8f0",borderRadius:12,padding:"16px 18px",marginBottom:14}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                      <div style={{fontSize:15,fontWeight:700}}>{doc}</div>
+                      <div style={{fontSize:22,fontWeight:800,color:"#0e7c6b"}}>{totalRev.toLocaleString()} ₸</div>
+                    </div>
+                    <div style={{display:"flex",gap:16,fontSize:12,marginBottom:12,flexWrap:"wrap"}}>
+                      <span style={{color:"#10b981"}}>✅ {done} провед.</span>
+                      <span style={{color:"#2563eb"}}>⏳ {sched} заплан.</span>
+                      <span style={{color:"#dc2626"}}>❌ {canc} отмена</span>
+                      <span>👥 {pats} пац.</span>
+                      <span style={{fontWeight:700}}>Σ {da.length}</span>
+                    </div>
+                    {Object.keys(procBreak).length>0&&<table style={{width:"100%",borderCollapse:"collapse",fontSize:11}}>
+                      <thead><tr style={{background:"#f8fafc"}}><th style={{padding:"5px 8px",border:"1px solid #f0f4f8",textAlign:"left"}}>Процедура</th><th style={{padding:"5px 8px",border:"1px solid #f0f4f8",textAlign:"center"}}>Сеансов</th><th style={{padding:"5px 8px",border:"1px solid #f0f4f8",textAlign:"right"}}>Сумма</th></tr></thead>
+                      <tbody>{Object.entries(procBreak).sort((a,b)=>b[1].r-a[1].r).map(([pn,ps])=><tr key={pn}><td style={{padding:"4px 8px",border:"1px solid #f0f4f8"}}>{ps.i} {pn}</td><td style={{padding:"4px 8px",border:"1px solid #f0f4f8",textAlign:"center"}}>{ps.s}</td><td style={{padding:"4px 8px",border:"1px solid #f0f4f8",textAlign:"right",color:"#0e7c6b",fontWeight:600}}>{ps.r.toLocaleString()} ₸</td></tr>)}</tbody>
+                    </table>}
+                  </div>;
+                })}
+              </div>
+            </div>;
+          })()}
+
+          {/* ═══ SUMMARY (existing view) ═══ */}
+          {repView==="summary"&&<>
           <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:20}}>
             {[{l:"Всего записей",v:repAppts.length,c:"#2563eb",i:"📅"},{l:"Проведено",v:doneAppts.length,c:"#10b981",i:"✅"},{l:"Запланировано",v:scheduledAppts.length,c:"#f59e0b",i:"⏳"},{l:"Отмена/Неявка",v:cancelledAppts.length,c:"#dc2626",i:"❌"}].map(s=>(
               <div key={s.l} className="card" style={{padding:"14px 18px",borderLeft:`4px solid ${s.c}`}}>
@@ -2850,6 +2956,7 @@ export default function MedKarta({ supabase, session, profile }) {
               </div>
             </div>
           </div>
+          </>}
 
           {(isSaturday||isLastDay)&&<div style={{marginTop:16,background:"#fef3c7",border:"1px solid #fde68a",borderRadius:12,padding:"16px 20px",display:"flex",alignItems:"center",gap:14}}>
             <span style={{fontSize:28}}>🔔</span>
