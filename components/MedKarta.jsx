@@ -1510,7 +1510,7 @@ export default function MedKarta({ supabase, session, profile }) {
           supabase.from("insole_stock").select("*"),
           supabase.from("insole_stock_log").select("*").order("date",{ascending:false}),
           supabase.from("procedure_catalog").select("*").order("name"),
-          supabase.from("protocol_templates").select("*").order("name").catch(()=>({data:null,error:true})),
+          supabase.from("protocol_templates").select("*").order("name").then(r=>r).catch(()=>({data:null,error:true})),
         ]);
         if (pR.error) return false;
         setPatients((pR.data||[]).map(mapPat));
