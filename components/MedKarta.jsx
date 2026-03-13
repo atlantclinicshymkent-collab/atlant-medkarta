@@ -45,16 +45,119 @@ const SAMPLE_PROCEDURES = [
   { id:20, name: "УЗИ молочных желёз", category: "Диагностика", icon: "🔬", color: "#ec4899", defaultSessions: 1, price: 5500 },
 ];
 
-const DIAGNOSES_CATALOG = [
-  "Межпозвоночная грыжа (L4-L5)", "Межпозвоночная грыжа (L5-S1)", "Межпозвоночная грыжа шейного отдела",
-  "Остеохондроз поясничного отдела", "Остеохондроз шейного отдела", "Остеохондроз грудного отдела",
-  "Гонартроз (коленный сустав)", "Коксартроз (тазобедренный сустав)", "Артроз плечевого сустава",
-  "Плантарный фасциит", "Hallux valgus", "Плоскостопие",
-  "Миофасциальный болевой синдром", "Бурсит", "Синовиит",
-  "Ревматоидный артрит", "Подагрический артрит",
-  "Сколиоз", "Кифоз", "Цервикалгия", "Люмбалгия", "Торакалгия",
-  "Эпикондилит", "Туннельный синдром",
-];
+const DIAGNOSIS_TEMPLATES = {
+  "🦴 Шейный отдел позвоночника": [
+    "Остеохондроз шейного отдела позвоночника",
+    "Межпозвоночная грыжа шейного отдела",
+    "Протрузия диска шейного отдела",
+    "Цервикалгия",
+    "Цервикобрахиалгия",
+    "Цервикокраниалгия",
+    "Спондилоартроз шейного отдела",
+    "Миофасциальный болевой синдром шейного отдела",
+    "Нестабильность шейного отдела позвоночника",
+    "Синдром позвоночной артерии",
+    "Кривошея",
+  ],
+  "🦴 Грудной отдел позвоночника": [
+    "Остеохондроз грудного отдела позвоночника",
+    "Межпозвоночная грыжа грудного отдела",
+    "Протрузия диска грудного отдела",
+    "Торакалгия",
+    "Межрёберная невралгия",
+    "Спондилоартроз грудного отдела",
+    "Миофасциальный болевой синдром грудного отдела",
+    "Болезнь Шойермана-Мау",
+  ],
+  "🦴 Поясничный отдел позвоночника": [
+    "Остеохондроз поясничного отдела позвоночника",
+    "Межпозвоночная грыжа L3-L4",
+    "Межпозвоночная грыжа L4-L5",
+    "Межпозвоночная грыжа L5-S1",
+    "Протрузия диска поясничного отдела",
+    "Люмбалгия",
+    "Люмбоишиалгия",
+    "Радикулопатия поясничного отдела",
+    "Спондилоартроз поясничного отдела",
+    "Спондилолистез",
+    "Стеноз позвоночного канала поясничного отдела",
+    "Миофасциальный болевой синдром поясничного отдела",
+    "Сакроилеит",
+  ],
+  "💪 Плечевой сустав": [
+    "Артроз плечевого сустава",
+    "Плечелопаточный периартрит",
+    "Импинджмент-синдром плечевого сустава",
+    "Тендинит вращательной манжеты плеча",
+    "Бурсит плечевого сустава",
+    "Адгезивный капсулит (замороженное плечо)",
+    "Повреждение ротаторной манжеты",
+    "Артрит плечевого сустава",
+    "Нестабильность плечевого сустава",
+  ],
+  "🦵 Коленный сустав": [
+    "Гонартроз (коленный сустав)",
+    "Артрит коленного сустава",
+    "Повреждение мениска",
+    "Бурсит коленного сустава",
+    "Синовиит коленного сустава",
+    "Хондромаляция надколенника",
+    "Тендинит надколенника",
+    "Повреждение связок коленного сустава",
+    "Киста Бейкера",
+    "Пателлофеморальный синдром",
+  ],
+  "🦴 Тазобедренный сустав": [
+    "Коксартроз (тазобедренный сустав)",
+    "Артрит тазобедренного сустава",
+    "Бурсит тазобедренного сустава",
+    "Синдром грушевидной мышцы",
+    "Трохантерит",
+    "Асептический некроз головки бедренной кости",
+    "Импинджмент тазобедренного сустава",
+  ],
+  "🦶 Стопа и голеностоп": [
+    "Плантарный фасциит",
+    "Hallux valgus",
+    "Плоскостопие",
+    "Артроз голеностопного сустава",
+    "Пяточная шпора",
+    "Ахиллотендинит",
+    "Метатарзалгия",
+    "Неврома Мортона",
+    "Деформация Тейлора",
+  ],
+  "🖐️ Локтевой / лучезапястный": [
+    "Эпикондилит латеральный (теннисный локоть)",
+    "Эпикондилит медиальный (локоть гольфиста)",
+    "Артроз локтевого сустава",
+    "Бурсит локтевого сустава",
+    "Туннельный синдром (карпальный)",
+    "Артроз лучезапястного сустава",
+    "Тендовагинит де Кервена",
+    "Ганглиозная киста",
+  ],
+  "📐 Нарушения осанки": [
+    "Сколиоз I степени",
+    "Сколиоз II степени",
+    "Сколиоз III степени",
+    "Сколиотическая осанка",
+    "Кифоз",
+    "Кифосколиоз",
+    "Лордоз усиленный",
+    "Нарушение осанки у детей",
+  ],
+  "💊 Системные / другие": [
+    "Ревматоидный артрит",
+    "Подагрический артрит",
+    "Фибромиалгия",
+    "Остеопороз",
+    "Миофасциальный болевой синдром",
+    "Полинейропатия",
+    "Дорсопатия",
+  ],
+};
+const DIAGNOSES_CATALOG = Object.values(DIAGNOSIS_TEMPLATES).flat();
 
 // ─── Podiatech constants ───
 const FOOT_TYPES = ["Нормальная стопа", "Плоскостопие (I ст.)", "Плоскостопие (II ст.)", "Плоскостопие (III ст.)", "Полая стопа", "Вальгусная деформация", "Варусная деформация"];
@@ -348,7 +451,7 @@ function MsgBtns({ patient, setMessengerPat }) {
 // ═══════════════════════════════════════════
 // PATIENT FORM
 // ═══════════════════════════════════════════
-function PatientForm({form,setForm,isAdd,onSave,onClose,doctorNames,onBulkBook}) {
+function PatientForm({form,setForm,isAdd,onSave,onClose,doctorNames,onBulkBook,procCatalog}) {
   const s=(k,v)=>setForm(f=>({...f,[k]:v}));
   const valid=form.lastName?.trim()&&form.firstName?.trim();
   const [showBulk, setShowBulk] = useState(false);
@@ -406,9 +509,37 @@ function PatientForm({form,setForm,isAdd,onSave,onClose,doctorNames,onBulkBook})
             <div className="field"><label>Дата поступления</label><input type="date" value={form.admissionDate||""} onChange={e=>s("admissionDate",e.target.value)}/></div>
             <div className="field"><label>Последний визит</label><input type="date" value={form.lastVisit||""} onChange={e=>s("lastVisit",e.target.value)}/></div>
           </div>
-          <div className="field"><label>Диагноз</label>
-            <input list="diag-list" value={form.diagnosis||""} onChange={e=>s("diagnosis",e.target.value)} placeholder="Выберите или введите диагноз"/>
-            <datalist id="diag-list">{DIAGNOSES_CATALOG.map(d=><option key={d} value={d}/>)}</datalist>
+          <div className="field"><label>🩺 Диагноз (конструктор)</label>
+            {/* Tags */}
+            <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:8,minHeight:28}}>
+              {(form.diagnosis||"").split("; ").filter(Boolean).map((d,i)=>(
+                <span key={i} style={{background:"linear-gradient(135deg,#e0f2fe,#dbeafe)",color:"#0c4a6e",padding:"4px 10px",borderRadius:14,fontSize:12,fontWeight:600,display:"inline-flex",alignItems:"center",gap:5,border:"1px solid #bae6fd"}}>
+                  {d}
+                  <span style={{cursor:"pointer",fontWeight:800,color:"#64748b",fontSize:14,lineHeight:1,marginLeft:2}} onClick={()=>{const arr=(form.diagnosis||"").split("; ").filter(Boolean);arr.splice(i,1);s("diagnosis",arr.join("; "));}}>×</span>
+                </span>
+              ))}
+              {!(form.diagnosis||"").trim()&&<span style={{color:"#94a3b8",fontSize:12,fontStyle:"italic"}}>Нажмите на шаблон ниже или введите свой...</span>}
+            </div>
+            {/* Grouped templates */}
+            <details style={{marginBottom:8,background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,overflow:"hidden"}}>
+              <summary style={{padding:"8px 12px",cursor:"pointer",fontSize:12,fontWeight:700,color:"#0e7c6b",userSelect:"none"}}>📋 Шаблоны диагнозов по зонам</summary>
+              <div style={{padding:"8px 12px",maxHeight:240,overflowY:"auto"}}>
+                {Object.entries(DIAGNOSIS_TEMPLATES).map(([group,items])=>(
+                  <div key={group} style={{marginBottom:10}}>
+                    <div style={{fontSize:11,fontWeight:700,color:"#475569",marginBottom:4}}>{group}</div>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:4}}>
+                      {items.map(d=>{
+                        const active=(form.diagnosis||"").split("; ").filter(Boolean).includes(d);
+                        return <button key={d} type="button" onClick={()=>{if(active)return;const arr=(form.diagnosis||"").split("; ").filter(Boolean);s("diagnosis",[...arr,d].join("; "));}} style={{padding:"3px 10px",borderRadius:12,fontSize:11,fontWeight:active?700:500,border:active?"1.5px solid #0e7c6b":"1px solid #cbd5e1",background:active?"#d1fae5":"#fff",color:active?"#065f46":"#334155",cursor:active?"default":"pointer",opacity:active?.7:1,transition:"all .15s"}}>{d}</button>;
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </details>
+            {/* Free text input */}
+            <input list="diag-list" placeholder="Или введите свой диагноз..." onKeyDown={e=>{if(e.key==="Enter"&&e.target.value.trim()){e.preventDefault();const v=e.target.value.trim();const arr=(form.diagnosis||"").split("; ").filter(Boolean);if(!arr.includes(v)){s("diagnosis",[...arr,v].join("; "));}e.target.value="";}}} onChange={e=>{const v=e.target.value;if(DIAGNOSES_CATALOG.includes(v)){const arr=(form.diagnosis||"").split("; ").filter(Boolean);if(!arr.includes(v)){s("diagnosis",[...arr,v].join("; "));}e.target.value="";}}}/>
+            <datalist id="diag-list">{DIAGNOSES_CATALOG.filter(d=>!(form.diagnosis||"").includes(d)).map(d=><option key={d} value={d}/>)}</datalist>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
             <div className="field"><label>Лечащий врач</label>
@@ -451,7 +582,8 @@ function PatientForm({form,setForm,isAdd,onSave,onClose,doctorNames,onBulkBook})
                     </div>
                     <div className="field"><label>Тип</label>
                       <select value={bulkType} onChange={e=>setBulkType(e.target.value)} style={{padding:"6px 8px",border:"1.5px solid #bfdbfe",borderRadius:7,fontSize:13}}>
-                        {APPT_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
+                        <optgroup label="Тип приёма">{APPT_TYPES.map(t=><option key={t} value={t}>{t}</option>)}</optgroup>
+                        {procCatalog&&procCatalog.length>0&&<optgroup label="── Процедуры ──">{procCatalog.map(p=><option key={p.id} value={p.name}>{p.icon} {p.name}</option>)}</optgroup>}
                       </select>
                     </div>
                   </div>
@@ -492,7 +624,7 @@ function PatientForm({form,setForm,isAdd,onSave,onClose,doctorNames,onBulkBook})
 // ═══════════════════════════════════════════
 // APPOINTMENT FORM (with inline new patient)
 // ═══════════════════════════════════════════
-function ApptForm({form,setForm,isAdd,patients,onSave,onClose,doctorNames,onCreatePatient,onViewPatient,onBulkBook}) {
+function ApptForm({form,setForm,isAdd,patients,onSave,onClose,doctorNames,onCreatePatient,onViewPatient,onBulkBook,procCatalog}) {
   const s=(k,v)=>setForm(f=>({...f,[k]:v}));
   const [newPat, setNewPat] = useState(false);
   const [np, setNp] = useState({lastName:"",firstName:"",patronymic:"",phone:"",diagnosis:""});
@@ -619,7 +751,8 @@ function ApptForm({form,setForm,isAdd,patients,onSave,onClose,doctorNames,onCrea
           </div>
           <div className="field"><label>Тип приёма</label>
             <select value={form.type||APPT_TYPES[0]} onChange={e=>s("type",e.target.value)}>
-              {APPT_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
+              <optgroup label="Тип приёма">{APPT_TYPES.map(t=><option key={t} value={t}>{t}</option>)}</optgroup>
+              {procCatalog&&procCatalog.length>0&&<optgroup label="── Процедуры из каталога ──">{procCatalog.map(p=><option key={p.id} value={p.name}>{p.icon} {p.name}</option>)}</optgroup>}
             </select>
           </div>
           {!isAdd&&<div className="field"><label>Статус</label>
@@ -998,6 +1131,7 @@ function DischargeSummaryModal({ patient, protocols, appointments, procCatalog, 
   const [improvement, setImprovement] = useState(5);
   const [nextVisitDate, setNextVisitDate] = useState(patient.nextVisitDate || "");
   const [nextVisitNote, setNextVisitNote] = useState(patient.nextVisitNote || "");
+  const [editDiagnosis, setEditDiagnosis] = useState(patient.diagnosis || "");
 
   const patProtocols = protocols.filter(pr => String(pr.patientId) === String(patient.id));
   const patAppts = appointments.filter(a => String(a.patientId) === String(patient.id) && a.status === "done").sort((a,b)=>a.date.localeCompare(b.date));
@@ -1103,6 +1237,10 @@ function DischargeSummaryModal({ patient, protocols, appointments, procCatalog, 
             </div>
           </div>
           <div style={{marginTop:12}}>
+            <label style={{display:"block",fontSize:11,fontWeight:700,color:"#64748b",marginBottom:4,textTransform:"uppercase"}}>🩺 Диагноз (можно отредактировать для выписки)</label>
+            <textarea rows={2} value={editDiagnosis} onChange={e=>setEditDiagnosis(e.target.value)} placeholder="Диагноз пациента..." style={{width:"100%",padding:"8px 10px",border:"1.5px solid #dde4ef",borderRadius:8,fontSize:13,outline:"none",resize:"vertical"}}/>
+          </div>
+          <div style={{marginTop:12}}>
             <label style={{display:"block",fontSize:11,fontWeight:700,color:"#64748b",marginBottom:4,textTransform:"uppercase"}}>Рекомендации врача</label>
             <textarea rows={3} value={recommendations} onChange={e=>setRecommendations(e.target.value)} placeholder="Рекомендации по лечению, образу жизни, повторной консультации..." style={{width:"100%",padding:"8px 10px",border:"1.5px solid #dde4ef",borderRadius:8,fontSize:13,outline:"none",resize:"vertical"}}/>
           </div>
@@ -1143,7 +1281,7 @@ function DischargeSummaryModal({ patient, protocols, appointments, procCatalog, 
           {/* Diagnosis */}
           <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:12,padding:"14px 20px",marginBottom:20}}>
             <div style={{fontSize:11,fontWeight:700,color:"#1e40af",marginBottom:8,textTransform:"uppercase",letterSpacing:".06em"}}>🩺 Диагноз</div>
-            <div style={{fontSize:17,fontWeight:700,color:"#1e3a5f"}}>{patient.diagnosis || "—"}</div>
+            <div style={{fontSize:17,fontWeight:700,color:"#1e3a5f"}}>{editDiagnosis || "—"}</div>
           </div>
 
           {/* Procedures */}
@@ -1510,7 +1648,7 @@ export default function MedKarta({ supabase, session, profile }) {
           supabase.from("insole_stock").select("*"),
           supabase.from("insole_stock_log").select("*").order("date",{ascending:false}),
           supabase.from("procedure_catalog").select("*").order("name"),
-          supabase.from("protocol_templates").select("*").order("name").then(r=>r).catch(()=>({data:null,error:true})),
+          supabase.from("protocol_templates").select("*").order("name").catch(()=>({data:null,error:true})),
         ]);
         if (pR.error) return false;
         setPatients((pR.data||[]).map(mapPat));
@@ -2900,7 +3038,8 @@ export default function MedKarta({ supabase, session, profile }) {
                           </div>
                           <div className="field"><label>Тип</label>
                             <select value={bulkType} onChange={e=>setBulkType(e.target.value)} style={{padding:"6px 8px",border:"1.5px solid #bfdbfe",borderRadius:7,fontSize:13}}>
-                              {APPT_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
+                              <optgroup label="Тип приёма">{APPT_TYPES.map(t=><option key={t} value={t}>{t}</option>)}</optgroup>
+                              {procCatalog&&procCatalog.length>0&&<optgroup label="── Процедуры ──">{procCatalog.map(p=><option key={p.id} value={p.name}>{p.icon} {p.name}</option>)}</optgroup>}
                             </select>
                           </div>
                         </div>
@@ -2985,8 +3124,8 @@ export default function MedKarta({ supabase, session, profile }) {
       )}
 
       {/* Form modals */}
-      {(modal==="addPat"||modal==="editPat")&&editPat&&<PatientForm form={editPat} setForm={setEditPat} isAdd={modal==="addPat"} onSave={savePat} onClose={()=>setModal(null)} doctorNames={doctorNames} onBulkBook={async ({patientId,doctor,dates,time,type,note})=>{for(const date of dates){const appt={...EMPTY_APPT,patientId,doctor,date,time,type,notes:note,status:"scheduled"};if(usingSupabase&&supabase){const row={patient_id:patientId,doctor,date,time:time||null,type,status:"scheduled",notes:note||""};const{data,error}=await supabase.from("appointments").insert(row).select().single();if(!error&&data)setAppointments(prev=>[...prev,mapAppt(data)]);}else{setAppointments(prev=>[...prev,{...appt,id:uid()}]);}}showToast(`Создано ${dates.length} записей на приём`);}}/>}
-      {(modal==="addAppt"||modal==="editAppt")&&editAppt&&<ApptForm form={editAppt} setForm={setEditAppt} isAdd={modal==="addAppt"} patients={patients} onSave={saveAppt} onClose={()=>setModal(null)} doctorNames={doctorNames} onCreatePatient={(p)=>setPatients(prev=>[...prev,p])} onViewPatient={(p)=>{setModal(null);setViewPat(p);setTimeout(()=>setModal("viewPat"),50);}} onBulkBook={async (days)=>{for(const d of days){if(usingSupabase&&supabase){const row={patient_id:d.patientId,doctor:d.doctor,date:d.date,time:d.time||null,type:d.type||"Процедура",status:"scheduled",notes:d.note||""};const{data,error}=await supabase.from("appointments").insert(row).select().single();if(!error&&data)setAppointments(prev=>[...prev,mapAppt(data)]);}else{setAppointments(prev=>[...prev,{...EMPTY_APPT,id:uid(),patientId:d.patientId,doctor:d.doctor,date:d.date,time:d.time,type:d.type||"Процедура",notes:d.note||"",status:"scheduled"}]);}}showToast(`Создано ${days.length} записей`);}}/>}
+      {(modal==="addPat"||modal==="editPat")&&editPat&&<PatientForm form={editPat} setForm={setEditPat} isAdd={modal==="addPat"} onSave={savePat} onClose={()=>setModal(null)} doctorNames={doctorNames} procCatalog={procCatalog} onBulkBook={async ({patientId,doctor,dates,time,type,note})=>{for(const date of dates){const appt={...EMPTY_APPT,patientId,doctor,date,time,type,notes:note,status:"scheduled"};if(usingSupabase&&supabase){const row={patient_id:patientId,doctor,date,time:time||null,type,status:"scheduled",notes:note||""};const{data,error}=await supabase.from("appointments").insert(row).select().single();if(!error&&data)setAppointments(prev=>[...prev,mapAppt(data)]);}else{setAppointments(prev=>[...prev,{...appt,id:uid()}]);}}showToast(`Создано ${dates.length} записей на приём`);}}/>}
+      {(modal==="addAppt"||modal==="editAppt")&&editAppt&&<ApptForm form={editAppt} setForm={setEditAppt} isAdd={modal==="addAppt"} patients={patients} onSave={saveAppt} onClose={()=>setModal(null)} doctorNames={doctorNames} procCatalog={procCatalog} onCreatePatient={(p)=>setPatients(prev=>[...prev,p])} onViewPatient={(p)=>{setModal(null);setViewPat(p);setTimeout(()=>setModal("viewPat"),50);}} onBulkBook={async (days)=>{for(const d of days){if(usingSupabase&&supabase){const row={patient_id:d.patientId,doctor:d.doctor,date:d.date,time:d.time||null,type:d.type||"Процедура",status:"scheduled",notes:d.note||""};const{data,error}=await supabase.from("appointments").insert(row).select().single();if(!error&&data)setAppointments(prev=>[...prev,mapAppt(data)]);}else{setAppointments(prev=>[...prev,{...EMPTY_APPT,id:uid(),patientId:d.patientId,doctor:d.doctor,date:d.date,time:d.time,type:d.type||"Процедура",notes:d.note||"",status:"scheduled"}]);}}showToast(`Создано ${days.length} записей`);}}/>}
       {(modal==="addProtocol"||modal==="editProtocol")&&editProtocol&&<ProtocolForm form={editProtocol} setForm={setEditProtocol} isAdd={modal==="addProtocol"} patients={patients} onSave={saveProtocol} onClose={()=>setModal(null)} doctorNames={doctorNames} procCatalog={procCatalog}/>}
       {(modal==="addDoctor"||modal==="editDoctor")&&editDoctor&&<DoctorForm form={editDoctor} setForm={setEditDoctor} isAdd={modal==="addDoctor"} onSave={saveDoctor} onClose={()=>setModal(null)}/>}
       {(modal==="addPodiatech"||modal==="editPodiatech")&&editPodiatech&&<PodiatechForm form={editPodiatech} setForm={setEditPodiatech} isAdd={modal==="addPodiatech"} patients={patients} onSave={savePodiatech} onClose={()=>setModal(null)}/>}
