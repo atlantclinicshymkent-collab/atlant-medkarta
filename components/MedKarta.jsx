@@ -684,13 +684,12 @@ function ApptForm({form,setForm,isAdd,patients,onSave,onClose,doctorNames,onCrea
     setMultiDays(prev=>prev.map(d=>({...d,[field]:val})));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!valid) return;
     if (newPat && onCreatePatient) {
-      const newId = Date.now() + Math.random();
-      const patient = { ...EMPTY_PATIENT, id: newId, lastName: np.lastName, firstName: np.firstName, patronymic: np.patronymic, phone: np.phone, diagnosis: np.diagnosis, doctor: form.doctor, status: "active", lastVisit: form.date };
-      onCreatePatient(patient);
-      onSave({ ...form, patientId: newId });
+      const patient = { ...EMPTY_PATIENT, lastName: np.lastName, firstName: np.firstName, patronymic: np.patronymic, phone: np.phone, diagnosis: np.diagnosis, doctor: form.doctor, status: "active", lastVisit: form.date };
+      const newId = await onCreatePatient(patient);
+      if (newId) onSave({ ...form, patientId: newId });
     } else {
       onSave(form);
     }
@@ -3134,7 +3133,7 @@ export default function MedKarta({ supabase, session, profile }) {
 
       {/* Form modals */}
       {(modal==="addPat"||modal==="editPat")&&editPat&&<PatientForm form={editPat} setForm={setEditPat} isAdd={modal==="addPat"} onSave={savePat} onClose={()=>setModal(null)} doctorNames={doctorNames} procCatalog={procCatalog} onBulkBook={async ({patientId,doctor,days})=>{const list=days||[];for(const d of list){const appt={...EMPTY_APPT,patientId,doctor,date:d.date,time:d.time||"10:00",type:d.type||"Процедура",notes:d.notes||"",status:"scheduled"};if(usingSupabase&&supabase){const row={patient_id:patientId,doctor,date:d.date,time:d.time||null,type:d.type||"Процедура",status:"scheduled",notes:d.notes||""};const{data,error}=await supabase.from("appointments").insert(row).select().single();if(!error&&data)setAppointments(prev=>[...prev,mapAppt(data)]);}else{setAppointments(prev=>[...prev,{...appt,id:uid()}]);}}showToast(`Создано ${list.length} записей на приём`);}}/>}
-      {(modal==="addAppt"||modal==="editAppt")&&editAppt&&<ApptForm form={editAppt} setForm={setEditAppt} isAdd={modal==="addAppt"} patients={patients} onSave={saveAppt} onClose={()=>setModal(null)} doctorNames={doctorNames} procCatalog={procCatalog} onCreatePatient={(p)=>setPatients(prev=>[...prev,p])} onViewPatient={(p)=>{setModal(null);setViewPat(p);setTimeout(()=>setModal("viewPat"),50);}} onBulkBook={async (days)=>{for(const d of days){if(usingSupabase&&supabase){const row={patient_id:d.patientId,doctor:d.doctor,date:d.date,time:d.time||null,type:d.type||"Процедура",status:"scheduled",notes:d.note||""};const{data,error}=await supabase.from("appointments").insert(row).select().single();if(!error&&data)setAppointments(prev=>[...prev,mapAppt(data)]);}else{setAppointments(prev=>[...prev,{...EMPTY_APPT,id:uid(),patientId:d.patientId,doctor:d.doctor,date:d.date,time:d.time,type:d.type||"Процедура",notes:d.note||"",status:"scheduled"}]);}}showToast(`Создано ${days.length} записей`);}}/>}
+      {(modal==="addAppt"||modal==="editAppt")&&editAppt&&<ApptForm form={editAppt} setForm={setEditAppt} isAdd={modal==="addAppt"} patients={patients} onSave={saveAppt} onClose={()=>setModal(null)} doctorNames={doctorNames} procCatalog={procCatalog} onCreatePatient={async (p)=>{if(usingSupabase&&supabase){const row={last_name:p.lastName,first_name:p.firstName,patronymic:p.patronymic||"",phone:p.phone||"",diagnosis:p.diagnosis||"",doctor:p.doctor||"",status:"active",last_visit:p.lastVisit||null};const{data,error}=await supabase.from("patients").insert(row).select().single();if(!error&&data){setPatients(prev=>[...prev,mapPat(data)]);return data.id;}}else{const np={...p,id:uid()};setPatients(prev=>[...prev,np]);return np.id;}}} onViewPatient={(p)=>{setModal(null);setViewPat(p);setTimeout(()=>setModal("viewPat"),50);}} onBulkBook={async (days)=>{for(const d of days){if(usingSupabase&&supabase){const row={patient_id:d.patientId,doctor:d.doctor,date:d.date,time:d.time||null,type:d.type||"Процедура",status:"scheduled",notes:d.note||""};const{data,error}=await supabase.from("appointments").insert(row).select().single();if(!error&&data)setAppointments(prev=>[...prev,mapAppt(data)]);}else{setAppointments(prev=>[...prev,{...EMPTY_APPT,id:uid(),patientId:d.patientId,doctor:d.doctor,date:d.date,time:d.time,type:d.type||"Процедура",notes:d.note||"",status:"scheduled"}]);}}showToast(`Создано ${days.length} записей`);}}/>}
       {(modal==="addProtocol"||modal==="editProtocol")&&editProtocol&&<ProtocolForm form={editProtocol} setForm={setEditProtocol} isAdd={modal==="addProtocol"} patients={patients} onSave={saveProtocol} onClose={()=>setModal(null)} doctorNames={doctorNames} procCatalog={procCatalog}/>}
       {(modal==="addDoctor"||modal==="editDoctor")&&editDoctor&&<DoctorForm form={editDoctor} setForm={setEditDoctor} isAdd={modal==="addDoctor"} onSave={saveDoctor} onClose={()=>setModal(null)}/>}
       {(modal==="addPodiatech"||modal==="editPodiatech")&&editPodiatech&&<PodiatechForm form={editPodiatech} setForm={setEditPodiatech} isAdd={modal==="addPodiatech"} patients={patients} onSave={savePodiatech} onClose={()=>setModal(null)}/>}
