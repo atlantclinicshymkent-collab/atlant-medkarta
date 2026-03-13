@@ -455,24 +455,32 @@ function PatientForm({form,setForm,isAdd,onSave,onClose,doctorNames,onBulkBook,p
   const s=(k,v)=>setForm(f=>({...f,[k]:v}));
   const valid=form.lastName?.trim()&&form.firstName?.trim();
   const [showBulk, setShowBulk] = useState(false);
-  const [bulkDays, setBulkDays] = useState(7);
-  const [bulkTime, setBulkTime] = useState("10:00");
-  const [bulkType, setBulkType] = useState("Процедура");
-  const [bulkNote, setBulkNote] = useState("");
-  const [bulkWorkdays, setBulkWorkdays] = useState(true);
   const [bulkDone, setBulkDone] = useState(false);
+  const [bulkDays, setBulkDays] = useState([]);
 
-  const generateDates = () => {
-    const dates = [];
-    let d = new Date(); d.setDate(d.getDate() + 1);
-    while (dates.length < bulkDays) {
-      const dow = d.getDay();
-      if (!bulkWorkdays || (dow >= 1 && dow <= 6)) dates.push(d.toISOString().slice(0,10));
+  const addBulkDaysBatch = (count) => {
+    const days = [];
+    const last = bulkDays.length > 0 ? bulkDays[bulkDays.length-1] : null;
+    let d = last ? new Date(last.date+"T00:00:00") : new Date();
+    d.setDate(d.getDate() + 1);
+    const baseTime = last?.time || "10:00";
+    const baseType = last?.type || "Процедура";
+    const baseNote = last?.notes || "";
+    for (let i = 0; i < count; i++) {
+      while (d.getDay() === 0) d.setDate(d.getDate() + 1);
+      days.push({ date: d.toISOString().slice(0,10), time: baseTime, type: baseType, notes: baseNote });
       d = new Date(d); d.setDate(d.getDate() + 1);
     }
-    return dates;
+    setBulkDays(prev => [...prev, ...days]);
   };
-  const previewDates = showBulk ? generateDates() : [];
+  const addBulkDay = () => {
+    const last = bulkDays.length > 0 ? bulkDays[bulkDays.length-1] : null;
+    const nd = last ? (()=>{ const x=new Date(last.date+"T00:00:00"); x.setDate(x.getDate()+1); while(x.getDay()===0) x.setDate(x.getDate()+1); return x.toISOString().slice(0,10); })() : (()=>{ const x=new Date(); x.setDate(x.getDate()+1); return x.toISOString().slice(0,10); })();
+    setBulkDays(prev=>[...prev,{ date:nd, time:last?.time||"10:00", type:last?.type||"Процедура", notes:last?.notes||"" }]);
+  };
+  const updateBulkDay = (i,k,v) => setBulkDays(prev=>prev.map((d,j)=>j===i?{...d,[k]:v}:d));
+  const removeBulkDay = (i) => setBulkDays(prev=>prev.filter((_,j)=>j!==i));
+  const applyBulkToAll = (i,field) => { const val=bulkDays[i][field]; setBulkDays(prev=>prev.map(d=>({...d,[field]:val}))); };
 
   return (
     <div className="modal-bg" onClick={onClose}>
@@ -566,41 +574,41 @@ function PatientForm({form,setForm,isAdd,onSave,onClose,doctorNames,onBulkBook,p
           {/* Bulk booking — only when editing existing patient */}
           {!isAdd&&form.id&&onBulkBook&&(
             <div>
-              <button className="btn" onClick={()=>{setShowBulk(!showBulk);setBulkDone(false);}} style={{background:showBulk?"#eff6ff":"#f8fafc",color:showBulk?"#2563eb":"#64748b",padding:"8px 14px",fontSize:12,border:"1px solid "+(showBulk?"#bfdbfe":"#e2e8f0"),borderRadius:8,width:"100%",textAlign:"left"}}>
-                📅 Записать на курс ({bulkDays} дней)… {showBulk?"▲":"▼"}
+              <button className="btn" onClick={()=>{setShowBulk(!showBulk);setBulkDone(false);if(!showBulk&&bulkDays.length===0)addBulkDaysBatch(5);}} style={{background:showBulk?"#eff6ff":"#f8fafc",color:showBulk?"#2563eb":"#64748b",padding:"8px 14px",fontSize:12,border:"1px solid "+(showBulk?"#bfdbfe":"#e2e8f0"),borderRadius:8,width:"100%",textAlign:"left"}}>
+                📅 Записать на курс ({bulkDays.length} дней)… {showBulk?"▲":"▼"}
               </button>
               {showBulk&&!bulkDone&&(
                 <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:"0 0 10px 10px",padding:"12px 14px",marginTop:-1}}>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}}>
-                    <div className="field"><label>Кол-во дней</label>
-                      <select value={bulkDays} onChange={e=>setBulkDays(+e.target.value)} style={{padding:"6px 8px",border:"1.5px solid #bfdbfe",borderRadius:7,fontSize:13}}>
-                        {[3,5,7,10,14,21].map(n=><option key={n} value={n}>{n} дней</option>)}
-                      </select>
-                    </div>
-                    <div className="field"><label>Время</label>
-                      <input type="time" value={bulkTime} onChange={e=>setBulkTime(e.target.value)} style={{padding:"6px 8px",border:"1.5px solid #bfdbfe",borderRadius:7,fontSize:13}}/>
-                    </div>
-                    <div className="field"><label>Тип</label>
-                      <select value={bulkType} onChange={e=>setBulkType(e.target.value)} style={{padding:"6px 8px",border:"1.5px solid #bfdbfe",borderRadius:7,fontSize:13}}>
-                        <optgroup label="Тип приёма">{APPT_TYPES.map(t=><option key={t} value={t}>{t}</option>)}</optgroup>
-                        {procCatalog&&procCatalog.length>0&&<optgroup label="── Процедуры ──">{procCatalog.map(p=><option key={p.id} value={p.name}>{p.icon} {p.name}</option>)}</optgroup>}
-                      </select>
-                    </div>
+                  <div style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap"}}>
+                    {[3,5,7,10,14].map(n=>(
+                      <button key={n} className="btn" onClick={()=>{setBulkDays([]);setTimeout(()=>addBulkDaysBatch(n),0);}} style={{background:bulkDays.length===n?"#2563eb":"#fff",color:bulkDays.length===n?"#fff":"#2563eb",padding:"5px 12px",fontSize:11,border:"1px solid #bfdbfe",borderRadius:6}}>{n} дней</button>
+                    ))}
+                    <button className="btn" onClick={addBulkDay} style={{background:"#fff",color:"#0e7c6b",padding:"5px 12px",fontSize:11,border:"1px solid #bbf7d0",borderRadius:6}}>＋ Ещё день</button>
                   </div>
-                  <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:8}}>
-                    <label style={{display:"flex",alignItems:"center",gap:6,fontSize:12,cursor:"pointer"}}>
-                      <input type="checkbox" checked={bulkWorkdays} onChange={e=>setBulkWorkdays(e.target.checked)} style={{accentColor:"#2563eb"}}/>
-                      Только рабочие дни (Пн–Сб)
-                    </label>
+                  <div style={{maxHeight:300,overflowY:"auto",marginBottom:10}}>
+                    {bulkDays.map((day,i)=>(
+                      <div key={i} style={{display:"grid",gridTemplateColumns:"28px 1fr 75px 1fr 28px",gap:5,alignItems:"center",marginBottom:5,padding:"5px 7px",background:i%2===0?"#fff":"#f8fafc",borderRadius:8,border:"1px solid #e8edf3"}}>
+                        <span style={{fontSize:11,color:"#94a3b8",fontWeight:700,textAlign:"center"}}>{i+1}</span>
+                        <input type="date" value={day.date} onChange={e=>updateBulkDay(i,"date",e.target.value)} style={{padding:"4px 5px",border:"1px solid #dde4ef",borderRadius:6,fontSize:12}}/>
+                        <input type="time" value={day.time} onChange={e=>updateBulkDay(i,"time",e.target.value)} style={{padding:"4px 5px",border:"1px solid #dde4ef",borderRadius:6,fontSize:12}}/>
+                        <select value={day.type} onChange={e=>updateBulkDay(i,"type",e.target.value)} style={{padding:"4px 5px",border:"1px solid #dde4ef",borderRadius:6,fontSize:11}}>
+                          <optgroup label="Тип">{APPT_TYPES.map(t=><option key={t} value={t}>{t}</option>)}</optgroup>
+                          {procCatalog&&procCatalog.length>0&&<optgroup label="Процедуры">{procCatalog.map(p=><option key={p.id} value={p.name}>{p.icon} {p.name}</option>)}</optgroup>}
+                        </select>
+                        <button onClick={()=>removeBulkDay(i)} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626",fontSize:14,padding:0}}>×</button>
+                      </div>
+                    ))}
                   </div>
-                  <div className="field" style={{marginBottom:10}}><label>Примечание</label>
-                    <input value={bulkNote} onChange={e=>setBulkNote(e.target.value)} placeholder="Процедура, курс…" style={{padding:"6px 8px",border:"1.5px solid #bfdbfe",borderRadius:7,fontSize:13,width:"100%"}}/>
-                  </div>
+                  {bulkDays.length>0&&(
+                    <div style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap"}}>
+                      <button className="btn" onClick={()=>applyBulkToAll(0,"time")} style={{background:"#fff",color:"#475569",padding:"4px 10px",fontSize:10,border:"1px solid #e2e8f0",borderRadius:6}}>⏰ Время 1-го → всем</button>
+                      <button className="btn" onClick={()=>applyBulkToAll(0,"type")} style={{background:"#fff",color:"#475569",padding:"4px 10px",fontSize:10,border:"1px solid #e2e8f0",borderRadius:6}}>📋 Тип 1-го → всем</button>
+                    </div>
+                  )}
                   <div style={{fontSize:11,color:"#475569",marginBottom:8}}>
-                    Будет создано <b>{previewDates.length}</b> записей: {previewDates.slice(0,5).map(d=>fmt(d)).join(", ")}{previewDates.length>5?"…":""}
-                    <br/>Врач: <b>{form.doctor||"—"}</b> · Время: <b>{bulkTime}</b>
+                    Будет создано <b>{bulkDays.length}</b> записей · Врач: <b>{form.doctor||"—"}</b>
                   </div>
-                  <button className="btn" onClick={()=>{onBulkBook({patientId:form.id,doctor:form.doctor||"",dates:generateDates(),time:bulkTime,type:bulkType,note:bulkNote});setBulkDone(true);}} style={{background:"#2563eb",color:"#fff",padding:"9px 18px",fontSize:13,width:"100%"}}>📅 Создать {previewDates.length} записей</button>
+                  <button className="btn" onClick={()=>{onBulkBook({patientId:form.id,doctor:form.doctor||"",dates:bulkDays.map(d=>d.date),time:bulkDays[0]?.time||"10:00",type:bulkDays[0]?.type||"Процедура",note:"",days:bulkDays});setBulkDone(true);}} style={{background:bulkDays.length>0?"#2563eb":"#e2e8f0",color:bulkDays.length>0?"#fff":"#94a3b8",padding:"9px 18px",fontSize:13,width:"100%"}}>📅 Создать {bulkDays.length} записей</button>
                 </div>
               )}
               {showBulk&&bulkDone&&(
@@ -2976,38 +2984,41 @@ export default function MedKarta({ supabase, session, profile }) {
                 {appointments.filter(a=>String(a.patientId)===String(viewPat.id)).length===0&&<div style={{color:"#94a3b8",fontSize:13}}>Нет записей</div>}
               </div>
 
-              {/* Bulk booking — schedule for 7 days ahead */}
+              {/* Bulk booking — schedule with per-day editing */}
               {(()=>{
                 const [showBulk, setShowBulk] = [viewPat._showBulk||false, (v)=>setViewPat(p=>({...p,_showBulk:v}))];
-                const [bulkDays, setBulkDays] = [viewPat._bulkDays||7, (v)=>setViewPat(p=>({...p,_bulkDays:v}))];
-                const [bulkTime, setBulkTime] = [viewPat._bulkTime||"10:00", (v)=>setViewPat(p=>({...p,_bulkTime:v}))];
-                const [bulkType, setBulkType] = [viewPat._bulkType||"Процедура", (v)=>setViewPat(p=>({...p,_bulkType:v}))];
-                const [bulkNote, setBulkNote] = [viewPat._bulkNote||"", (v)=>setViewPat(p=>({...p,_bulkNote:v}))];
-                const [bulkWorkdays, setBulkWorkdays] = [viewPat._bulkWorkdays!==false, (v)=>setViewPat(p=>({...p,_bulkWorkdays:v}))];
+                const [bDays, setBDays] = [viewPat._bDays||[], (v)=>setViewPat(p=>({...p,_bDays:typeof v==="function"?v(p._bDays||[]):v}))];
                 const [bulkDone, setBulkDone] = [viewPat._bulkDone||false, (v)=>setViewPat(p=>({...p,_bulkDone:v}))];
 
-                // Generate dates
-                const generateDates = () => {
-                  const dates = [];
-                  let d = new Date();
+                const addBatch = (count) => {
+                  const days = [];
+                  const cur = bDays||[];
+                  const last = cur.length > 0 ? cur[cur.length-1] : null;
+                  let d = last ? new Date(last.date+"T00:00:00") : new Date();
                   d.setDate(d.getDate() + 1);
-                  while (dates.length < bulkDays) {
-                    const dow = d.getDay();
-                    if (!bulkWorkdays || (dow >= 1 && dow <= 6)) { // Пн-Сб
-                      dates.push(d.toISOString().slice(0,10));
-                    }
+                  for (let i = 0; i < count; i++) {
+                    while (d.getDay() === 0) d.setDate(d.getDate() + 1);
+                    days.push({ date: d.toISOString().slice(0,10), time: last?.time||"10:00", type: last?.type||"Процедура" });
                     d = new Date(d); d.setDate(d.getDate() + 1);
                   }
-                  return dates;
+                  setBDays([...cur, ...days]);
                 };
+                const addOne = () => {
+                  const cur = bDays||[];
+                  const last = cur.length > 0 ? cur[cur.length-1] : null;
+                  const nd = last ? (()=>{ const x=new Date(last.date+"T00:00:00"); x.setDate(x.getDate()+1); while(x.getDay()===0) x.setDate(x.getDate()+1); return x.toISOString().slice(0,10); })() : (()=>{ const x=new Date(); x.setDate(x.getDate()+1); return x.toISOString().slice(0,10); })();
+                  setBDays([...cur,{ date:nd, time:last?.time||"10:00", type:last?.type||"Процедура" }]);
+                };
+                const upd = (i,k,v) => setBDays(prev=>prev.map((d,j)=>j===i?{...d,[k]:v}:d));
+                const rm = (i) => setBDays(prev=>prev.filter((_,j)=>j!==i));
+                const applyAll = (i,field) => { const val=(bDays||[])[i]?.[field]; if(val) setBDays(prev=>prev.map(d=>({...d,[field]:val}))); };
 
                 const handleBulkCreate = async () => {
-                  const dates = generateDates();
                   const doctor = viewPat.doctor || doctorNames[0] || "";
-                  for (const date of dates) {
-                    const appt = { ...EMPTY_APPT, patientId: viewPat.id, doctor, date, time: bulkTime, type: bulkType, notes: bulkNote, status: "scheduled" };
+                  for (const d of (bDays||[])) {
+                    const appt = { ...EMPTY_APPT, patientId: viewPat.id, doctor, date: d.date, time: d.time, type: d.type||"Процедура", notes: "", status: "scheduled" };
                     if (usingSupabase && supabase) {
-                      const row = { patient_id:viewPat.id, doctor, date, time:bulkTime||null, type:bulkType, status:"scheduled", notes:bulkNote||"" };
+                      const row = { patient_id:viewPat.id, doctor, date:d.date, time:d.time||null, type:d.type||"Процедура", status:"scheduled", notes:"" };
                       const {data,error}=await supabase.from("appointments").insert(row).select().single();
                       if(!error&&data) setAppointments(prev=>[...prev,mapAppt(data)]);
                     } else {
@@ -3015,48 +3026,46 @@ export default function MedKarta({ supabase, session, profile }) {
                     }
                   }
                   setBulkDone(true);
-                  showToast(`Создано ${dates.length} записей на приём`);
+                  showToast(`Создано ${(bDays||[]).length} записей на приём`);
                 };
-
-                const previewDates = showBulk ? generateDates() : [];
 
                 return (
                   <div style={{marginTop:10}}>
-                    <button className="btn" onClick={()=>{setShowBulk(!showBulk);setBulkDone(false);}} style={{background:showBulk?"#eff6ff":"#f8fafc",color:showBulk?"#2563eb":"#64748b",padding:"7px 14px",fontSize:12,border:"1px solid "+(showBulk?"#bfdbfe":"#e2e8f0"),borderRadius:8,width:"100%",textAlign:"left"}}>
-                      📅 Записать на курс ({bulkDays} дней)… {showBulk?"▲":"▼"}
+                    <button className="btn" onClick={()=>{setShowBulk(!showBulk);setBulkDone(false);if(!showBulk&&(!bDays||bDays.length===0))addBatch(5);}} style={{background:showBulk?"#eff6ff":"#f8fafc",color:showBulk?"#2563eb":"#64748b",padding:"7px 14px",fontSize:12,border:"1px solid "+(showBulk?"#bfdbfe":"#e2e8f0"),borderRadius:8,width:"100%",textAlign:"left"}}>
+                      📅 Записать на курс ({(bDays||[]).length} дней)… {showBulk?"▲":"▼"}
                     </button>
                     {showBulk&&!bulkDone&&(
                       <div style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:"0 0 10px 10px",padding:"12px 14px",marginTop:-1}}>
-                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:10}}>
-                          <div className="field"><label>Кол-во дней</label>
-                            <select value={bulkDays} onChange={e=>setBulkDays(+e.target.value)} style={{padding:"6px 8px",border:"1.5px solid #bfdbfe",borderRadius:7,fontSize:13}}>
-                              {[3,5,7,10,14,21].map(n=><option key={n} value={n}>{n} дней</option>)}
-                            </select>
-                          </div>
-                          <div className="field"><label>Время</label>
-                            <input type="time" value={bulkTime} onChange={e=>setBulkTime(e.target.value)} style={{padding:"6px 8px",border:"1.5px solid #bfdbfe",borderRadius:7,fontSize:13}}/>
-                          </div>
-                          <div className="field"><label>Тип</label>
-                            <select value={bulkType} onChange={e=>setBulkType(e.target.value)} style={{padding:"6px 8px",border:"1.5px solid #bfdbfe",borderRadius:7,fontSize:13}}>
-                              <optgroup label="Тип приёма">{APPT_TYPES.map(t=><option key={t} value={t}>{t}</option>)}</optgroup>
-                              {procCatalog&&procCatalog.length>0&&<optgroup label="── Процедуры ──">{procCatalog.map(p=><option key={p.id} value={p.name}>{p.icon} {p.name}</option>)}</optgroup>}
-                            </select>
-                          </div>
+                        <div style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap"}}>
+                          {[3,5,7,10,14].map(n=>(
+                            <button key={n} className="btn" onClick={()=>{setBDays([]);setTimeout(()=>addBatch(n),0);}} style={{background:(bDays||[]).length===n?"#2563eb":"#fff",color:(bDays||[]).length===n?"#fff":"#2563eb",padding:"5px 12px",fontSize:11,border:"1px solid #bfdbfe",borderRadius:6}}>{n} дней</button>
+                          ))}
+                          <button className="btn" onClick={addOne} style={{background:"#fff",color:"#0e7c6b",padding:"5px 12px",fontSize:11,border:"1px solid #bbf7d0",borderRadius:6}}>＋ Ещё день</button>
                         </div>
-                        <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:8}}>
-                          <label style={{display:"flex",alignItems:"center",gap:6,fontSize:12,cursor:"pointer"}}>
-                            <input type="checkbox" checked={bulkWorkdays} onChange={e=>setBulkWorkdays(e.target.checked)} style={{accentColor:"#2563eb"}}/>
-                            Только рабочие дни (Пн–Сб)
-                          </label>
+                        <div style={{maxHeight:280,overflowY:"auto",marginBottom:10}}>
+                          {(bDays||[]).map((day,i)=>(
+                            <div key={i} style={{display:"grid",gridTemplateColumns:"28px 1fr 75px 1fr 28px",gap:5,alignItems:"center",marginBottom:5,padding:"5px 7px",background:i%2===0?"#fff":"#f8fafc",borderRadius:8,border:"1px solid #e8edf3"}}>
+                              <span style={{fontSize:11,color:"#94a3b8",fontWeight:700,textAlign:"center"}}>{i+1}</span>
+                              <input type="date" value={day.date} onChange={e=>upd(i,"date",e.target.value)} style={{padding:"4px 5px",border:"1px solid #dde4ef",borderRadius:6,fontSize:12}}/>
+                              <input type="time" value={day.time} onChange={e=>upd(i,"time",e.target.value)} style={{padding:"4px 5px",border:"1px solid #dde4ef",borderRadius:6,fontSize:12}}/>
+                              <select value={day.type} onChange={e=>upd(i,"type",e.target.value)} style={{padding:"4px 5px",border:"1px solid #dde4ef",borderRadius:6,fontSize:11}}>
+                                <optgroup label="Тип">{APPT_TYPES.map(t=><option key={t} value={t}>{t}</option>)}</optgroup>
+                                {procCatalog&&procCatalog.length>0&&<optgroup label="Процедуры">{procCatalog.map(p=><option key={p.id} value={p.name}>{p.icon} {p.name}</option>)}</optgroup>}
+                              </select>
+                              <button onClick={()=>rm(i)} style={{background:"none",border:"none",cursor:"pointer",color:"#dc2626",fontSize:14,padding:0}}>×</button>
+                            </div>
+                          ))}
                         </div>
-                        <div className="field" style={{marginBottom:10}}><label>Примечание (для всех записей)</label>
-                          <input value={bulkNote} onChange={e=>setBulkNote(e.target.value)} placeholder="Процедура, курс…" style={{padding:"6px 8px",border:"1.5px solid #bfdbfe",borderRadius:7,fontSize:13,width:"100%"}}/>
-                        </div>
+                        {(bDays||[]).length>0&&(
+                          <div style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap"}}>
+                            <button className="btn" onClick={()=>applyAll(0,"time")} style={{background:"#fff",color:"#475569",padding:"4px 10px",fontSize:10,border:"1px solid #e2e8f0",borderRadius:6}}>⏰ Время 1-го → всем</button>
+                            <button className="btn" onClick={()=>applyAll(0,"type")} style={{background:"#fff",color:"#475569",padding:"4px 10px",fontSize:10,border:"1px solid #e2e8f0",borderRadius:6}}>📋 Тип 1-го → всем</button>
+                          </div>
+                        )}
                         <div style={{fontSize:11,color:"#475569",marginBottom:8}}>
-                          Будет создано <b>{previewDates.length}</b> записей: {previewDates.slice(0,5).map(d=>fmt(d)).join(", ")}{previewDates.length>5?"…":""}
-                          <br/>Врач: <b>{viewPat.doctor||doctorNames[0]||"—"}</b> · Время: <b>{bulkTime}</b>
+                          Будет создано <b>{(bDays||[]).length}</b> записей · Врач: <b>{viewPat.doctor||doctorNames[0]||"—"}</b>
                         </div>
-                        <button className="btn" onClick={handleBulkCreate} style={{background:"#2563eb",color:"#fff",padding:"9px 18px",fontSize:13,width:"100%"}}>📅 Создать {previewDates.length} записей</button>
+                        <button className="btn" onClick={handleBulkCreate} style={{background:(bDays||[]).length>0?"#2563eb":"#e2e8f0",color:(bDays||[]).length>0?"#fff":"#94a3b8",padding:"9px 18px",fontSize:13,width:"100%"}}>📅 Создать {(bDays||[]).length} записей</button>
                       </div>
                     )}
                     {showBulk&&bulkDone&&(
@@ -3124,7 +3133,7 @@ export default function MedKarta({ supabase, session, profile }) {
       )}
 
       {/* Form modals */}
-      {(modal==="addPat"||modal==="editPat")&&editPat&&<PatientForm form={editPat} setForm={setEditPat} isAdd={modal==="addPat"} onSave={savePat} onClose={()=>setModal(null)} doctorNames={doctorNames} procCatalog={procCatalog} onBulkBook={async ({patientId,doctor,dates,time,type,note})=>{for(const date of dates){const appt={...EMPTY_APPT,patientId,doctor,date,time,type,notes:note,status:"scheduled"};if(usingSupabase&&supabase){const row={patient_id:patientId,doctor,date,time:time||null,type,status:"scheduled",notes:note||""};const{data,error}=await supabase.from("appointments").insert(row).select().single();if(!error&&data)setAppointments(prev=>[...prev,mapAppt(data)]);}else{setAppointments(prev=>[...prev,{...appt,id:uid()}]);}}showToast(`Создано ${dates.length} записей на приём`);}}/>}
+      {(modal==="addPat"||modal==="editPat")&&editPat&&<PatientForm form={editPat} setForm={setEditPat} isAdd={modal==="addPat"} onSave={savePat} onClose={()=>setModal(null)} doctorNames={doctorNames} procCatalog={procCatalog} onBulkBook={async ({patientId,doctor,days})=>{const list=days||[];for(const d of list){const appt={...EMPTY_APPT,patientId,doctor,date:d.date,time:d.time||"10:00",type:d.type||"Процедура",notes:d.notes||"",status:"scheduled"};if(usingSupabase&&supabase){const row={patient_id:patientId,doctor,date:d.date,time:d.time||null,type:d.type||"Процедура",status:"scheduled",notes:d.notes||""};const{data,error}=await supabase.from("appointments").insert(row).select().single();if(!error&&data)setAppointments(prev=>[...prev,mapAppt(data)]);}else{setAppointments(prev=>[...prev,{...appt,id:uid()}]);}}showToast(`Создано ${list.length} записей на приём`);}}/>}
       {(modal==="addAppt"||modal==="editAppt")&&editAppt&&<ApptForm form={editAppt} setForm={setEditAppt} isAdd={modal==="addAppt"} patients={patients} onSave={saveAppt} onClose={()=>setModal(null)} doctorNames={doctorNames} procCatalog={procCatalog} onCreatePatient={(p)=>setPatients(prev=>[...prev,p])} onViewPatient={(p)=>{setModal(null);setViewPat(p);setTimeout(()=>setModal("viewPat"),50);}} onBulkBook={async (days)=>{for(const d of days){if(usingSupabase&&supabase){const row={patient_id:d.patientId,doctor:d.doctor,date:d.date,time:d.time||null,type:d.type||"Процедура",status:"scheduled",notes:d.note||""};const{data,error}=await supabase.from("appointments").insert(row).select().single();if(!error&&data)setAppointments(prev=>[...prev,mapAppt(data)]);}else{setAppointments(prev=>[...prev,{...EMPTY_APPT,id:uid(),patientId:d.patientId,doctor:d.doctor,date:d.date,time:d.time,type:d.type||"Процедура",notes:d.note||"",status:"scheduled"}]);}}showToast(`Создано ${days.length} записей`);}}/>}
       {(modal==="addProtocol"||modal==="editProtocol")&&editProtocol&&<ProtocolForm form={editProtocol} setForm={setEditProtocol} isAdd={modal==="addProtocol"} patients={patients} onSave={saveProtocol} onClose={()=>setModal(null)} doctorNames={doctorNames} procCatalog={procCatalog}/>}
       {(modal==="addDoctor"||modal==="editDoctor")&&editDoctor&&<DoctorForm form={editDoctor} setForm={setEditDoctor} isAdd={modal==="addDoctor"} onSave={saveDoctor} onClose={()=>setModal(null)}/>}
