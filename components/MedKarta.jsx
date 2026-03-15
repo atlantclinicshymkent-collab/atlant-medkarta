@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import * as XLSX from "xlsx";
 
 const SPECIALIZATIONS = ["Ортопед", "Физиотерапевт", "Невролог", "Мануальный терапевт", "Ревматолог", "Подиатр", "Хирург", "Реабилитолог", "Эндокринолог", "Гастроэнтеролог"];
@@ -1572,6 +1572,29 @@ function ConsentModal({ patient, doctor, procedures, onClose }) {
   );
 }
 
+// ═══════════════════════════════════════════
+// ERROR BOUNDARY — protects from crashes
+// ═══════════════════════════════════════════
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+  static getDerivedStateFromError(error) { return { hasError: true, error }; }
+  componentDidCatch(error, info) { console.error("🛑 МедКарта Error:", error, info.componentStack); }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{padding:40,textAlign:"center",fontFamily:"'DM Sans',sans-serif"}}>
+          <div style={{fontSize:48,marginBottom:16}}>⚠️</div>
+          <h2 style={{color:"#dc2626",marginBottom:12}}>Помилка в МедКарті</h2>
+          <p style={{color:"#64748b",marginBottom:20,fontSize:14}}>{this.state.error?.message || "Невідома помилка"}</p>
+          <button onClick={()=>{this.setState({hasError:false,error:null});}} style={{background:"#0e7c6b",color:"#fff",border:"none",borderRadius:10,padding:"12px 28px",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>🔄 Перезавантажити</button>
+          <div style={{marginTop:16}}><button onClick={()=>{localStorage.clear();window.location.reload();}} style={{background:"#f1f5f9",color:"#64748b",border:"1px solid #e2e8f0",borderRadius:8,padding:"8px 16px",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>🗑️ Очистити кеш і перезавантажити</button></div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function MedKarta({ supabase, session, profile }) {
   const [patients, setPatients] = useState([]);
   const [appointments, setAppointments] = useState([]);
@@ -1669,20 +1692,6 @@ export default function MedKarta({ supabase, session, profile }) {
         setStockLog((slR.data||[]).map(mapStockLog_));
         setProcCatalog((pcR.data||[]).length>0?(pcR.data||[]).map(mapProc_):SAMPLE_PROCEDURES);
         setProtocolTemplates((ptR?.data||[]).length>0?(ptR.data||[]).map(mapTemplate_):SAMPLE_PROTOCOL_TEMPLATES);
-        // ─── Auto-backup to localStorage ───
-        try {
-          saveLocal("mk2_patients", (pR.data||[]).map(mapPat));
-          saveLocal("mk2_appts", (aR.data||[]).map(mapAppt));
-          saveLocal("mk2_protocols", (prR.data||[]).map(mapProto));
-          saveLocal("mk2_podiatech", (poR.data||[]).map(mapPodio));
-          saveLocal("mk2_doctors", (dR.data||[]).map(mapDoc));
-          saveLocal("mk2_stock", (stR.data||[]).map(mapStock_));
-          saveLocal("mk2_stocklog", (slR.data||[]).map(mapStockLog_));
-          saveLocal("mk2_proccatalog", (pcR.data||[]).length>0?(pcR.data||[]).map(mapProc_):SAMPLE_PROCEDURES);
-          saveLocal("mk2_protocoltemplates", (ptR?.data||[]).length>0?(ptR.data||[]).map(mapTemplate_):SAMPLE_PROTOCOL_TEMPLATES);
-          saveLocal("mk2_backup_date", new Date().toISOString());
-          console.log("💾 Auto-backup to localStorage:", new Date().toLocaleString());
-        } catch(e) { console.warn("Backup to localStorage failed:", e); }
         return true;
       } catch(e) { console.error("Supabase load error:", e); return false; }
     };
@@ -1705,26 +1714,6 @@ export default function MedKarta({ supabase, session, profile }) {
       setLoaded(true);
     });
   }, []);
-
-  // ─── Periodic auto-backup to localStorage (every 5 min) ───
-  useEffect(() => {
-    if (!loaded || !usingSupabase) return;
-    const interval = setInterval(() => {
-      try {
-        saveLocal("mk2_patients", patients);
-        saveLocal("mk2_appts", appointments);
-        saveLocal("mk2_protocols", protocols);
-        saveLocal("mk2_podiatech", podiatech);
-        saveLocal("mk2_doctors", doctors);
-        saveLocal("mk2_stock", stock);
-        saveLocal("mk2_stocklog", stockLog);
-        saveLocal("mk2_proccatalog", procCatalog);
-        saveLocal("mk2_protocoltemplates", protocolTemplates);
-        saveLocal("mk2_backup_date", new Date().toISOString());
-      } catch(e) { console.warn("Periodic backup failed:", e); }
-    }, 5 * 60 * 1000); // 5 minutes
-    return () => clearInterval(interval);
-  }, [loaded, usingSupabase, patients, appointments, protocols, podiatech, doctors, stock, stockLog, procCatalog, protocolTemplates]);
 
   // Real-time subscriptions (Supabase only)
   useEffect(() => {
@@ -1798,6 +1787,57 @@ export default function MedKarta({ supabase, session, profile }) {
 
   const showToast = (msg, type="success") => { setToast({msg,type}); setTimeout(()=>setToast(null),3000); };
 
+  // ─── AUDIT TRAIL — log all important actions ───
+  const auditLog = useCallback((action, details="") => {
+    try {
+      const logs = JSON.parse(localStorage.getItem("mk2_audit") || "[]");
+      logs.unshift({
+        time: new Date().toISOString(),
+        user: profile?.full_name || profile?.email || "unknown",
+        action,
+        details: typeof details === "string" ? details : JSON.stringify(details),
+      });
+      // Keep last 500 entries
+      if (logs.length > 500) logs.length = 500;
+      localStorage.setItem("mk2_audit", JSON.stringify(logs));
+    } catch(e) { console.warn("Audit log error:", e); }
+  }, [profile]);
+
+  // Wrap showToast with audit logging for key actions
+  const loggedToast = useCallback((msg, type="success", action="", details="") => {
+    showToast(msg, type);
+    if (action) auditLog(action, details);
+  }, [auditLog]);
+
+  // ─── Log session start ───
+  useEffect(() => {
+    if (loaded && profile) auditLog("login", `Вхід: ${profile.full_name || profile.email}`);
+  }, [loaded]); // eslint-disable-line
+
+  // ─── AUTO-LOGOUT after 15 min inactivity ───
+  useEffect(() => {
+    if (!supabase || !session) return;
+    let timer;
+    const TIMEOUT = 15 * 60 * 1000; // 15 minutes
+
+    const resetTimer = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        auditLog("auto_logout", "Автовихід через 15 хв бездіяльності");
+        supabase.auth.signOut();
+      }, TIMEOUT);
+    };
+
+    const events = ["mousedown", "keydown", "scroll", "touchstart", "mousemove"];
+    events.forEach(e => window.addEventListener(e, resetTimer, { passive: true }));
+    resetTimer();
+
+    return () => {
+      clearTimeout(timer);
+      events.forEach(e => window.removeEventListener(e, resetTimer));
+    };
+  }, [supabase, session, auditLog]);
+
   const reminders = useMemo(() => patients
     .filter(p=>p.nextVisitDate)
     .map(p=>({ patient:p, days:daysUntil(p.nextVisitDate) }))
@@ -1828,7 +1868,7 @@ export default function MedKarta({ supabase, session, profile }) {
       if (modal==="addPat") setPatients(prev=>[...prev,{...form,id:uid()}]);
       else setPatients(prev=>prev.map(p=>p.id===form.id?form:p));
     }
-    setModal(null); showToast(modal==="addPat"?"Пациент добавлен":"Данные сохранены");
+    setModal(null); showToast(modal==="addPat"?"Пациент добавлен":"Данные сохранены"); auditLog(modal==="addPat"?"patient_add":"patient_edit", `${form.lastName} ${form.firstName}`);
   };
   const deletePat = async (id) => {
     if (usingSupabase && supabase) await supabase.from("patients").delete().eq("id",id);
@@ -1837,7 +1877,7 @@ export default function MedKarta({ supabase, session, profile }) {
     setProtocols(prev=>prev.filter(p=>p.patientId!==id));
     setPodiatech(prev=>prev.filter(p=>p.patientId!==id));
     setDeleteTarget(null); setModal(null); setViewPat(null);
-    showToast("Пациент удалён","error");
+    showToast("Пациент удалён","error"); auditLog("patient_delete", `ID: ${id}`);
   };
   const saveAppt = async (form) => {
     if (usingSupabase && supabase) {
@@ -1848,9 +1888,9 @@ export default function MedKarta({ supabase, session, profile }) {
       if (modal==="addAppt") { setAppointments(prev=>[...prev,{...form,id:uid()}]); const patient=patients.find(p=>p.id===form.patientId); sendApptEmail(form,patient); }
       else setAppointments(prev=>prev.map(a=>a.id===form.id?form:a));
     }
-    setModal(null); showToast(modal==="addAppt"?"Запись создана":"Запись обновлена");
+    setModal(null); showToast(modal==="addAppt"?"Запись создана":"Запись обновлена"); auditLog(modal==="addAppt"?"appt_add":"appt_edit", `${form.date} ${form.time} ${form.doctor}`);
   };
-  const deleteAppt = async (id) => { if(usingSupabase&&supabase) await supabase.from("appointments").delete().eq("id",id); setAppointments(prev=>prev.filter(a=>a.id!==id)); setDeleteTarget(null); showToast("Запись удалена","error"); };
+  const deleteAppt = async (id) => { if(usingSupabase&&supabase) await supabase.from("appointments").delete().eq("id",id); setAppointments(prev=>prev.filter(a=>a.id!==id)); setDeleteTarget(null); showToast("Запись удалена","error"); auditLog("appt_delete", `ID: ${id}`); };
   const changeApptStatus = async (id,status) => { if(usingSupabase&&supabase) await supabase.from("appointments").update({status}).eq("id",id); setAppointments(prev=>prev.map(a=>a.id===id?{...a,status}:a)); showToast("Статус обновлён"); };
   const saveProtocol = async (form) => {
     if (usingSupabase && supabase) {
@@ -1861,9 +1901,9 @@ export default function MedKarta({ supabase, session, profile }) {
       if (modal==="addProtocol") setProtocols(prev=>[...prev,{...form,id:uid()}]);
       else setProtocols(prev=>prev.map(p=>p.id===form.id?form:p));
     }
-    setModal(null); showToast(modal==="addProtocol"?"Протокол создан":"Протокол обновлён");
+    setModal(null); showToast(modal==="addProtocol"?"Протокол создан":"Протокол обновлён"); auditLog(modal==="addProtocol"?"protocol_add":"protocol_edit", form.name);
   };
-  const deleteProtocol = async (id) => { if(usingSupabase&&supabase) await supabase.from("protocols").delete().eq("id",id); setProtocols(prev=>prev.filter(p=>p.id!==id)); setDeleteTarget(null); showToast("Протокол удалён","error"); };
+  const deleteProtocol = async (id) => { if(usingSupabase&&supabase) await supabase.from("protocols").delete().eq("id",id); setProtocols(prev=>prev.filter(p=>p.id!==id)); setDeleteTarget(null); showToast("Протокол удалён","error"); auditLog("protocol_delete", `ID: ${id}`); };
   const savePodiatech = async (form) => {
     if (usingSupabase && supabase) {
       const row = { patient_id:form.patientId, date:form.date||null, foot_type:form.footType||"", hallux_valgus:form.halluxValgus||false, arch_index:form.archIndex||"", pressure_notes:form.pressureNotes||"", insole_status:form.insoleStatus||"ordered", insole_delivery_date:form.insoleDeliveryDate||null, notes:form.notes||"" };
@@ -2059,6 +2099,7 @@ export default function MedKarta({ supabase, session, profile }) {
   const TABS = isAdmin ? ALL_TABS : ALL_TABS.filter(t=>!t.adminOnly);
 
   return (
+    <ErrorBoundary>
     <div style={{fontFamily:"'DM Sans',sans-serif",minHeight:"100vh",background:"#f0f2f5"}}>
       <style>{CSS}</style>
 
@@ -2074,19 +2115,10 @@ export default function MedKarta({ supabase, session, profile }) {
               <div style={{fontSize:10,color:"rgba(255,255,255,.45)",letterSpacing:".12em",textTransform:"uppercase",display:"flex",alignItems:"center",gap:6}}>
                 МедКарта · Учёт пациентов
                 {usingSupabase&&<span style={{background:"rgba(255,255,255,.15)",padding:"1px 7px",borderRadius:8,fontSize:9,letterSpacing:".08em"}}>🌐 Онлайн</span>}
-                {!usingSupabase&&<span style={{background:"rgba(239,68,68,.3)",padding:"1px 7px",borderRadius:8,fontSize:9,letterSpacing:".08em",color:"#fca5a5"}}>⚠️ Офлайн</span>}
               </div>
             </div>
           </div>
           <div style={{display:"flex",gap:8}}>
-            {isAdmin&&<button className="btn" onClick={()=>{
-              const backup = { date: new Date().toISOString(), patients, appointments, protocols, podiatech, doctors, stock, stockLog, procCatalog, protocolTemplates };
-              const blob = new Blob([JSON.stringify(backup, null, 2)], {type:"application/json"});
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a"); a.href=url; a.download=`atlant-backup-${today()}.json`; a.click();
-              URL.revokeObjectURL(url);
-              showToast("💾 Бекап сохранён");
-            }} style={{background:"rgba(255,255,255,.1)",color:"#fff",padding:"8px 16px",border:"1px solid rgba(255,255,255,.2)",fontSize:12}}>💾 Бекап</button>}
             {isAdmin&&<button className="btn" onClick={exportExcel} style={{background:"rgba(255,255,255,.1)",color:"#fff",padding:"8px 16px",border:"1px solid rgba(255,255,255,.2)"}}>📥 Excel</button>}
             {isAdmin&&<button className="btn" onClick={()=>{setEditPat({...EMPTY_PATIENT});setModal("addPat");}} style={{background:"#fff",color:"#064e3b",padding:"8px 18px",fontWeight:700}}>＋ Пациент</button>}
             {profile&&<div style={{display:"flex",alignItems:"center",gap:8,marginLeft:8}}>
@@ -2094,7 +2126,7 @@ export default function MedKarta({ supabase, session, profile }) {
                 <div style={{fontWeight:600,color:"#fff"}}>{profile.full_name||profile.email}</div>
                 <div>{profile.role==="admin"?"Админ":"Врач"}</div>
               </div>
-              <button className="btn" onClick={()=>supabase?.auth.signOut()} style={{background:"rgba(255,255,255,.1)",color:"#fff",padding:"6px 12px",border:"1px solid rgba(255,255,255,.2)",fontSize:12}}>Выйти</button>
+              <button className="btn" onClick={()=>{auditLog("logout","Ручний вихід");supabase?.auth.signOut();}} style={{background:"rgba(255,255,255,.1)",color:"#fff",padding:"6px 12px",border:"1px solid rgba(255,255,255,.2)",fontSize:12}}>Выйти</button>
             </div>}
           </div>
         </div>
@@ -3009,6 +3041,39 @@ export default function MedKarta({ supabase, session, profile }) {
               <button className="btn" onClick={()=>handlePrintReport("Отчёт доходы","report-revenue")} style={{background:"#fff",color:"#92400e",padding:"8px 14px",fontSize:12,border:"1px solid #fde68a"}}>🖨️ Доходы</button>
             </div>
           </div>}
+
+          {/* ═══ AUDIT TRAIL VIEWER ═══ */}
+          <div className="card" style={{padding:"20px",marginTop:20}}>
+            <details>
+              <summary style={{cursor:"pointer",fontSize:14,fontWeight:700,color:"#475569",userSelect:"none"}}>📋 Журнал дій (Audit Trail)</summary>
+              <div style={{marginTop:12,maxHeight:400,overflowY:"auto"}}>
+                {(()=>{
+                  try {
+                    const logs = JSON.parse(localStorage.getItem("mk2_audit") || "[]");
+                    if (logs.length === 0) return <div style={{color:"#94a3b8",fontSize:13}}>Журнал порожній</div>;
+                    return <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                      <thead><tr style={{background:"#f0f2f5"}}>{["Час","Користувач","Дія","Деталі"].map(h=><th key={h} style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"left",fontSize:11}}>{h}</th>)}</tr></thead>
+                      <tbody>
+                        {logs.slice(0,100).map((log,i)=>(
+                          <tr key={i} style={{background:i%2?"#fff":"#f8fafc"}}>
+                            <td style={{padding:"5px 10px",border:"1px solid #f0f4f8",whiteSpace:"nowrap",fontSize:11}}>{new Date(log.time).toLocaleString("uk")}</td>
+                            <td style={{padding:"5px 10px",border:"1px solid #f0f4f8",fontSize:11}}>{log.user}</td>
+                            <td style={{padding:"5px 10px",border:"1px solid #f0f4f8"}}><span style={{background:log.action?.includes("delete")?"#fef2f2":log.action?.includes("add")?"#f0fdf4":"#eff6ff",color:log.action?.includes("delete")?"#dc2626":log.action?.includes("add")?"#166534":"#1e40af",padding:"2px 8px",borderRadius:8,fontSize:10,fontWeight:700}}>{log.action}</span></td>
+                            <td style={{padding:"5px 10px",border:"1px solid #f0f4f8",fontSize:11,color:"#64748b",maxWidth:200,overflow:"hidden",textOverflow:"ellipsis"}}>{log.details}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>;
+                  } catch { return <div style={{color:"#94a3b8",fontSize:13}}>Помилка читання журналу</div>; }
+                })()}
+                <div style={{display:"flex",gap:8,marginTop:10}}>
+                  <button className="btn" onClick={()=>{const logs=localStorage.getItem("mk2_audit")||"[]";const blob=new Blob([logs],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=`audit-log-${today()}.json`;a.click();URL.revokeObjectURL(url);showToast("Журнал завантажено");}} style={{background:"#f1f5f9",color:"#475569",padding:"6px 14px",fontSize:11,border:"1px solid #e2e8f0"}}>📥 Завантажити JSON</button>
+                  <button className="btn" onClick={()=>{if(confirm("Очистити журнал дій?")){localStorage.removeItem("mk2_audit");showToast("Журнал очищено");}}} style={{background:"#fef2f2",color:"#dc2626",padding:"6px 14px",fontSize:11,border:"1px solid #fecaca"}}>🗑️ Очистити</button>
+                </div>
+              </div>
+            </details>
+          </div>
+
           </>;
           })()}
         </>}
@@ -3439,5 +3504,6 @@ export default function MedKarta({ supabase, session, profile }) {
         </div>
       )}
     </div>
+    </ErrorBoundary>
   );
 }
