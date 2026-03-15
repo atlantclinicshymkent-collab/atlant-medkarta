@@ -1669,6 +1669,20 @@ export default function MedKarta({ supabase, session, profile }) {
         setStockLog((slR.data||[]).map(mapStockLog_));
         setProcCatalog((pcR.data||[]).length>0?(pcR.data||[]).map(mapProc_):SAMPLE_PROCEDURES);
         setProtocolTemplates((ptR?.data||[]).length>0?(ptR.data||[]).map(mapTemplate_):SAMPLE_PROTOCOL_TEMPLATES);
+        // ─── Auto-backup to localStorage ───
+        try {
+          saveLocal("mk2_patients", (pR.data||[]).map(mapPat));
+          saveLocal("mk2_appts", (aR.data||[]).map(mapAppt));
+          saveLocal("mk2_protocols", (prR.data||[]).map(mapProto));
+          saveLocal("mk2_podiatech", (poR.data||[]).map(mapPodio));
+          saveLocal("mk2_doctors", (dR.data||[]).map(mapDoc));
+          saveLocal("mk2_stock", (stR.data||[]).map(mapStock_));
+          saveLocal("mk2_stocklog", (slR.data||[]).map(mapStockLog_));
+          saveLocal("mk2_proccatalog", (pcR.data||[]).length>0?(pcR.data||[]).map(mapProc_):SAMPLE_PROCEDURES);
+          saveLocal("mk2_protocoltemplates", (ptR?.data||[]).length>0?(ptR.data||[]).map(mapTemplate_):SAMPLE_PROTOCOL_TEMPLATES);
+          saveLocal("mk2_backup_date", new Date().toISOString());
+          console.log("💾 Auto-backup to localStorage:", new Date().toLocaleString());
+        } catch(e) { console.warn("Backup to localStorage failed:", e); }
         return true;
       } catch(e) { console.error("Supabase load error:", e); return false; }
     };
@@ -1691,6 +1705,26 @@ export default function MedKarta({ supabase, session, profile }) {
       setLoaded(true);
     });
   }, []);
+
+  // ─── Periodic auto-backup to localStorage (every 5 min) ───
+  useEffect(() => {
+    if (!loaded || !usingSupabase) return;
+    const interval = setInterval(() => {
+      try {
+        saveLocal("mk2_patients", patients);
+        saveLocal("mk2_appts", appointments);
+        saveLocal("mk2_protocols", protocols);
+        saveLocal("mk2_podiatech", podiatech);
+        saveLocal("mk2_doctors", doctors);
+        saveLocal("mk2_stock", stock);
+        saveLocal("mk2_stocklog", stockLog);
+        saveLocal("mk2_proccatalog", procCatalog);
+        saveLocal("mk2_protocoltemplates", protocolTemplates);
+        saveLocal("mk2_backup_date", new Date().toISOString());
+      } catch(e) { console.warn("Periodic backup failed:", e); }
+    }, 5 * 60 * 1000); // 5 minutes
+    return () => clearInterval(interval);
+  }, [loaded, usingSupabase, patients, appointments, protocols, podiatech, doctors, stock, stockLog, procCatalog, protocolTemplates]);
 
   // Real-time subscriptions (Supabase only)
   useEffect(() => {
@@ -2040,10 +2074,19 @@ export default function MedKarta({ supabase, session, profile }) {
               <div style={{fontSize:10,color:"rgba(255,255,255,.45)",letterSpacing:".12em",textTransform:"uppercase",display:"flex",alignItems:"center",gap:6}}>
                 МедКарта · Учёт пациентов
                 {usingSupabase&&<span style={{background:"rgba(255,255,255,.15)",padding:"1px 7px",borderRadius:8,fontSize:9,letterSpacing:".08em"}}>🌐 Онлайн</span>}
+                {!usingSupabase&&<span style={{background:"rgba(239,68,68,.3)",padding:"1px 7px",borderRadius:8,fontSize:9,letterSpacing:".08em",color:"#fca5a5"}}>⚠️ Офлайн</span>}
               </div>
             </div>
           </div>
           <div style={{display:"flex",gap:8}}>
+            {isAdmin&&<button className="btn" onClick={()=>{
+              const backup = { date: new Date().toISOString(), patients, appointments, protocols, podiatech, doctors, stock, stockLog, procCatalog, protocolTemplates };
+              const blob = new Blob([JSON.stringify(backup, null, 2)], {type:"application/json"});
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a"); a.href=url; a.download=`atlant-backup-${today()}.json`; a.click();
+              URL.revokeObjectURL(url);
+              showToast("💾 Бекап сохранён");
+            }} style={{background:"rgba(255,255,255,.1)",color:"#fff",padding:"8px 16px",border:"1px solid rgba(255,255,255,.2)",fontSize:12}}>💾 Бекап</button>}
             {isAdmin&&<button className="btn" onClick={exportExcel} style={{background:"rgba(255,255,255,.1)",color:"#fff",padding:"8px 16px",border:"1px solid rgba(255,255,255,.2)"}}>📥 Excel</button>}
             {isAdmin&&<button className="btn" onClick={()=>{setEditPat({...EMPTY_PATIENT});setModal("addPat");}} style={{background:"#fff",color:"#064e3b",padding:"8px 18px",fontWeight:700}}>＋ Пациент</button>}
             {profile&&<div style={{display:"flex",alignItems:"center",gap:8,marginLeft:8}}>
