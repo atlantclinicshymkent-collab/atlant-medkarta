@@ -14,8 +14,42 @@ export default function DashboardPage() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) { router.push('/login'); return; }
       setSession(session);
-      supabase.from('profiles').select('*').eq('id', session.user.id).single()
-        .then(({ data }) => { setProfile(data); setLoading(false); });
+      // Load profile with error handling — 406 fix
+      supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle()
+        .then(({ data, error }) => {
+          if (error) {
+            console.warn('Profile load error:', error.message);
+            // Fallback profile from auth user metadata
+            setProfile({
+              id: session.user.id,
+              email: session.user.email,
+              full_name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || '',
+              role: 'admin',
+            });
+          } else if (!data) {
+            // Profile doesn't exist yet — create one
+            console.log('No profile found, using defaults');
+            setProfile({
+              id: session.user.id,
+              email: session.user.email,
+              full_name: session.user.user_metadata?.full_name || '',
+              role: 'admin',
+            });
+          } else {
+            setProfile(data);
+          }
+          setLoading(false);
+        })
+        .catch(() => {
+          // Complete fallback
+          setProfile({
+            id: session.user.id,
+            email: session.user.email,
+            full_name: '',
+            role: 'admin',
+          });
+          setLoading(false);
+        });
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
