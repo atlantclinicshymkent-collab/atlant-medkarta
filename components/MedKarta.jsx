@@ -159,6 +159,89 @@ const DIAGNOSIS_TEMPLATES = {
 };
 const DIAGNOSES_CATALOG = Object.values(DIAGNOSIS_TEMPLATES).flat();
 
+// ─── EXAMINATION TEMPLATES (шаблони огляду) ───
+const EXAM_TEMPLATES = {
+  "Шийний відділ": {
+    icon: "🦴", fields: [
+      { key:"complaints", label:"Скарги", type:"text", placeholder:"Біль у шиї, обмеження рухів, головний біль..." },
+      { key:"inspection", label:"Огляд", type:"text", placeholder:"Постава, асиметрія, напруження м'язів..." },
+      { key:"palpation", label:"Пальпація", type:"text", placeholder:"Болючість паравертебральних точок, тригерні точки..." },
+      { key:"rom", label:"Обсяг рухів", type:"text", placeholder:"Флексія/екстензія, ротація, латерофлексія..." },
+      { key:"neuro", label:"Неврологічний статус", type:"text", placeholder:"Рефлекси, чутливість, сила м'язів..." },
+      { key:"special", label:"Спеціальні тести", type:"text", placeholder:"Тест Спурлінга, тест компресії, тест дистракції..." },
+    ]
+  },
+  "Грудний відділ": {
+    icon: "🦴", fields: [
+      { key:"complaints", label:"Скарги", type:"text", placeholder:"Біль у грудному відділі, міжреберна біль..." },
+      { key:"inspection", label:"Огляд", type:"text", placeholder:"Кіфоз, сколіоз, асиметрія..." },
+      { key:"palpation", label:"Пальпація", type:"text", placeholder:"Болючість остистих відростків, ребер..." },
+      { key:"rom", label:"Обсяг рухів", type:"text", placeholder:"Ротація, латерофлексія..." },
+      { key:"breathing", label:"Дихальна екскурсія", type:"text", placeholder:"Екскурсія грудної клітки..." },
+      { key:"special", label:"Спеціальні тести", type:"text", placeholder:"Тест Адамса, тест компресії..." },
+    ]
+  },
+  "Поперековий відділ": {
+    icon: "🦴", fields: [
+      { key:"complaints", label:"Скарги", type:"text", placeholder:"Біль у попереку, іррадіація в ногу..." },
+      { key:"inspection", label:"Огляд", type:"text", placeholder:"Лордоз, антальгічна поза, хода..." },
+      { key:"palpation", label:"Пальпація", type:"text", placeholder:"Паравертебральні точки, КПЗ, грушоподібний м'яз..." },
+      { key:"rom", label:"Обсяг рухів", type:"text", placeholder:"Флексія, екстензія, нахили..." },
+      { key:"neuro", label:"Неврологічний статус", type:"text", placeholder:"Ахіловий/колінний рефлекси, Ласег, чутливість..." },
+      { key:"special", label:"Спеціальні тести", type:"text", placeholder:"Ласег, Вассермана, SLR, Фабер..." },
+    ]
+  },
+  "Плечовий суглоб": {
+    icon: "💪", fields: [
+      { key:"complaints", label:"Скарги", type:"text", placeholder:"Біль при відведенні, нічний біль..." },
+      { key:"inspection", label:"Огляд", type:"text", placeholder:"Атрофія, асиметрія, положення..." },
+      { key:"palpation", label:"Пальпація", type:"text", placeholder:"Акроміон, біцепс, ротаторна манжета..." },
+      { key:"rom", label:"Обсяг рухів", type:"text", placeholder:"Абдукція, флексія, ротація зовнішня/внутрішня..." },
+      { key:"special", label:"Спеціальні тести", type:"text", placeholder:"Ніер, Хоукінс, Джоб, Speed, болюча дуга..." },
+    ]
+  },
+  "Колінний суглоб": {
+    icon: "🦵", fields: [
+      { key:"complaints", label:"Скарги", type:"text", placeholder:"Біль при ходьбі, набряк, блокування..." },
+      { key:"inspection", label:"Огляд", type:"text", placeholder:"Набряк, варус/вальгус, атрофія квадрицепсу..." },
+      { key:"palpation", label:"Пальпація", type:"text", placeholder:"Суглобова щілина, надколінок, бурси..." },
+      { key:"rom", label:"Обсяг рухів", type:"text", placeholder:"Флексія/екстензія, крепітація..." },
+      { key:"stability", label:"Стабільність", type:"text", placeholder:"Передня/задня шухляда, вальгус/варус тест..." },
+      { key:"special", label:"Спеціальні тести", type:"text", placeholder:"Мак-Маррі, Апплі, тест Лахмана..." },
+    ]
+  },
+  "Тазостегновий суглоб": {
+    icon: "🦴", fields: [
+      { key:"complaints", label:"Скарги", type:"text", placeholder:"Біль у паху, кульгавість..." },
+      { key:"inspection", label:"Огляд", type:"text", placeholder:"Хода, Тренделенбург, вкорочення..." },
+      { key:"palpation", label:"Пальпація", type:"text", placeholder:"Великий вертел, паховий зв'язок..." },
+      { key:"rom", label:"Обсяг рухів", type:"text", placeholder:"Флексія, абдукція, ротація..." },
+      { key:"special", label:"Спеціальні тести", type:"text", placeholder:"FABER, FADIR, тест Тренделенбурга, Томас..." },
+    ]
+  },
+  "Стопа / гомілковостоп": {
+    icon: "🦶", fields: [
+      { key:"complaints", label:"Скарги", type:"text", placeholder:"Біль при ходьбі, ранковий біль..." },
+      { key:"inspection", label:"Огляд", type:"text", placeholder:"Склепіння, hallux valgus, набряк..." },
+      { key:"palpation", label:"Пальпація", type:"text", placeholder:"Плантарна фасція, ахіл, п'ятка..." },
+      { key:"rom", label:"Обсяг рухів", type:"text", placeholder:"Дорсіфлексія, плантарфлексія..." },
+      { key:"special", label:"Спеціальні тести", type:"text", placeholder:"Сілверскьолд, Томпсон, тилт тест..." },
+    ]
+  },
+  "Постава / сколіоз": {
+    icon: "📐", fields: [
+      { key:"complaints", label:"Скарги", type:"text", placeholder:"Біль у спині, втомлюваність..." },
+      { key:"inspection", label:"Огляд", type:"text", placeholder:"Фронтальна/сагітальна площина, рівень плечей, тазу..." },
+      { key:"adams", label:"Тест Адамса", type:"text", placeholder:"Реберний горб, поперековий валик..." },
+      { key:"measurements", label:"Виміри", type:"text", placeholder:"Кут Кобба (за МРТ/Rö), рівень плечей, тазу..." },
+      { key:"flexibility", label:"Гнучкість", type:"text", placeholder:"Пальці-підлога, Шобер, Отт..." },
+    ]
+  },
+};
+
+const VAS_LABELS = ["Немає болю","Мінімальний","Слабкий","Помірний","Середній","Відчутний","Сильний","Дуже сильний","Інтенсивний","Нестерпний","Максимальний"];
+const VAS_COLORS = ["#10b981","#22c55e","#84cc16","#a3e635","#eab308","#f59e0b","#f97316","#ef4444","#dc2626","#b91c1c","#7f1d1d"];
+
 // ─── Podiatech constants ───
 const FOOT_TYPES = ["Нормальная стопа", "Плоскостопие (I ст.)", "Плоскостопие (II ст.)", "Плоскостопие (III ст.)", "Полая стопа", "Вальгусная деформация", "Варусная деформация"];
 const INSOLE_STATUSES = { ordered: "Заказано", production: "У производстве", ready: "Готово", delivered: "Выдано" };
@@ -1387,6 +1470,160 @@ function DischargeSummaryModal({ patient, protocols, appointments, procCatalog, 
 // ═══════════════════════════════════════════
 // INFORMED CONSENT MODAL (Информированное согласие)
 // ═══════════════════════════════════════════
+// ═══════════════════════════════════════════
+// VAS PAIN SCALE COMPONENT
+// ═══════════════════════════════════════════
+function VasPainScale({ value, onChange, label="Шкала болю (VAS)", compact=false }) {
+  const v = value||0;
+  return (
+    <div style={{marginBottom:compact?0:12}}>
+      {!compact&&<div style={{fontSize:11,fontWeight:700,color:"#64748b",marginBottom:6,textTransform:"uppercase",letterSpacing:".06em"}}>{label}</div>}
+      <div style={{display:"flex",alignItems:"center",gap:compact?8:12}}>
+        <input type="range" min={0} max={10} value={v} onChange={e=>onChange(+e.target.value)} style={{flex:1,accentColor:VAS_COLORS[v],height:compact?6:10}}/>
+        <div style={{textAlign:"center",minWidth:compact?36:48}}>
+          <div style={{fontSize:compact?18:28,fontWeight:800,color:VAS_COLORS[v],lineHeight:1}}>{v}</div>
+          {!compact&&<div style={{fontSize:10,color:VAS_COLORS[v],fontWeight:600}}>/10</div>}
+        </div>
+      </div>
+      <div style={{fontSize:compact?10:12,color:VAS_COLORS[v],fontWeight:600,marginTop:2}}>{VAS_LABELS[v]}</div>
+    </div>
+  );
+}
+
+// VAS history mini-chart (shows pain trend over time)
+function VasHistory({ exams }) {
+  if (!exams || exams.length < 2) return null;
+  const sorted = [...exams].sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+  const max = 10;
+  const w = 280, h = 80, pad = 20;
+  const step = sorted.length > 1 ? (w - pad*2) / (sorted.length - 1) : 0;
+  const points = sorted.map((e,i) => ({ x: pad + i*step, y: h - pad - ((e.painVas||0)/max)*(h-pad*2), vas: e.painVas||0, date: e.date }));
+  const line = points.map((p,i) => `${i===0?"M":"L"}${p.x},${p.y}`).join(" ");
+  return (
+    <div style={{marginBottom:12}}>
+      <div style={{fontSize:11,fontWeight:700,color:"#64748b",marginBottom:6,textTransform:"uppercase"}}>📈 Динаміка болю</div>
+      <svg viewBox={`0 0 ${w} ${h}`} style={{width:"100%",maxWidth:w,height:h,background:"#f8fafc",borderRadius:8,border:"1px solid #e2e8f0"}}>
+        <line x1={pad} y1={h-pad} x2={w-pad} y2={h-pad} stroke="#e2e8f0" strokeWidth="1"/>
+        <path d={line} fill="none" stroke="#0e7c6b" strokeWidth="2.5" strokeLinejoin="round"/>
+        {points.map((p,i)=>(
+          <g key={i}>
+            <circle cx={p.x} cy={p.y} r="4" fill={VAS_COLORS[p.vas]} stroke="#fff" strokeWidth="2"/>
+            <text x={p.x} y={h-4} textAnchor="middle" fontSize="8" fill="#94a3b8">{fmt(p.date).slice(0,5)}</text>
+            <text x={p.x} y={p.y-8} textAnchor="middle" fontSize="9" fontWeight="700" fill={VAS_COLORS[p.vas]}>{p.vas}</text>
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════
+// EXAMINATION MODAL (Шаблон огляду)
+// ═══════════════════════════════════════════
+function ExamModal({ patient, existingExams, onSave, onClose, procCatalog }) {
+  const [zone, setZone] = useState(Object.keys(EXAM_TEMPLATES)[0]);
+  const [examData, setExamData] = useState({});
+  const [painVas, setPainVas] = useState(5);
+  const [examDate, setExamDate] = useState(today());
+  const [examNotes, setExamNotes] = useState("");
+
+  const template = EXAM_TEMPLATES[zone];
+  const set = (k,v) => setExamData(prev=>({...prev,[k]:v}));
+
+  const handleSave = () => {
+    const exam = {
+      id: uid(),
+      patientId: patient.id,
+      date: examDate,
+      zone,
+      painVas,
+      data: examData,
+      notes: examNotes,
+      doctor: patient.doctor || "",
+    };
+    onSave(exam);
+  };
+
+  const patExams = (existingExams||[]).filter(e=>String(e.patientId)===String(patient.id));
+
+  return (
+    <div className="modal-bg" onClick={onClose}>
+      <div className="modal" style={{width:640,maxHeight:"93vh",overflow:"auto"}} onClick={e=>e.stopPropagation()}>
+        <div style={{background:"linear-gradient(135deg,#042f2e,#064e3b,#0e7c6b)",padding:"18px 24px",borderRadius:"18px 18px 0 0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div>
+            <div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:"#fff"}}>🔍 Огляд пацієнта</div>
+            <div style={{color:"rgba(255,255,255,.6)",fontSize:13,marginTop:2}}>{fullName(patient)}</div>
+          </div>
+          <button className="btn" onClick={onClose} style={{background:"rgba(255,255,255,.15)",color:"#fff",padding:"5px 11px"}}>✕</button>
+        </div>
+
+        <div style={{padding:"16px 24px"}}>
+          {/* Zone selector */}
+          <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:16}}>
+            {Object.entries(EXAM_TEMPLATES).map(([name,tmpl])=>(
+              <button key={name} className="btn" onClick={()=>{setZone(name);setExamData({});}} style={{background:zone===name?"#0e7c6b":"#f1f5f9",color:zone===name?"#fff":"#475569",padding:"6px 12px",fontSize:12}}>
+                {tmpl.icon} {name}
+              </button>
+            ))}
+          </div>
+
+          {/* Date & VAS */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}}>
+            <div className="field"><label>Дата огляду</label><input type="date" value={examDate} onChange={e=>setExamDate(e.target.value)}/></div>
+            <VasPainScale value={painVas} onChange={setPainVas}/>
+          </div>
+
+          {/* VAS history chart */}
+          <VasHistory exams={patExams}/>
+
+          {/* Template fields */}
+          <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:12,padding:"14px 16px",marginBottom:16}}>
+            <div style={{fontSize:12,fontWeight:700,color:"#0e7c6b",marginBottom:10}}>{template.icon} {zone} — Шаблон огляду</div>
+            {template.fields.map(f=>(
+              <div key={f.key} className="field" style={{marginBottom:10}}>
+                <label>{f.label}</label>
+                <textarea rows={2} value={examData[f.key]||""} onChange={e=>set(f.key,e.target.value)} placeholder={f.placeholder} style={{resize:"vertical",fontSize:13}}/>
+              </div>
+            ))}
+          </div>
+
+          {/* Additional notes */}
+          <div className="field" style={{marginBottom:16}}>
+            <label>Додаткові нотатки / висновок</label>
+            <textarea rows={3} value={examNotes} onChange={e=>setExamNotes(e.target.value)} placeholder="Висновок, план лікування, рекомендації..." style={{resize:"vertical"}}/>
+          </div>
+
+          {/* Previous exams */}
+          {patExams.length>0&&(
+            <details style={{marginBottom:16}}>
+              <summary style={{cursor:"pointer",fontSize:12,fontWeight:700,color:"#475569"}}>📋 Попередні огляди ({patExams.length})</summary>
+              <div style={{marginTop:8,maxHeight:200,overflowY:"auto"}}>
+                {[...patExams].sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(ex=>(
+                  <div key={ex.id} style={{background:"#f8fafc",borderRadius:8,padding:"10px 12px",marginBottom:6,border:"1px solid #e2e8f0"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                      <span style={{fontSize:12,fontWeight:700}}>{fmt(ex.date)} — {ex.zone}</span>
+                      <span style={{fontSize:14,fontWeight:800,color:VAS_COLORS[ex.painVas||0]}}>VAS: {ex.painVas||0}</span>
+                    </div>
+                    {Object.entries(ex.data||{}).filter(([,v])=>v).map(([k,v])=>(
+                      <div key={k} style={{fontSize:11,color:"#475569",marginBottom:2}}><b>{k}:</b> {v}</div>
+                    ))}
+                    {ex.notes&&<div style={{fontSize:11,color:"#64748b",marginTop:4,fontStyle:"italic"}}>{ex.notes}</div>}
+                  </div>
+                ))}
+              </div>
+            </details>
+          )}
+
+          <div style={{display:"flex",gap:8}}>
+            <button className="btn" onClick={handleSave} style={{flex:1,background:"#0e7c6b",color:"#fff",padding:"12px",fontSize:15}}>💾 Зберегти огляд</button>
+            <button className="btn" onClick={onClose} style={{background:"#f1f5f9",color:"#475569",padding:"12px 20px"}}>Скасувати</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ConsentModal({ patient, doctor, procedures, onClose }) {
   const printRef = useRef(null);
   const [customProcedures, setCustomProcedures] = useState(
@@ -1624,6 +1861,8 @@ export default function MedKarta({ supabase, session, profile }) {
   const [messengerPat, setMessengerPat] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [dischargePat, setDischargePat] = useState(null);
+  const [examinations, setExaminations] = useState([]);
+  const [examPat, setExamPat] = useState(null);
   const [consentPat, setConsentPat] = useState(null);
   const [toast, setToast] = useState(null);
   const [sortBy, setSortBy] = useState("lastName");
@@ -1710,6 +1949,7 @@ export default function MedKarta({ supabase, session, profile }) {
         setStockLog(loadLocal("mk2_stocklog", SAMPLE_STOCK_LOG));
         setProcCatalog(loadLocal("mk2_proccatalog", SAMPLE_PROCEDURES));
         setProtocolTemplates(loadLocal("mk2_protocoltemplates", SAMPLE_PROTOCOL_TEMPLATES));
+        setExaminations(loadLocal("mk2_examinations", []));
       }
       setLoaded(true);
     });
@@ -1747,7 +1987,8 @@ export default function MedKarta({ supabase, session, profile }) {
     saveLocal("mk2_stocklog", stockLog);
     saveLocal("mk2_proccatalog", procCatalog);
     saveLocal("mk2_protocoltemplates", protocolTemplates);
-  }, [patients, appointments, protocols, podiatech, doctors, stock, stockLog, procCatalog, protocolTemplates, loaded, usingSupabase]);
+    saveLocal("mk2_examinations", examinations);
+  }, [patients, appointments, protocols, podiatech, doctors, stock, stockLog, procCatalog, protocolTemplates, examinations, loaded, usingSupabase]);
 
   // ─── Email notification on appointment creation ───
   const sendApptEmail = async (appt, patient) => {
@@ -3126,6 +3367,7 @@ export default function MedKarta({ supabase, session, profile }) {
       {/* ════════════════════════════════════════ */}
 
       {messengerPat&&<MessengerModal patient={messengerPat} onClose={()=>setMessengerPat(null)}/>}
+      {modal==="exam"&&examPat&&<ExamModal patient={examPat} existingExams={examinations} procCatalog={procCatalog} onClose={()=>{setModal(null);setExamPat(null);}} onSave={(exam)=>{setExaminations(prev=>[...prev,exam]);setModal(null);setExamPat(null);showToast("🔍 Огляд збережено");auditLog("exam_add",`${fullName(examPat)} · ${exam.zone} · VAS:${exam.painVas}`);}}/>}
       {modal==="discharge"&&dischargePat&&<DischargeSummaryModal patient={dischargePat} protocols={protocols} appointments={appointments} procCatalog={procCatalog} onClose={()=>{setModal(null);setDischargePat(null);}}/>}
       {modal==="consent"&&consentPat&&<ConsentModal patient={consentPat} doctor={consentPat.doctor||""} procedures={protocols.filter(pr=>String(pr.patientId)===String(consentPat.id)&&pr.status==="active").flatMap(pr=>pr.procedures)} onClose={()=>{setModal(null);setConsentPat(null);}}/>}
 
@@ -3147,6 +3389,35 @@ export default function MedKarta({ supabase, session, profile }) {
                   <div style={{fontSize:14}}>{v}</div>
                 </div>
               ))}
+
+              {/* VAS Pain & Last Exam */}
+              {(()=>{
+                const patExams = examinations.filter(e=>String(e.patientId)===String(viewPat.id));
+                const lastExam = patExams.sort((a,b)=>(b.date||"").localeCompare(a.date||""))[0];
+                if (!lastExam && patExams.length === 0) return null;
+                return (
+                  <div style={{background:"#fef3c7",border:"1px solid #fde68a",borderRadius:10,padding:"12px 14px",marginBottom:12}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                      <div style={{fontSize:11,fontWeight:700,color:"#92400e",textTransform:"uppercase",letterSpacing:".06em"}}>🔍 Останній огляд</div>
+                      {lastExam&&<span style={{fontSize:11,color:"#78350f"}}>{fmt(lastExam.date)} · {lastExam.zone}</span>}
+                    </div>
+                    {lastExam&&<>
+                      <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:6}}>
+                        <div style={{fontSize:11,color:"#64748b",fontWeight:600}}>VAS:</div>
+                        <div style={{flex:1,height:8,borderRadius:4,background:"#e2e8f0",overflow:"hidden"}}>
+                          <div style={{height:"100%",width:`${(lastExam.painVas||0)*10}%`,background:VAS_COLORS[lastExam.painVas||0],borderRadius:4}}/>
+                        </div>
+                        <div style={{fontSize:18,fontWeight:800,color:VAS_COLORS[lastExam.painVas||0],minWidth:28,textAlign:"center"}}>{lastExam.painVas||0}</div>
+                        <div style={{fontSize:10,color:VAS_COLORS[lastExam.painVas||0],fontWeight:600}}>{VAS_LABELS[lastExam.painVas||0]}</div>
+                      </div>
+                      <VasHistory exams={patExams}/>
+                      {lastExam.notes&&<div style={{fontSize:12,color:"#78350f",marginTop:4}}>{lastExam.notes}</div>}
+                    </>}
+                    <button className="btn" onClick={()=>{setExamPat(viewPat);setModal("exam");}} style={{background:"#fff",color:"#92400e",padding:"5px 12px",fontSize:11,border:"1px solid #fde68a",marginTop:6}}>🔍 Новий огляд</button>
+                  </div>
+                );
+              })()}
+
               {/* Protocols for this patient */}
               <div style={{marginTop:8}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
@@ -3292,6 +3563,7 @@ export default function MedKarta({ supabase, session, profile }) {
               })()}
 
               <div style={{display:"flex",gap:8,marginTop:16,flexWrap:"wrap"}}>
+                <button className="btn" onClick={()=>{setExamPat(viewPat);setModal("exam");}} style={{background:"#fef3c7",color:"#92400e",padding:"9px 14px"}}>🔍 Огляд</button>
                 <button className="btn" onClick={()=>{setDischargePat(viewPat);setModal("discharge");}} style={{background:"#f0fdf4",color:"#0e7c6b",padding:"9px 14px"}}>📄 Выписка</button>
                 <button className="btn" onClick={()=>{setConsentPat(viewPat);setModal("consent");}} style={{background:"#eff6ff",color:"#2563eb",padding:"9px 14px"}}>📝 Согласие</button>
               <button className="btn" onClick={()=>{setModal(null);setTimelinePat(viewPat);setTimeout(()=>setModal("timeline"),50);}} style={{background:"#faf5ff",color:"#7c3aed",padding:"9px 14px"}}>📋 История</button>
