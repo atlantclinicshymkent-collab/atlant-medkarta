@@ -3945,4 +3945,5 @@ export default function MedKarta({ supabase, session, profile }) {
     </div>
     </ErrorBoundary>
   );
-}
+} 
+ 
