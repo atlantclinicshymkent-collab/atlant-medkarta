@@ -161,85 +161,85 @@ const DIAGNOSES_CATALOG = Object.values(DIAGNOSIS_TEMPLATES).flat();
 
 // ─── EXAMINATION TEMPLATES (шаблони огляду) ───
 const EXAM_TEMPLATES = {
-  "Шийний відділ": {
+  "Шейный отдел": {
     icon: "🦴", fields: [
-      { key:"complaints", label:"Скарги", type:"text", placeholder:"Біль у шиї, обмеження рухів, головний біль..." },
-      { key:"inspection", label:"Огляд", type:"text", placeholder:"Постава, асиметрія, напруження м'язів..." },
-      { key:"palpation", label:"Пальпація", type:"text", placeholder:"Болючість паравертебральних точок, тригерні точки..." },
-      { key:"rom", label:"Обсяг рухів", type:"text", placeholder:"Флексія/екстензія, ротація, латерофлексія..." },
-      { key:"neuro", label:"Неврологічний статус", type:"text", placeholder:"Рефлекси, чутливість, сила м'язів..." },
-      { key:"special", label:"Спеціальні тести", type:"text", placeholder:"Тест Спурлінга, тест компресії, тест дистракції..." },
+      { key:"complaints", label:"Жалобы", type:"text", placeholder:"Боль в шее, ограничение движений, головная боль..." },
+      { key:"inspection", label:"Осмотр", type:"text", placeholder:"Осанка, асимметрия, напряжение мышц..." },
+      { key:"palpation", label:"Пальпация", type:"text", placeholder:"Болезненность паравертебральных точек, триггерные точки..." },
+      { key:"rom", label:"Объём движений", type:"text", placeholder:"Флексия/экстензия, ротация, латерофлексия..." },
+      { key:"neuro", label:"Неврологический статус", type:"text", placeholder:"Рефлексы, чувствительность, сила мышц..." },
+      { key:"special", label:"Специальные тесты", type:"text", placeholder:"Тест Спурлинга, тест компрессии, тест дистракции..." },
     ]
   },
-  "Грудний відділ": {
+  "Грудной отдел": {
     icon: "🦴", fields: [
-      { key:"complaints", label:"Скарги", type:"text", placeholder:"Біль у грудному відділі, міжреберна біль..." },
-      { key:"inspection", label:"Огляд", type:"text", placeholder:"Кіфоз, сколіоз, асиметрія..." },
-      { key:"palpation", label:"Пальпація", type:"text", placeholder:"Болючість остистих відростків, ребер..." },
-      { key:"rom", label:"Обсяг рухів", type:"text", placeholder:"Ротація, латерофлексія..." },
-      { key:"breathing", label:"Дихальна екскурсія", type:"text", placeholder:"Екскурсія грудної клітки..." },
-      { key:"special", label:"Спеціальні тести", type:"text", placeholder:"Тест Адамса, тест компресії..." },
+      { key:"complaints", label:"Жалобы", type:"text", placeholder:"Боль в грудном отделе, межрёберная боль..." },
+      { key:"inspection", label:"Осмотр", type:"text", placeholder:"Кифоз, сколиоз, асимметрия..." },
+      { key:"palpation", label:"Пальпация", type:"text", placeholder:"Болезненность остистых отростков, рёбер..." },
+      { key:"rom", label:"Объём движений", type:"text", placeholder:"Ротация, латерофлексия..." },
+      { key:"breathing", label:"Дыхательная экскурсия", type:"text", placeholder:"Экскурсия грудной клетки..." },
+      { key:"special", label:"Специальные тесты", type:"text", placeholder:"Тест Адамса, тест компрессии..." },
     ]
   },
-  "Поперековий відділ": {
+  "Поясничный отдел": {
     icon: "🦴", fields: [
-      { key:"complaints", label:"Скарги", type:"text", placeholder:"Біль у попереку, іррадіація в ногу..." },
-      { key:"inspection", label:"Огляд", type:"text", placeholder:"Лордоз, антальгічна поза, хода..." },
-      { key:"palpation", label:"Пальпація", type:"text", placeholder:"Паравертебральні точки, КПЗ, грушоподібний м'яз..." },
-      { key:"rom", label:"Обсяг рухів", type:"text", placeholder:"Флексія, екстензія, нахили..." },
-      { key:"neuro", label:"Неврологічний статус", type:"text", placeholder:"Ахіловий/колінний рефлекси, Ласег, чутливість..." },
-      { key:"special", label:"Спеціальні тести", type:"text", placeholder:"Ласег, Вассермана, SLR, Фабер..." },
+      { key:"complaints", label:"Жалобы", type:"text", placeholder:"Боль в пояснице, иррадиация в ногу..." },
+      { key:"inspection", label:"Осмотр", type:"text", placeholder:"Лордоз, анталгическая поза, походка..." },
+      { key:"palpation", label:"Пальпация", type:"text", placeholder:"Паравертебральные точки, КПС, грушевидная мышца..." },
+      { key:"rom", label:"Объём движений", type:"text", placeholder:"Флексия, экстензия, наклоны..." },
+      { key:"neuro", label:"Неврологический статус", type:"text", placeholder:"Ахиллов/коленный рефлексы, Ласег, чувствительность..." },
+      { key:"special", label:"Специальные тесты", type:"text", placeholder:"Ласег, Вассерман, SLR, Фабер..." },
     ]
   },
-  "Плечовий суглоб": {
+  "Плечевой сустав": {
     icon: "💪", fields: [
-      { key:"complaints", label:"Скарги", type:"text", placeholder:"Біль при відведенні, нічний біль..." },
-      { key:"inspection", label:"Огляд", type:"text", placeholder:"Атрофія, асиметрія, положення..." },
-      { key:"palpation", label:"Пальпація", type:"text", placeholder:"Акроміон, біцепс, ротаторна манжета..." },
-      { key:"rom", label:"Обсяг рухів", type:"text", placeholder:"Абдукція, флексія, ротація зовнішня/внутрішня..." },
-      { key:"special", label:"Спеціальні тести", type:"text", placeholder:"Ніер, Хоукінс, Джоб, Speed, болюча дуга..." },
+      { key:"complaints", label:"Жалобы", type:"text", placeholder:"Боль при отведении, ночная боль..." },
+      { key:"inspection", label:"Осмотр", type:"text", placeholder:"Атрофия, асимметрия, положение..." },
+      { key:"palpation", label:"Пальпация", type:"text", placeholder:"Акромион, бицепс, ротаторная манжета..." },
+      { key:"rom", label:"Объём движений", type:"text", placeholder:"Абдукция, флексия, ротация наружная/внутренняя..." },
+      { key:"special", label:"Специальные тесты", type:"text", placeholder:"Ниер, Хоукинс, Джоб, Speed, болезненная дуга..." },
     ]
   },
-  "Колінний суглоб": {
+  "Коленный сустав": {
     icon: "🦵", fields: [
-      { key:"complaints", label:"Скарги", type:"text", placeholder:"Біль при ходьбі, набряк, блокування..." },
-      { key:"inspection", label:"Огляд", type:"text", placeholder:"Набряк, варус/вальгус, атрофія квадрицепсу..." },
-      { key:"palpation", label:"Пальпація", type:"text", placeholder:"Суглобова щілина, надколінок, бурси..." },
-      { key:"rom", label:"Обсяг рухів", type:"text", placeholder:"Флексія/екстензія, крепітація..." },
-      { key:"stability", label:"Стабільність", type:"text", placeholder:"Передня/задня шухляда, вальгус/варус тест..." },
-      { key:"special", label:"Спеціальні тести", type:"text", placeholder:"Мак-Маррі, Апплі, тест Лахмана..." },
+      { key:"complaints", label:"Жалобы", type:"text", placeholder:"Боль при ходьбе, отёк, блокирование..." },
+      { key:"inspection", label:"Осмотр", type:"text", placeholder:"Отёк, варус/вальгус, атрофия квадрицепса..." },
+      { key:"palpation", label:"Пальпация", type:"text", placeholder:"Суставная щель, надколенник, бурсы..." },
+      { key:"rom", label:"Объём движений", type:"text", placeholder:"Флексия/экстензия, крепитация..." },
+      { key:"stability", label:"Стабильность", type:"text", placeholder:"Передний/задний выдвижной ящик, вальгус/варус тест..." },
+      { key:"special", label:"Специальные тесты", type:"text", placeholder:"Мак-Марри, Аппли, тест Лахмана..." },
     ]
   },
-  "Тазостегновий суглоб": {
+  "Тазобедренный сустав": {
     icon: "🦴", fields: [
-      { key:"complaints", label:"Скарги", type:"text", placeholder:"Біль у паху, кульгавість..." },
-      { key:"inspection", label:"Огляд", type:"text", placeholder:"Хода, Тренделенбург, вкорочення..." },
-      { key:"palpation", label:"Пальпація", type:"text", placeholder:"Великий вертел, паховий зв'язок..." },
-      { key:"rom", label:"Обсяг рухів", type:"text", placeholder:"Флексія, абдукція, ротація..." },
-      { key:"special", label:"Спеціальні тести", type:"text", placeholder:"FABER, FADIR, тест Тренделенбурга, Томас..." },
+      { key:"complaints", label:"Жалобы", type:"text", placeholder:"Боль в паху, хромота..." },
+      { key:"inspection", label:"Осмотр", type:"text", placeholder:"Походка, Тренделенбург, укорочение..." },
+      { key:"palpation", label:"Пальпация", type:"text", placeholder:"Большой вертел, паховая связка..." },
+      { key:"rom", label:"Объём движений", type:"text", placeholder:"Флексия, абдукция, ротация..." },
+      { key:"special", label:"Специальные тесты", type:"text", placeholder:"FABER, FADIR, тест Тренделенбурга, Томас..." },
     ]
   },
-  "Стопа / гомілковостоп": {
+  "Стопа / голеностоп": {
     icon: "🦶", fields: [
-      { key:"complaints", label:"Скарги", type:"text", placeholder:"Біль при ходьбі, ранковий біль..." },
-      { key:"inspection", label:"Огляд", type:"text", placeholder:"Склепіння, hallux valgus, набряк..." },
-      { key:"palpation", label:"Пальпація", type:"text", placeholder:"Плантарна фасція, ахіл, п'ятка..." },
-      { key:"rom", label:"Обсяг рухів", type:"text", placeholder:"Дорсіфлексія, плантарфлексія..." },
-      { key:"special", label:"Спеціальні тести", type:"text", placeholder:"Сілверскьолд, Томпсон, тилт тест..." },
+      { key:"complaints", label:"Жалобы", type:"text", placeholder:"Боль при ходьбе, утренняя боль..." },
+      { key:"inspection", label:"Осмотр", type:"text", placeholder:"Свод, hallux valgus, отёк..." },
+      { key:"palpation", label:"Пальпация", type:"text", placeholder:"Плантарная фасция, ахилл, пятка..." },
+      { key:"rom", label:"Объём движений", type:"text", placeholder:"Дорсифлексия, плантарфлексия..." },
+      { key:"special", label:"Специальные тесты", type:"text", placeholder:"Сілверскьолд, Томпсон, тилт тест..." },
     ]
   },
-  "Постава / сколіоз": {
+  "Осанка / сколиоз": {
     icon: "📐", fields: [
-      { key:"complaints", label:"Скарги", type:"text", placeholder:"Біль у спині, втомлюваність..." },
-      { key:"inspection", label:"Огляд", type:"text", placeholder:"Фронтальна/сагітальна площина, рівень плечей, тазу..." },
-      { key:"adams", label:"Тест Адамса", type:"text", placeholder:"Реберний горб, поперековий валик..." },
-      { key:"measurements", label:"Виміри", type:"text", placeholder:"Кут Кобба (за МРТ/Rö), рівень плечей, тазу..." },
-      { key:"flexibility", label:"Гнучкість", type:"text", placeholder:"Пальці-підлога, Шобер, Отт..." },
+      { key:"complaints", label:"Жалобы", type:"text", placeholder:"Боль в спине, утомляемость..." },
+      { key:"inspection", label:"Осмотр", type:"text", placeholder:"Фронтальная/сагиттальная плоскость, уровень плеч, таза..." },
+      { key:"adams", label:"Тест Адамса", type:"text", placeholder:"Рёберный горб, поясничный валик..." },
+      { key:"measurements", label:"Измерения", type:"text", placeholder:"Угол Кобба (по МРТ/Rö), уровень плеч, таза..." },
+      { key:"flexibility", label:"Гибкость", type:"text", placeholder:"Пальцы-пол, Шобер, Отт..." },
     ]
   },
 };
 
-const VAS_LABELS = ["Немає болю","Мінімальний","Слабкий","Помірний","Середній","Відчутний","Сильний","Дуже сильний","Інтенсивний","Нестерпний","Максимальний"];
+const VAS_LABELS = ["Нет боли","Минимальная","Слабая","Умеренная","Средняя","Ощутимая","Сильная","Очень сильная","Интенсивная","Нестерпимая","Максимальная"];
 const VAS_COLORS = ["#10b981","#22c55e","#84cc16","#a3e635","#eab308","#f59e0b","#f97316","#ef4444","#dc2626","#b91c1c","#7f1d1d"];
 
 // ─── Podiatech constants ───
@@ -1216,7 +1216,7 @@ function StockOpForm({form,setForm,patients,stock,onSave,onClose}) {
 // ═══════════════════════════════════════════
 // DISCHARGE SUMMARY MODAL (Выписной эпикриз)
 // ═══════════════════════════════════════════
-function DischargeSummaryModal({ patient, protocols, appointments, procCatalog, onClose }) {
+function DischargeSummaryModal({ patient, protocols, appointments, procCatalog, labResults, onClose }) {
   const [recommendations, setRecommendations] = useState(patient.notes || "");
   const [improvement, setImprovement] = useState(5);
   const [nextVisitDate, setNextVisitDate] = useState(patient.nextVisitDate || "");
@@ -1432,6 +1432,34 @@ function DischargeSummaryModal({ patient, protocols, appointments, procCatalog, 
             <div style={{marginTop:8,fontSize:15,fontWeight:700,color:improvColors[improvement]}}>{improvLabels[improvement]}</div>
           </div>
 
+          {/* Lab Results in discharge */}
+          {(()=>{
+            const patLabs = (labResults||[]).filter(l=>String(l.patientId)===String(patient.id));
+            if (patLabs.length === 0) return null;
+            return (
+              <div style={{marginBottom:20}}>
+                <div style={{fontSize:12,fontWeight:700,color:"#7c3aed",marginBottom:10,textTransform:"uppercase",letterSpacing:".06em"}}>🔬 Лабораторные исследования</div>
+                <table style={{width:"100%",borderCollapse:"collapse",border:"1px solid #e2e8f0",borderRadius:10,overflow:"hidden"}}>
+                  <thead>
+                    <tr style={{background:"#faf5ff"}}>{["Дата","Назва файлу","Тип"].map(h=>(
+                      <th key={h} style={{padding:"8px 12px",textAlign:"left",fontSize:11,fontWeight:700,color:"#6d28d9",borderBottom:"1px solid #e2e8f0"}}>{h}</th>
+                    ))}</tr>
+                  </thead>
+                  <tbody>
+                    {patLabs.sort((a,b)=>(a.date||"").localeCompare(b.date||"")).map((lab,i)=>(
+                      <tr key={lab.id} style={{borderBottom:"1px solid #f0f4f8",background:i%2?"#fff":"#faf5ff"}}>
+                        <td style={{padding:"7px 12px",fontSize:13}}>{fmt(lab.date)}</td>
+                        <td style={{padding:"7px 12px",fontSize:13,fontWeight:600}}>{lab.fileType?.includes("pdf")?"📄":"🖼️"} {lab.name}</td>
+                        <td style={{padding:"7px 12px",fontSize:12,color:"#64748b"}}>{lab.fileType?.includes("pdf")?"PDF":"Зображення"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div style={{fontSize:11,color:"#94a3b8",marginTop:6,fontStyle:"italic"}}>* Электронные копии лабораторных результатов добавлены в медицинскую карту пациента</div>
+              </div>
+            );
+          })()}
+
           {/* Recommendations */}
           {recommendations && (
             <div style={{background:"#fefce8",border:"1px solid #fde68a",borderRadius:12,padding:"14px 20px",marginBottom:20}}>
@@ -1473,7 +1501,7 @@ function DischargeSummaryModal({ patient, protocols, appointments, procCatalog, 
 // ═══════════════════════════════════════════
 // VAS PAIN SCALE COMPONENT
 // ═══════════════════════════════════════════
-function VasPainScale({ value, onChange, label="Шкала болю (VAS)", compact=false }) {
+function VasPainScale({ value, onChange, label="Шкала боли (VAS)", compact=false }) {
   const v = value||0;
   return (
     <div style={{marginBottom:compact?0:12}}>
@@ -1501,7 +1529,7 @@ function VasHistory({ exams }) {
   const line = points.map((p,i) => `${i===0?"M":"L"}${p.x},${p.y}`).join(" ");
   return (
     <div style={{marginBottom:12}}>
-      <div style={{fontSize:11,fontWeight:700,color:"#64748b",marginBottom:6,textTransform:"uppercase"}}>📈 Динаміка болю</div>
+      <div style={{fontSize:11,fontWeight:700,color:"#64748b",marginBottom:6,textTransform:"uppercase"}}>📈 Динамика боли</div>
       <svg viewBox={`0 0 ${w} ${h}`} style={{width:"100%",maxWidth:w,height:h,background:"#f8fafc",borderRadius:8,border:"1px solid #e2e8f0"}}>
         <line x1={pad} y1={h-pad} x2={w-pad} y2={h-pad} stroke="#e2e8f0" strokeWidth="1"/>
         <path d={line} fill="none" stroke="#0e7c6b" strokeWidth="2.5" strokeLinejoin="round"/>
@@ -1518,7 +1546,7 @@ function VasHistory({ exams }) {
 }
 
 // ═══════════════════════════════════════════
-// EXAMINATION MODAL (Шаблон огляду)
+// EXAMINATION MODAL (Шаблон осмотра)
 // ═══════════════════════════════════════════
 function ExamModal({ patient, existingExams, onSave, onClose, procCatalog }) {
   const [zone, setZone] = useState(Object.keys(EXAM_TEMPLATES)[0]);
@@ -1551,7 +1579,7 @@ function ExamModal({ patient, existingExams, onSave, onClose, procCatalog }) {
       <div className="modal" style={{width:640,maxHeight:"93vh",overflow:"auto"}} onClick={e=>e.stopPropagation()}>
         <div style={{background:"linear-gradient(135deg,#042f2e,#064e3b,#0e7c6b)",padding:"18px 24px",borderRadius:"18px 18px 0 0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
           <div>
-            <div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:"#fff"}}>🔍 Огляд пацієнта</div>
+            <div style={{fontFamily:"'DM Serif Display',serif",fontSize:18,color:"#fff"}}>🔍 Осмотр пациента</div>
             <div style={{color:"rgba(255,255,255,.6)",fontSize:13,marginTop:2}}>{fullName(patient)}</div>
           </div>
           <button className="btn" onClick={onClose} style={{background:"rgba(255,255,255,.15)",color:"#fff",padding:"5px 11px"}}>✕</button>
@@ -1569,7 +1597,7 @@ function ExamModal({ patient, existingExams, onSave, onClose, procCatalog }) {
 
           {/* Date & VAS */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}}>
-            <div className="field"><label>Дата огляду</label><input type="date" value={examDate} onChange={e=>setExamDate(e.target.value)}/></div>
+            <div className="field"><label>Дата осмотра</label><input type="date" value={examDate} onChange={e=>setExamDate(e.target.value)}/></div>
             <VasPainScale value={painVas} onChange={setPainVas}/>
           </div>
 
@@ -1578,7 +1606,7 @@ function ExamModal({ patient, existingExams, onSave, onClose, procCatalog }) {
 
           {/* Template fields */}
           <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:12,padding:"14px 16px",marginBottom:16}}>
-            <div style={{fontSize:12,fontWeight:700,color:"#0e7c6b",marginBottom:10}}>{template.icon} {zone} — Шаблон огляду</div>
+            <div style={{fontSize:12,fontWeight:700,color:"#0e7c6b",marginBottom:10}}>{template.icon} {zone} — Шаблон осмотра</div>
             {template.fields.map(f=>(
               <div key={f.key} className="field" style={{marginBottom:10}}>
                 <label>{f.label}</label>
@@ -1589,14 +1617,14 @@ function ExamModal({ patient, existingExams, onSave, onClose, procCatalog }) {
 
           {/* Additional notes */}
           <div className="field" style={{marginBottom:16}}>
-            <label>Додаткові нотатки / висновок</label>
-            <textarea rows={3} value={examNotes} onChange={e=>setExamNotes(e.target.value)} placeholder="Висновок, план лікування, рекомендації..." style={{resize:"vertical"}}/>
+            <label>Дополнительные заметки / заключение</label>
+            <textarea rows={3} value={examNotes} onChange={e=>setExamNotes(e.target.value)} placeholder="Заключение, план лечения, рекомендации..." style={{resize:"vertical"}}/>
           </div>
 
           {/* Previous exams */}
           {patExams.length>0&&(
             <details style={{marginBottom:16}}>
-              <summary style={{cursor:"pointer",fontSize:12,fontWeight:700,color:"#475569"}}>📋 Попередні огляди ({patExams.length})</summary>
+              <summary style={{cursor:"pointer",fontSize:12,fontWeight:700,color:"#475569"}}>📋 Предыдущие осмотры ({patExams.length})</summary>
               <div style={{marginTop:8,maxHeight:200,overflowY:"auto"}}>
                 {[...patExams].sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(ex=>(
                   <div key={ex.id} style={{background:"#f8fafc",borderRadius:8,padding:"10px 12px",marginBottom:6,border:"1px solid #e2e8f0"}}>
@@ -1615,8 +1643,8 @@ function ExamModal({ patient, existingExams, onSave, onClose, procCatalog }) {
           )}
 
           <div style={{display:"flex",gap:8}}>
-            <button className="btn" onClick={handleSave} style={{flex:1,background:"#0e7c6b",color:"#fff",padding:"12px",fontSize:15}}>💾 Зберегти огляд</button>
-            <button className="btn" onClick={onClose} style={{background:"#f1f5f9",color:"#475569",padding:"12px 20px"}}>Скасувати</button>
+            <button className="btn" onClick={handleSave} style={{flex:1,background:"#0e7c6b",color:"#fff",padding:"12px",fontSize:15}}>💾 Сохранить осмотр</button>
+            <button className="btn" onClick={onClose} style={{background:"#f1f5f9",color:"#475569",padding:"12px 20px"}}>Отменить</button>
           </div>
         </div>
       </div>
@@ -1821,10 +1849,10 @@ class ErrorBoundary extends React.Component {
       return (
         <div style={{padding:40,textAlign:"center",fontFamily:"'DM Sans',sans-serif"}}>
           <div style={{fontSize:48,marginBottom:16}}>⚠️</div>
-          <h2 style={{color:"#dc2626",marginBottom:12}}>Помилка в МедКарті</h2>
-          <p style={{color:"#64748b",marginBottom:20,fontSize:14}}>{this.state.error?.message || "Невідома помилка"}</p>
-          <button onClick={()=>{this.setState({hasError:false,error:null});}} style={{background:"#0e7c6b",color:"#fff",border:"none",borderRadius:10,padding:"12px 28px",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>🔄 Перезавантажити</button>
-          <div style={{marginTop:16}}><button onClick={()=>{localStorage.clear();window.location.reload();}} style={{background:"#f1f5f9",color:"#64748b",border:"1px solid #e2e8f0",borderRadius:8,padding:"8px 16px",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>🗑️ Очистити кеш і перезавантажити</button></div>
+          <h2 style={{color:"#dc2626",marginBottom:12}}>Ошибка в МедКарте</h2>
+          <p style={{color:"#64748b",marginBottom:20,fontSize:14}}>{this.state.error?.message || "Неизвестная ошибка"}</p>
+          <button onClick={()=>{this.setState({hasError:false,error:null});}} style={{background:"#0e7c6b",color:"#fff",border:"none",borderRadius:10,padding:"12px 28px",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>🔄 Перезагрузить</button>
+          <div style={{marginTop:16}}><button onClick={()=>{localStorage.clear();window.location.reload();}} style={{background:"#f1f5f9",color:"#64748b",border:"1px solid #e2e8f0",borderRadius:8,padding:"8px 16px",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>🗑️ Очистить кеш и перезагрузить</button></div>
         </div>
       );
     }
@@ -2052,7 +2080,7 @@ export default function MedKarta({ supabase, session, profile }) {
 
   // ─── Log session start ───
   useEffect(() => {
-    if (loaded && profile) auditLog("login", `Вхід: ${profile.full_name || profile.email}`);
+    if (loaded && profile) auditLog("login", `Вход: ${profile.full_name || profile.email}`);
   }, [loaded]); // eslint-disable-line
 
   // ─── AUTO-LOGOUT after 15 min inactivity ───
@@ -2064,7 +2092,7 @@ export default function MedKarta({ supabase, session, profile }) {
     const resetTimer = () => {
       clearTimeout(timer);
       timer = setTimeout(() => {
-        auditLog("auto_logout", "Автовихід через 15 хв бездіяльності");
+        auditLog("auto_logout", "Автовыход через 15 мин бездействия");
         supabase.auth.signOut();
       }, TIMEOUT);
     };
@@ -2367,7 +2395,7 @@ export default function MedKarta({ supabase, session, profile }) {
                 <div style={{fontWeight:600,color:"#fff"}}>{profile.full_name||profile.email}</div>
                 <div>{profile.role==="admin"?"Админ":"Врач"}</div>
               </div>
-              <button className="btn" onClick={()=>{auditLog("logout","Ручний вихід");supabase?.auth.signOut();}} style={{background:"rgba(255,255,255,.1)",color:"#fff",padding:"6px 12px",border:"1px solid rgba(255,255,255,.2)",fontSize:12}}>Выйти</button>
+              <button className="btn" onClick={()=>{auditLog("logout","Ручной выход");supabase?.auth.signOut();}} style={{background:"rgba(255,255,255,.1)",color:"#fff",padding:"6px 12px",border:"1px solid rgba(255,255,255,.2)",fontSize:12}}>Выйти</button>
             </div>}
           </div>
         </div>
@@ -3286,14 +3314,14 @@ export default function MedKarta({ supabase, session, profile }) {
           {/* ═══ AUDIT TRAIL VIEWER ═══ */}
           <div className="card" style={{padding:"20px",marginTop:20}}>
             <details>
-              <summary style={{cursor:"pointer",fontSize:14,fontWeight:700,color:"#475569",userSelect:"none"}}>📋 Журнал дій (Audit Trail)</summary>
+              <summary style={{cursor:"pointer",fontSize:14,fontWeight:700,color:"#475569",userSelect:"none"}}>📋 Журнал действий (Audit Trail)</summary>
               <div style={{marginTop:12,maxHeight:400,overflowY:"auto"}}>
                 {(()=>{
                   try {
                     const logs = JSON.parse(localStorage.getItem("mk2_audit") || "[]");
-                    if (logs.length === 0) return <div style={{color:"#94a3b8",fontSize:13}}>Журнал порожній</div>;
+                    if (logs.length === 0) return <div style={{color:"#94a3b8",fontSize:13}}>Журнал пустой</div>;
                     return <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-                      <thead><tr style={{background:"#f0f2f5"}}>{["Час","Користувач","Дія","Деталі"].map(h=><th key={h} style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"left",fontSize:11}}>{h}</th>)}</tr></thead>
+                      <thead><tr style={{background:"#f0f2f5"}}>{["Время","Пользователь","Действие","Детали"].map(h=><th key={h} style={{padding:"6px 10px",border:"1px solid #e2e8f0",textAlign:"left",fontSize:11}}>{h}</th>)}</tr></thead>
                       <tbody>
                         {logs.slice(0,100).map((log,i)=>(
                           <tr key={i} style={{background:i%2?"#fff":"#f8fafc"}}>
@@ -3305,11 +3333,11 @@ export default function MedKarta({ supabase, session, profile }) {
                         ))}
                       </tbody>
                     </table>;
-                  } catch { return <div style={{color:"#94a3b8",fontSize:13}}>Помилка читання журналу</div>; }
+                  } catch { return <div style={{color:"#94a3b8",fontSize:13}}>Ошибка чтения журнала</div>; }
                 })()}
                 <div style={{display:"flex",gap:8,marginTop:10}}>
-                  <button className="btn" onClick={()=>{const logs=localStorage.getItem("mk2_audit")||"[]";const blob=new Blob([logs],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=`audit-log-${today()}.json`;a.click();URL.revokeObjectURL(url);showToast("Журнал завантажено");}} style={{background:"#f1f5f9",color:"#475569",padding:"6px 14px",fontSize:11,border:"1px solid #e2e8f0"}}>📥 Завантажити JSON</button>
-                  <button className="btn" onClick={()=>{if(confirm("Очистити журнал дій?")){localStorage.removeItem("mk2_audit");showToast("Журнал очищено");}}} style={{background:"#fef2f2",color:"#dc2626",padding:"6px 14px",fontSize:11,border:"1px solid #fecaca"}}>🗑️ Очистити</button>
+                  <button className="btn" onClick={()=>{const logs=localStorage.getItem("mk2_audit")||"[]";const blob=new Blob([logs],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=`audit-log-${today()}.json`;a.click();URL.revokeObjectURL(url);showToast("Журнал скачан");}} style={{background:"#f1f5f9",color:"#475569",padding:"6px 14px",fontSize:11,border:"1px solid #e2e8f0"}}>📥 Скачать JSON</button>
+                  <button className="btn" onClick={()=>{if(confirm("Очистить журнал действий?")){localStorage.removeItem("mk2_audit");showToast("Журнал очищен");}}} style={{background:"#fef2f2",color:"#dc2626",padding:"6px 14px",fontSize:11,border:"1px solid #fecaca"}}>🗑️ Очистить</button>
                 </div>
               </div>
             </details>
@@ -3329,11 +3357,90 @@ export default function MedKarta({ supabase, session, profile }) {
               <div style={{fontFamily:"'DM Serif Display',serif",fontSize:22}}>Напоминания</div>
               <div style={{fontSize:13,color:"#64748b",marginTop:2}}>Визити у найближчі 14 днів</div>
             </div>
-            {urgentCount>0&&<div style={{background:"#fef2f2",border:"1px solid #fca5a5",borderRadius:10,padding:"10px 18px",color:"#dc2626",fontWeight:700}}>🚨 Срочно: {urgentCount}</div>}
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              {urgentCount>0&&<div style={{background:"#fef2f2",border:"1px solid #fca5a5",borderRadius:10,padding:"10px 18px",color:"#dc2626",fontWeight:700}}>🚨 Срочно: {urgentCount}</div>}
+            </div>
           </div>
+
+          {/* Auto WA reminder for tomorrow's patients */}
+          {(()=>{
+            const tomorrow = reminders.filter(r=>r.days===1);
+            const todayPats = reminders.filter(r=>r.days===0);
+            const [waSending, setWaSending] = [viewPat?._waSending||false, (v)=>setViewPat(p=>({...(p||{}),_waSending:v}))];
+            const [waResult, setWaResult] = [viewPat?._waResult||null, (v)=>setViewPat(p=>({...(p||{}),_waResult:v}))];
+
+            const sendViaApi = async (patientList) => {
+              setWaSending(true);
+              setWaResult(null);
+              try {
+                const bulk = patientList.filter(({patient:p})=>p.phone).map(({patient:p})=>({
+                  to: cleanPhone(p.phone),
+                  message: `Уважаемый(ая) ${p.firstName} ${p.patronymic||""}!\n\nНапоминаем, что завтра, ${fmt(p.nextVisitDate)}, у Вас запланирован визит в Atlant Clinic.${p.nextVisitNote?"\n📋 "+p.nextVisitNote:""}\n\nВрач: ${p.doctor}\nАдрес: ул. Акпан Батыр, 46\n\nПросим подтвердить визит ответным сообщением.\nЖдём Вас! 😊`,
+                }));
+                const res = await fetch("/api/whatsapp", {
+                  method: "POST",
+                  headers: {"Content-Type":"application/json"},
+                  body: JSON.stringify({ bulk }),
+                });
+                const data = await res.json();
+                setWaResult(data);
+                if (data.sent) {
+                  showToast(`✅ Отправлено ${data.sent}/${data.total} повідомлень`);
+                  auditLog("wa_bulk_send", `Отправлено ${data.sent}/${data.total} нагадувань`);
+                } else {
+                  showToast(data.error || "Ошибка отправки", "error");
+                }
+              } catch(err) {
+                showToast("Ошибка подключения к WhatsApp API", "error");
+                setWaResult({error: err.message});
+              }
+              setWaSending(false);
+            };
+
+            if (tomorrow.length === 0 && todayPats.length === 0) return null;
+            return (
+              <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:12,padding:"16px 20px",marginBottom:18}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                  <div>
+                    <div style={{fontWeight:700,fontSize:14,color:"#166534"}}>📤 Автоматическое напоминание WhatsApp</div>
+                    <div style={{fontSize:12,color:"#64748b",marginTop:2}}>
+                      {tomorrow.length>0&&<span>Завтра: {tomorrow.length} пац. </span>}
+                      {todayPats.length>0&&<span>Сегодня: {todayPats.length} пац.</span>}
+                    </div>
+                  </div>
+                  <div style={{display:"flex",gap:6}}>
+                    {tomorrow.length>0&&<button className="btn" disabled={waSending} onClick={()=>sendViaApi(tomorrow)} style={{background:waSending?"#94a3b8":"#25d366",color:"#fff",padding:"10px 20px",fontSize:13,display:"flex",alignItems:"center",gap:6}}>
+                      {waSending?"⏳ Отправка...":"📤 Отправить завтрашним"}
+                    </button>}
+                    <button className="btn" onClick={async ()=>{
+                      try {
+                        const res = await fetch("/api/reminders");
+                        const data = await res.json();
+                        showToast(`Cron: відправлено ${data.sent||0}/${data.total||0}`);
+                      } catch { showToast("Помилка cron", "error"); }
+                    }} style={{background:"#eff6ff",color:"#2563eb",padding:"10px 14px",fontSize:11,border:"1px solid #bfdbfe"}}>🔄 Тест cron</button>
+                  </div>
+                </div>
+                {waResult&&<div style={{marginTop:8,padding:"8px 12px",borderRadius:8,background:waResult.error?"#fef2f2":"#f0fdf4",border:`1px solid ${waResult.error?"#fca5a5":"#bbf7d0"}`,fontSize:12}}>
+                  {waResult.error?<span style={{color:"#dc2626"}}>❌ {waResult.error}</span>:
+                  <span style={{color:"#166534"}}>✅ Отправлено: {waResult.sent}/{waResult.total}{waResult.results&&waResult.results.filter(r=>!r.success).length>0&&` · Ошибки: ${waResult.results.filter(r=>!r.success).map(r=>r.to).join(", ")}`}</span>}
+                </div>}
+                <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
+                  {[...tomorrow,...todayPats].map(({patient:p,days})=>(
+                    <div key={p.id} style={{background:"#fff",borderRadius:8,padding:"5px 10px",fontSize:11,border:"1px solid #bbf7d0",display:"flex",alignItems:"center",gap:4}}>
+                      <span style={{fontWeight:600}}>{shortName(p)}</span>
+                      <span style={{color:days===0?"#f59e0b":"#64748b"}}>{days===0?"сегодня":"завтра"}</span>
+                      <span style={{color:p.phone?"#10b981":"#dc2626"}}>{p.phone?"✓":"⚠️"}</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{fontSize:10,color:"#94a3b8",marginTop:8}}>💡 Автоматическая рассылка: ежедневно в 10:00 через Vercel Cron → /api/reminders</div>
+              </div>
+            );
+          })()}
           {reminders.length===0
             ?<div className="card" style={{padding:"52px",textAlign:"center",color:"#94a3b8",fontSize:15}}>🎉 Нет ближайших напоминаний</div>
-            :[{label:"🔴 Прострочені",filter:r=>r.days<0,col:"#dc2626"},{label:"🟠 Сегодня / завтра",filter:r=>r.days>=0&&r.days<=1,col:"#f59e0b"},{label:"🟡 Через 2–7 дней",filter:r=>r.days>=2&&r.days<=7,col:"#eab308"},{label:"🟢 Через 8–14 дней",filter:r=>r.days>=8&&r.days<=14,col:"#10b981"}].map(group=>{
+            :[{label:"🔴 Просроченные",filter:r=>r.days<0,col:"#dc2626"},{label:"🟠 Сегодня / завтра",filter:r=>r.days>=0&&r.days<=1,col:"#f59e0b"},{label:"🟡 Через 2–7 дней",filter:r=>r.days>=2&&r.days<=7,col:"#eab308"},{label:"🟢 Через 8–14 дней",filter:r=>r.days>=8&&r.days<=14,col:"#10b981"}].map(group=>{
               const items=reminders.filter(group.filter); if(!items.length) return null;
               return <div key={group.label} style={{marginBottom:22}}>
                 <div style={{fontSize:12,fontWeight:700,color:"#64748b",marginBottom:8,textTransform:"uppercase",letterSpacing:".07em"}}>{group.label} ({items.length})</div>
@@ -3367,8 +3474,8 @@ export default function MedKarta({ supabase, session, profile }) {
       {/* ════════════════════════════════════════ */}
 
       {messengerPat&&<MessengerModal patient={messengerPat} onClose={()=>setMessengerPat(null)}/>}
-      {modal==="exam"&&examPat&&<ExamModal patient={examPat} existingExams={examinations} procCatalog={procCatalog} onClose={()=>{setModal(null);setExamPat(null);}} onSave={(exam)=>{setExaminations(prev=>[...prev,exam]);setModal(null);setExamPat(null);showToast("🔍 Огляд збережено");auditLog("exam_add",`${fullName(examPat)} · ${exam.zone} · VAS:${exam.painVas}`);}}/>}
-      {modal==="discharge"&&dischargePat&&<DischargeSummaryModal patient={dischargePat} protocols={protocols} appointments={appointments} procCatalog={procCatalog} onClose={()=>{setModal(null);setDischargePat(null);}}/>}
+      {modal==="exam"&&examPat&&<ExamModal patient={examPat} existingExams={examinations} procCatalog={procCatalog} onClose={()=>{setModal(null);setExamPat(null);}} onSave={(exam)=>{setExaminations(prev=>[...prev,exam]);setModal(null);setExamPat(null);showToast("🔍 Осмотр сохранён");auditLog("exam_add",`${fullName(examPat)} · ${exam.zone} · VAS:${exam.painVas}`);}}/>}
+      {modal==="discharge"&&dischargePat&&<DischargeSummaryModal patient={dischargePat} protocols={protocols} appointments={appointments} procCatalog={procCatalog} labResults={labResults} onClose={()=>{setModal(null);setDischargePat(null);}}/>}
       {modal==="consent"&&consentPat&&<ConsentModal patient={consentPat} doctor={consentPat.doctor||""} procedures={protocols.filter(pr=>String(pr.patientId)===String(consentPat.id)&&pr.status==="active").flatMap(pr=>pr.procedures)} onClose={()=>{setModal(null);setConsentPat(null);}}/>}
 
       {/* Patient view modal */}
@@ -3398,7 +3505,7 @@ export default function MedKarta({ supabase, session, profile }) {
                 return (
                   <div style={{background:"#fef3c7",border:"1px solid #fde68a",borderRadius:10,padding:"12px 14px",marginBottom:12}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                      <div style={{fontSize:11,fontWeight:700,color:"#92400e",textTransform:"uppercase",letterSpacing:".06em"}}>🔍 Останній огляд</div>
+                      <div style={{fontSize:11,fontWeight:700,color:"#92400e",textTransform:"uppercase",letterSpacing:".06em"}}>🔍 Последний осмотр</div>
                       {lastExam&&<span style={{fontSize:11,color:"#78350f"}}>{fmt(lastExam.date)} · {lastExam.zone}</span>}
                     </div>
                     {lastExam&&<>
@@ -3413,7 +3520,7 @@ export default function MedKarta({ supabase, session, profile }) {
                       <VasHistory exams={patExams}/>
                       {lastExam.notes&&<div style={{fontSize:12,color:"#78350f",marginTop:4}}>{lastExam.notes}</div>}
                     </>}
-                    <button className="btn" onClick={()=>{setExamPat(viewPat);setModal("exam");}} style={{background:"#fff",color:"#92400e",padding:"5px 12px",fontSize:11,border:"1px solid #fde68a",marginTop:6}}>🔍 Новий огляд</button>
+                    <button className="btn" onClick={()=>{setExamPat(viewPat);setModal("exam");}} style={{background:"#fff",color:"#92400e",padding:"5px 12px",fontSize:11,border:"1px solid #fde68a",marginTop:6}}>🔍 Новый осмотр</button>
                   </div>
                 );
               })()}
@@ -3563,7 +3670,7 @@ export default function MedKarta({ supabase, session, profile }) {
               })()}
 
               <div style={{display:"flex",gap:8,marginTop:16,flexWrap:"wrap"}}>
-                <button className="btn" onClick={()=>{setExamPat(viewPat);setModal("exam");}} style={{background:"#fef3c7",color:"#92400e",padding:"9px 14px"}}>🔍 Огляд</button>
+                <button className="btn" onClick={()=>{setExamPat(viewPat);setModal("exam");}} style={{background:"#fef3c7",color:"#92400e",padding:"9px 14px"}}>🔍 Осмотр</button>
                 <button className="btn" onClick={()=>{setDischargePat(viewPat);setModal("discharge");}} style={{background:"#f0fdf4",color:"#0e7c6b",padding:"9px 14px"}}>📄 Выписка</button>
                 <button className="btn" onClick={()=>{setConsentPat(viewPat);setModal("consent");}} style={{background:"#eff6ff",color:"#2563eb",padding:"9px 14px"}}>📝 Согласие</button>
               <button className="btn" onClick={()=>{setModal(null);setTimelinePat(viewPat);setTimeout(()=>setModal("timeline"),50);}} style={{background:"#faf5ff",color:"#7c3aed",padding:"9px 14px"}}>📋 История</button>
