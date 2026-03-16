@@ -213,7 +213,20 @@ function QuestionnaireContent() {
             </div>
             <div style={styles.field}>
               <label style={styles.label}>Дата рождения</label>
-              <input style={styles.input} type="date" value={form.dob} onChange={e => s("dob", e.target.value)} />
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+                <select style={styles.input} value={form.dob?form.dob.split("-")[2]:""} onChange={e=>{const d=e.target.value;const m=form.dob?form.dob.split("-")[1]:"01";const y=form.dob?form.dob.split("-")[0]:"1990";if(d)s("dob",`${y}-${m}-${d.padStart(2,"0")}`);}}>
+                  <option value="">День</option>
+                  {Array.from({length:31},(_,i)=>i+1).map(d=><option key={d} value={String(d).padStart(2,"0")}>{d}</option>)}
+                </select>
+                <select style={styles.input} value={form.dob?form.dob.split("-")[1]:""} onChange={e=>{const m=e.target.value;const d=form.dob?form.dob.split("-")[2]:"01";const y=form.dob?form.dob.split("-")[0]:"1990";if(m)s("dob",`${y}-${m}-${d}`);}}>
+                  <option value="">Месяц</option>
+                  {["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"].map((name,i)=><option key={i} value={String(i+1).padStart(2,"0")}>{name}</option>)}
+                </select>
+                <select style={styles.input} value={form.dob?form.dob.split("-")[0]:""} onChange={e=>{const y=e.target.value;const m=form.dob?form.dob.split("-")[1]:"01";const d=form.dob?form.dob.split("-")[2]:"01";if(y)s("dob",`${y}-${m}-${d}`);}}>
+                  <option value="">Год</option>
+                  {Array.from({length:100},(_,i)=>new Date().getFullYear()-i).map(y=><option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
             </div>
             <div style={styles.field}>
               <label style={styles.label}>Телефон *</label>
