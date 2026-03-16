@@ -715,6 +715,28 @@ function PatientForm({form,setForm,isAdd,onSave,onClose,doctorNames,onBulkBook,p
             </div>
           )}
 
+          {/* Send questionnaire via WhatsApp */}
+          {isAdd&&(
+            <div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:10,padding:"12px 14px"}}>
+              <div style={{fontSize:11,fontWeight:700,color:"#166534",marginBottom:8,textTransform:"uppercase",letterSpacing:".06em"}}>📤 Или отправьте анкету пациенту</div>
+              <div style={{fontSize:12,color:"#475569",marginBottom:8}}>Пациент заполнит данные самостоятельно с телефона. Вам нужно указать только телефон.</div>
+              <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                <input value={form.phone||""} onChange={e=>s("phone",e.target.value)} placeholder="+7 701 123 45 67" style={{flex:1,padding:"9px 12px",border:"1.5px solid #bbf7d0",borderRadius:8,fontSize:14,outline:"none"}}/>
+                <button className="btn" disabled={!form.phone?.trim()} onClick={()=>{
+                  const phone = (form.phone||"").replace(/[\s\-\(\)]/g,"").replace("+","");
+                  if(!phone){alert("Укажите номер телефона!");return;}
+                  const baseUrl = typeof window!=="undefined"?window.location.origin:"";
+                  const url = `${baseUrl}/questionnaire?phone=${encodeURIComponent(form.phone||"")}&doctor=${encodeURIComponent(form.doctor||doctorNames[0]||"")}`;
+                  const text = `Здравствуйте! Перед визитом в Atlant Clinic, пожалуйста, заполните анкету пациента:\n\n${url}\n\nЭто займёт 2-3 минуты. Спасибо! 😊`;
+                  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`,"_blank");
+                }} style={{background:form.phone?.trim()?"#25d366":"#e2e8f0",color:form.phone?.trim()?"#fff":"#94a3b8",padding:"9px 18px",fontSize:13,whiteSpace:"nowrap"}}>
+                  📤 Отправить анкету в WA
+                </button>
+              </div>
+              <div style={{fontSize:10,color:"#94a3b8",marginTop:6}}>После заполнения пациентом — данные автоматически сохранятся в системе</div>
+            </div>
+          )}
+
           <div style={{display:"flex",gap:10,marginTop:4}}>
             <button className="btn" onClick={()=>valid&&onSave(form)} disabled={!valid} style={{flex:1,background:valid?"#0e7c6b":"#e2e8f0",color:valid?"#fff":"#94a3b8",padding:"12px",fontSize:15}}>{isAdd?"➕ Добавить пациента":"💾 Сохранить"}</button>
             <button className="btn" onClick={onClose} style={{background:"#f1f5f9",color:"#475569",padding:"12px 20px"}}>Отменить</button>
