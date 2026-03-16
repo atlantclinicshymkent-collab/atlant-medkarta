@@ -83,23 +83,36 @@ function QuestionnaireContent() {
     }));
   };
 
-  const handleSubmit = async () => {
-    // Save to localStorage for the clinic to pick up
-    try {
-      const existing = JSON.parse(localStorage.getItem("mk2_questionnaires") || "[]");
-      existing.push({ ...form, submittedAt: new Date().toISOString() });
-      localStorage.setItem("mk2_questionnaires", JSON.stringify(existing));
-    } catch (e) { /* ignore */ }
+  const [submitError, setSubmitError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-    // Try to save to Supabase via API if available
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    setSubmitError("");
+
+    // Save to Supabase via API
     try {
-      await fetch("/api/questionnaire", {
+      const res = await fetch("/api/questionnaire", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, consent }),
       });
-    } catch (e) { /* ignore — will work even without API */ }
+      const data = await res.json();
+      if (data.error) {
+        setSubmitError("Ошибка сохранения: " + data.error);
+        setSubmitting(false);
+        return;
+      }
+    } catch (e) {
+      // Fallback: save to localStorage
+      try {
+        const existing = JSON.parse(localStorage.getItem("mk2_questionnaires") || "[]");
+        existing.push({ ...form, consent, submittedAt: new Date().toISOString() });
+        localStorage.setItem("mk2_questionnaires", JSON.stringify(existing));
+      } catch (e2) { /* ignore */ }
+    }
 
+    setSubmitting(false);
     setSubmitted(true);
   };
 
@@ -345,11 +358,12 @@ function QuestionnaireContent() {
               Далее →
             </button>
           ) : (
-            <button onClick={handleSubmit} style={{ ...styles.btn, background: "#0e7c6b", color: "#fff", flex: 2, fontSize: 16 }}>
-              ✅ Отправить анкету
+            <button onClick={handleSubmit} disabled={submitting} style={{ ...styles.btn, background: submitting ? "#94a3b8" : "#0e7c6b", color: "#fff", flex: 2, fontSize: 16, opacity: submitting ? 0.7 : 1 }}>
+              {submitting ? "⏳ Отправка..." : "✅ Отправить анкету"}
             </button>
           )}
         </div>
+        {submitError && <div style={{marginTop:10,padding:"10px 14px",background:"#fef2f2",border:"1px solid #fca5a5",borderRadius:8,fontSize:13,color:"#dc2626"}}>{submitError}</div>}
       </div>
 
       {/* Footer */}
