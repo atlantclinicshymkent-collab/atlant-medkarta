@@ -377,6 +377,19 @@ const openWA  = (phone, text) => { const p=cleanPhone(phone); if(!p){alert("Ук
 const openTG  = (phone, text) => { const p=cleanPhone(phone); if(!p){alert("Укажите номер телефона!");return;} window.open(`https://t.me/${p}?text=${encodeURIComponent(text)}`,"_blank"); };
 const doCopy  = async (text, cb) => { try{ await navigator.clipboard.writeText(text); cb(); }catch{ alert(text); } };
 
+// ─── QR Code (via Google Charts API) ───
+function QrCodeSvg({ text, size=200 }) {
+  const url = `https://chart.googleapis.com/chart?cht=qr&chs=${size}x${size}&chl=${encodeURIComponent(text)}&choe=UTF-8`;
+  return <img src={url} alt="QR" style={{width:size,height:size,borderRadius:8,border:"1px solid #e2e8f0"}} />;
+}
+
+// ─── Patient Questionnaire URL ───
+const buildQuestionnaireUrl = (patient) => {
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const params = new URLSearchParams({ name: fullName(patient), phone: patient.phone||"", doctor: patient.doctor||"", pid: patient.id||"" });
+  return `${baseUrl}/questionnaire?${params.toString()}`;
+};
+
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600;700&display=swap');
   *{box-sizing:border-box;margin:0;padding:0}
@@ -1891,6 +1904,7 @@ export default function MedKarta({ supabase, session, profile }) {
   const [dischargePat, setDischargePat] = useState(null);
   const [examinations, setExaminations] = useState([]);
   const [examPat, setExamPat] = useState(null);
+  const [labResults, setLabResults] = useState([]);
   const [consentPat, setConsentPat] = useState(null);
   const [toast, setToast] = useState(null);
   const [sortBy, setSortBy] = useState("lastName");
@@ -1978,6 +1992,7 @@ export default function MedKarta({ supabase, session, profile }) {
         setProcCatalog(loadLocal("mk2_proccatalog", SAMPLE_PROCEDURES));
         setProtocolTemplates(loadLocal("mk2_protocoltemplates", SAMPLE_PROTOCOL_TEMPLATES));
         setExaminations(loadLocal("mk2_examinations", []));
+        setLabResults(loadLocal("mk2_labresults", []));
       }
       setLoaded(true);
     });
@@ -2016,7 +2031,8 @@ export default function MedKarta({ supabase, session, profile }) {
     saveLocal("mk2_proccatalog", procCatalog);
     saveLocal("mk2_protocoltemplates", protocolTemplates);
     saveLocal("mk2_examinations", examinations);
-  }, [patients, appointments, protocols, podiatech, doctors, stock, stockLog, procCatalog, protocolTemplates, examinations, loaded, usingSupabase]);
+    saveLocal("mk2_labresults", labResults);
+  }, [patients, appointments, protocols, podiatech, doctors, stock, stockLog, procCatalog, protocolTemplates, examinations, labResults, loaded, usingSupabase]);
 
   // ─── Email notification on appointment creation ───
   const sendApptEmail = async (appt, patient) => {
@@ -3524,6 +3540,50 @@ export default function MedKarta({ supabase, session, profile }) {
                   </div>
                 );
               })()}
+
+              {/* Lab Results */}
+              <div style={{marginBottom:12}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                  <div style={{fontSize:11,fontWeight:700,color:"#7c3aed",textTransform:"uppercase",letterSpacing:".06em"}}>🔬 Лабораторные результаты</div>
+                  <label className="btn" style={{background:"#faf5ff",color:"#7c3aed",padding:"4px 12px",fontSize:11,border:"1px solid #ddd6fe",cursor:"pointer"}}>
+                    📎 Загрузить PDF
+                    <input type="file" accept=".pdf,.jpg,.jpeg,.png" hidden onChange={(e)=>{
+                      const file=e.target.files?.[0];if(!file)return;
+                      if(file.size>5*1024*1024){alert("Файл слишком большой (макс. 5 МБ)");return;}
+                      const reader=new FileReader();
+                      reader.onload=(ev)=>{
+                        setLabResults(prev=>[...prev,{id:Date.now()+Math.random(),patientId:viewPat.id,date:today(),name:file.name,fileData:ev.target.result,fileType:file.type,notes:""}]);
+                        showToast("🔬 Файл загружен");auditLog("lab_upload",`${fullName(viewPat)} · ${file.name}`);
+                      };reader.readAsDataURL(file);e.target.value="";
+                    }}/>
+                  </label>
+                </div>
+                {(()=>{
+                  const patLabs=labResults.filter(l=>String(l.patientId)===String(viewPat.id));
+                  return patLabs.length>0?patLabs.sort((a,b)=>(b.date||"").localeCompare(a.date||"")).map(lab=>(
+                    <div key={lab.id} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:"#faf5ff",borderRadius:8,marginBottom:5,border:"1px solid #ede9fe"}}>
+                      <span style={{fontSize:18}}>{lab.fileType?.includes("pdf")?"📄":"🖼️"}</span>
+                      <div style={{flex:1,minWidth:0}}><div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{lab.name}</div><div style={{fontSize:11,color:"#64748b"}}>{fmt(lab.date)}</div></div>
+                      <button className="btn" onClick={()=>{const a=document.createElement("a");a.href=lab.fileData;a.download=lab.name;a.click();}} style={{background:"#7c3aed",color:"#fff",padding:"4px 10px",fontSize:11}}>📥</button>
+                      <button className="btn" onClick={()=>{if(confirm("Удалить файл?"))setLabResults(prev=>prev.filter(l=>l.id!==lab.id));}} style={{background:"#fef2f2",color:"#dc2626",padding:"4px 8px",fontSize:11}}>×</button>
+                    </div>
+                  )):<div style={{fontSize:12,color:"#94a3b8"}}>Нет загруженных файлов</div>;
+                })()}
+              </div>
+
+              {/* QR-код анкеты */}
+              <details style={{marginBottom:12}}>
+                <summary style={{cursor:"pointer",fontSize:11,fontWeight:700,color:"#2563eb",textTransform:"uppercase",letterSpacing:".06em",userSelect:"none"}}>📱 QR-код анкеты пациента</summary>
+                <div style={{padding:"12px",background:"#eff6ff",borderRadius:"0 0 10px 10px",border:"1px solid #bfdbfe",textAlign:"center",marginTop:4}}>
+                  <QrCodeSvg text={buildQuestionnaireUrl(viewPat)} size={180}/>
+                  <div style={{fontSize:12,color:"#1e40af",fontWeight:600,marginTop:8}}>Сканируйте для заполнения анкеты</div>
+                  <div style={{fontSize:10,color:"#64748b",marginTop:4}}>Пациент заполняет анкету с телефона перед первым визитом</div>
+                  <div style={{display:"flex",gap:6,justifyContent:"center",marginTop:8}}>
+                    <button className="btn" onClick={()=>{doCopy(buildQuestionnaireUrl(viewPat),()=>showToast("Ссылка скопирована"));}} style={{background:"#2563eb",color:"#fff",padding:"5px 14px",fontSize:11}}>📋 Копировать ссылку</button>
+                    <button className="btn" onClick={()=>{const url=buildQuestionnaireUrl(viewPat);const text=`Уважаемый(ая) ${viewPat.firstName}! Перед визитом в Atlant Clinic, пожалуйста, заполните анкету:\n${url}`;openWA(viewPat.phone,text);}} style={{background:"#25d366",color:"#fff",padding:"5px 14px",fontSize:11}}>📤 Отправить WA</button>
+                  </div>
+                </div>
+              </details>
 
               {/* Protocols for this patient */}
               <div style={{marginTop:8}}>
