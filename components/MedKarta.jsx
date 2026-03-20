@@ -1353,6 +1353,23 @@ function DischargeSummaryModal({ patient, protocols, appointments, procCatalog, 
           <div style={{display:"flex",gap:8}}>
             <button className="btn" onClick={handlePrint} style={{background:"#fff",color:"#064e3b",padding:"8px 16px",fontWeight:700}}>🖨️ Печать</button>
             <button className="btn" onClick={handlePDF} style={{background:"rgba(255,255,255,.2)",color:"#fff",padding:"8px 16px",fontWeight:700}}>📥 PDF</button>
+            <button className="btn" id="wa-send-btn" onClick={async()=>{
+              const btn=document.getElementById("wa-send-btn");
+              const phone=(patient.phone||"").replace(/[\s\-\(\)]/g,"");
+              if(!phone){alert("У пациента не указан телефон!");return;}
+              btn.textContent="⏳ Отправка...";btn.disabled=true;
+              const name=`${patient.lastName} ${patient.firstName} ${patient.patronymic||""}`.trim();
+              const procs=completedProcedures.map(p=>`• ${p.name}: ${p.sessions}/${p.total} сеансов${p.medications?.length?` (${p.medications.join(", ")})`:""}`).join("\n");
+              const visits=patAppts.length;
+              const text=`🏥 *ATLANT CLINIC*\n📄 *Выписной эпикриз*\n\n👤 *Пациент:* ${name}\n📅 *Дата:* ${fmt(today())}\n\n🩺 *Диагноз:* ${editDiagnosis||"—"}\n👨‍⚕️ *Лечащий врач:* ${patient.doctor||"—"}\n\n💊 *Проведённое лечение:*\n${procs||"—"}\n\n📊 *Визитов:* ${visits}\n📈 *Улучшение:* ${improvLabels[improvement]||"—"} (${improvement}/10)\n${recommendations?`\n📋 *Рекомендации:*\n${recommendations}\n`:""}${nextVisitDate?`\n🔔 *Повторный визит:* ${fmt(nextVisitDate)}${nextVisitNote?" — "+nextVisitNote:""}`:""}\n\n📍 ул. Акпан Батыр, 46, Шымкент\n🌐 atlantclinic.com`;
+              try{
+                const res=await fetch("/api/whatsapp",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:phone,message:text})});
+                const data=await res.json();
+                if(data.success){btn.textContent="✅ Отправлено!";btn.style.background="#10b981";}
+                else{btn.textContent="❌ Ошибка";alert(data.error||"Ошибка отправки");}
+              }catch(e){btn.textContent="❌ Ошибка";alert("Ошибка подключения: "+e.message);}
+              setTimeout(()=>{btn.textContent="📤 WhatsApp";btn.disabled=false;btn.style.background="#25d366";},3000);
+            }} style={{background:"#25d366",color:"#fff",padding:"8px 16px",fontWeight:700}}>📤 WhatsApp</button>
             <button className="btn" onClick={()=>{if(onSave)onSave({recommendations,improvement,nextVisitDate,nextVisitNote,editDiagnosis});try{localStorage.setItem(savedKey,JSON.stringify({recommendations,improvement,nextVisitDate,nextVisitNote,editDiagnosis}));}catch{}}} style={{background:"#fef3c7",color:"#92400e",padding:"8px 16px",fontWeight:700}}>💾 Сохранить</button>
             <button className="btn" onClick={onClose} style={{background:"rgba(255,255,255,.15)",color:"#fff",padding:"5px 11px"}}>✕</button>
           </div>
