@@ -272,15 +272,15 @@ const SAMPLE_STOCK_LOG = [
 
 // ─── Medications catalog ───
 const MEDICATION_CATEGORIES = {
+  "Кортикостероиды (в/с)": ["Бетаспан", "Дипроспан", "Кеналог", "Дексаметазон", "Гидрокортизон", "Флостерон", "Депо-Медрол"],
+  "Гиалуроновая кислота": ["Хронотрон", "Плексатрон", "Флексатрон Плюс", "Ostenil", "Ostenil Plus", "Synvisc", "Fermatron", "Curavisc", "Hyalgan", "Sinovial", "Гиалуром CS", "Вискосил"],
+  "PRP / биопрепараты": ["PRP (собственная кровь)", "SVF", "Ортокин", "Плазмолифтинг"],
   "НПВП": ["Мелоксикам", "Диклофенак", "Ибупрофен", "Нимесулид", "Целекоксиб", "Эторикоксиб", "Кеторолак", "Декскетопрофен"],
   "Миорелаксанты": ["Тизанидин", "Толперизон", "Баклофен", "Сирдалуд"],
   "Хондропротекторы": ["Хондроитин сульфат", "Глюкозамин", "Дона", "Артра", "Терафлекс", "Мукосат", "Алфлутоп"],
-  "Гиалуроновая кислота": ["Ostenil", "Ostenil Plus", "Synvisc", "Fermatron", "Curavisc", "Hyalgan", "Sinovial"],
-  "Кортикостероиды": ["Дипроспан", "Дексаметазон", "Кеналог", "Гидрокортизон", "Флостерон"],
-  "PRP / биопрепараты": ["PRP (собственная кровь)", "SVF", "Ортокин"],
-  "Витамины / нейротропы": ["Витамин B1/B6/B12", "Мильгамма", "Нейрорубин", "Нуклео ЦМФ Форте"],
   "Обезболивающие (для блокад)": ["Лидокаин", "Бупивакаин", "Ропивакаин", "Новокаин"],
-  "Другое": ["Карбоген (CO₂)", "Озон", "Плазмолифтинг"],
+  "Витамины / нейротропы": ["Витамин B1/B6/B12", "Мильгамма", "Нейрорубин", "Нуклео ЦМФ Форте"],
+  "Другое": ["Карбоген (CO₂)", "Озон"],
 };
 const ALL_MEDICATIONS = Object.values(MEDICATION_CATEGORIES).flat();
 
@@ -1251,12 +1251,23 @@ function StockOpForm({form,setForm,patients,stock,onSave,onClose}) {
 // ═══════════════════════════════════════════
 // DISCHARGE SUMMARY MODAL (Выписной эпикриз)
 // ═══════════════════════════════════════════
-function DischargeSummaryModal({ patient, protocols, appointments, procCatalog, labResults, onClose }) {
-  const [recommendations, setRecommendations] = useState(patient.notes || "");
-  const [improvement, setImprovement] = useState(5);
-  const [nextVisitDate, setNextVisitDate] = useState(patient.nextVisitDate || "");
-  const [nextVisitNote, setNextVisitNote] = useState(patient.nextVisitNote || "");
-  const [editDiagnosis, setEditDiagnosis] = useState(patient.diagnosis || "");
+function DischargeSummaryModal({ patient, protocols, appointments, procCatalog, labResults, onSave, onClose }) {
+  // Load saved discharge data or defaults (NOT from patient.notes)
+  const savedKey = `mk2_discharge_${patient.id}`;
+  const saved = (() => { try { return JSON.parse(localStorage.getItem(savedKey) || "null"); } catch { return null; } })();
+
+  const [recommendations, setRecommendations] = useState(saved?.recommendations || "");
+  const [improvement, setImprovement] = useState(saved?.improvement || 5);
+  const [nextVisitDate, setNextVisitDate] = useState(saved?.nextVisitDate || patient.nextVisitDate || "");
+  const [nextVisitNote, setNextVisitNote] = useState(saved?.nextVisitNote || patient.nextVisitNote || "");
+  const [editDiagnosis, setEditDiagnosis] = useState(saved?.editDiagnosis || patient.diagnosis || "");
+
+  // Auto-save discharge state to localStorage on every change
+  useEffect(() => {
+    try {
+      localStorage.setItem(savedKey, JSON.stringify({ recommendations, improvement, nextVisitDate, nextVisitNote, editDiagnosis }));
+    } catch {}
+  }, [recommendations, improvement, nextVisitDate, nextVisitNote, editDiagnosis, savedKey]);
 
   const patProtocols = protocols.filter(pr => String(pr.patientId) === String(patient.id));
   const patAppts = appointments.filter(a => String(a.patientId) === String(patient.id) && a.status === "done").sort((a,b)=>a.date.localeCompare(b.date));
@@ -1342,6 +1353,7 @@ function DischargeSummaryModal({ patient, protocols, appointments, procCatalog, 
           <div style={{display:"flex",gap:8}}>
             <button className="btn" onClick={handlePrint} style={{background:"#fff",color:"#064e3b",padding:"8px 16px",fontWeight:700}}>🖨️ Печать</button>
             <button className="btn" onClick={handlePDF} style={{background:"rgba(255,255,255,.2)",color:"#fff",padding:"8px 16px",fontWeight:700}}>📥 PDF</button>
+            <button className="btn" onClick={()=>{if(onSave)onSave({recommendations,improvement,nextVisitDate,nextVisitNote,editDiagnosis});try{localStorage.setItem(savedKey,JSON.stringify({recommendations,improvement,nextVisitDate,nextVisitNote,editDiagnosis}));}catch{}}} style={{background:"#fef3c7",color:"#92400e",padding:"8px 16px",fontWeight:700}}>💾 Сохранить</button>
             <button className="btn" onClick={onClose} style={{background:"rgba(255,255,255,.15)",color:"#fff",padding:"5px 11px"}}>✕</button>
           </div>
         </div>
@@ -3513,7 +3525,7 @@ export default function MedKarta({ supabase, session, profile }) {
 
       {messengerPat&&<MessengerModal patient={messengerPat} onClose={()=>setMessengerPat(null)}/>}
       {modal==="exam"&&examPat&&<ExamModal patient={examPat} existingExams={examinations} procCatalog={procCatalog} onClose={()=>{setModal(null);setExamPat(null);}} onSave={(exam)=>{setExaminations(prev=>[...prev,exam]);setModal(null);setExamPat(null);showToast("🔍 Осмотр сохранён");auditLog("exam_add",`${fullName(examPat)} · ${exam.zone} · VAS:${exam.painVas}`);}}/>}
-      {modal==="discharge"&&dischargePat&&<DischargeSummaryModal patient={dischargePat} protocols={protocols} appointments={appointments} procCatalog={procCatalog} labResults={labResults} onClose={()=>{setModal(null);setDischargePat(null);}}/>}
+      {modal==="discharge"&&dischargePat&&<DischargeSummaryModal patient={dischargePat} protocols={protocols} appointments={appointments} procCatalog={procCatalog} labResults={labResults} onSave={(data)=>{showToast("💾 Выписка сохранена");auditLog("discharge_save",`${fullName(dischargePat)}`);}} onClose={()=>{setModal(null);setDischargePat(null);}}/>}
       {modal==="consent"&&consentPat&&<ConsentModal patient={consentPat} doctor={consentPat.doctor||""} procedures={protocols.filter(pr=>String(pr.patientId)===String(consentPat.id)&&pr.status==="active").flatMap(pr=>pr.procedures)} onClose={()=>{setModal(null);setConsentPat(null);}}/>}
 
       {/* Patient view modal */}
