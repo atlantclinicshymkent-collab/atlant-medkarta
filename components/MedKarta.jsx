@@ -2121,6 +2121,41 @@ export default function MedKarta({ supabase, session, profile }) {
     } catch (e) { console.error('Email send failed:', e); }
   };
 
+  // ─── Google Calendar sync ───
+  const syncToGoogleCalendar = async (appt, patient) => {
+    const doc = doctors.find(d => d.name === appt.doctor);
+    const patName = patient ? `${patient.lastName} ${patient.firstName} ${patient.patronymic||""}`.trim() : "Пациент";
+    const calendarId = doc?.email || "";
+    if (!calendarId) return;
+    try {
+      const res = await fetch("/api/calendar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          summary: `${patName} — ${appt.type||"Приём"}`,
+          description: [
+            `Пациент: ${patName}`,
+            patient?.phone ? `Телефон: ${formatPhone(patient.phone)}` : "",
+            patient?.diagnosis ? `Диагноз: ${patient.diagnosis}` : "",
+            appt.notes ? `Примечания: ${appt.notes}` : "",
+            `Тип: ${appt.type||"Приём"}`,
+            `Врач: ${appt.doctor}`,
+          ].filter(Boolean).join("\n"),
+          date: appt.date,
+          time: appt.time || "10:00",
+          duration: 30,
+          calendarId: calendarId,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        console.log("📅 Google Calendar event created:", data.eventId);
+      } else {
+        console.warn("📅 Google Calendar error:", data.error);
+      }
+    } catch (e) { console.error("Google Calendar sync failed:", e); }
+  };
+
   const showToast = (msg, type="success") => { setToast({msg,type}); setTimeout(()=>setToast(null),3000); };
 
   // ─── AUDIT TRAIL — log all important actions ───
@@ -2218,10 +2253,10 @@ export default function MedKarta({ supabase, session, profile }) {
   const saveAppt = async (form) => {
     if (usingSupabase && supabase) {
       const row = { patient_id:form.patientId, doctor:form.doctor||"", date:form.date, time:form.time||null, type:form.type||"Первичный приём", status:form.status||"scheduled", notes:form.notes||"" };
-      if (modal==="addAppt") { const {data,error}=await supabase.from("appointments").insert(row).select().single(); if(!error&&data){setAppointments(prev=>[...prev,mapAppt(data)]); const patient=patients.find(p=>p.id===form.patientId); sendApptEmail(form,patient);} }
+      if (modal==="addAppt") { const {data,error}=await supabase.from("appointments").insert(row).select().single(); if(!error&&data){setAppointments(prev=>[...prev,mapAppt(data)]); const patient=patients.find(p=>p.id===form.patientId); sendApptEmail(form,patient); syncToGoogleCalendar(form,patient);} }
       else { const {data,error}=await supabase.from("appointments").update(row).eq("id",form.id).select().single(); if(!error&&data) setAppointments(prev=>prev.map(a=>a.id===form.id?mapAppt(data):a)); }
     } else {
-      if (modal==="addAppt") { setAppointments(prev=>[...prev,{...form,id:uid()}]); const patient=patients.find(p=>p.id===form.patientId); sendApptEmail(form,patient); }
+      if (modal==="addAppt") { setAppointments(prev=>[...prev,{...form,id:uid()}]); const patient=patients.find(p=>p.id===form.patientId); sendApptEmail(form,patient); syncToGoogleCalendar(form,patient); }
       else setAppointments(prev=>prev.map(a=>a.id===form.id?form:a));
     }
     setModal(null); showToast(modal==="addAppt"?"Запись создана":"Запись обновлена"); auditLog(modal==="addAppt"?"appt_add":"appt_edit", `${form.date} ${form.time} ${form.doctor}`);
